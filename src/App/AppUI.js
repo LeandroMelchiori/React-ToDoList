@@ -8,51 +8,55 @@ import { TodosError } from '../components/TodosError/TodosError';
 import { EmptyTodos } from '../components/EmptyTodos/EmptyTodos';
 import React from 'react';
 import { TodoContext } from '../TodoContext/TodoContext';
+import { Modal } from '../components/Modal/Modal';
 
 function AppUI({
 }) {
+
+    const { loading,
+        error,
+        searchTodos,
+        completeTodo,
+        deleteTodo,
+        openModal,
+        toogleModal,
+    } = React.useContext(TodoContext);
+
     return (
         <>
             <TodoCounter /> 
             <TodoSearch />
-            <TodoContext.Consumer>
-                {({
-                    loading,
-                    error,
-                    searchTodos,
-                    completeTodo,
-                    deleteTodo
-                }
-                ) => (
-                    <TodoList>
-                        {loading ? (
-                            <>
-                                <TodosLoading />
-                                <TodosLoading />
-                                <TodosLoading />
-                            </>
+            <TodoList>
+                {loading ? (
+                    <>
+                        <TodosLoading />
+                        <TodosLoading />
+                        <TodosLoading />
+                    </>
 
-                        ) : error ? (
-                            <TodosError />
-                        ) : !searchTodos.length ? (
-                            <EmptyTodos />
-                        ) : (
-                            searchTodos.map(todo => (
-                                <TodoItem
-                                    key={todo.text}
-                                    text={todo.text}
-                                    completed={todo.completed}
-                                    onComplete={() => completeTodo(todo.text)}
-                                    onDelete={() => deleteTodo(todo.text)}
-                                />
-                            ))
-                        )
-                        }
-                    </TodoList> 
+                ) : error ? (
+                    <TodosError />
+                ) : !searchTodos.length ? (
+                    <EmptyTodos />
+                ) : (
+                    searchTodos.map(todo => (
+                        <TodoItem
+                            key={todo.text}
+                            text={todo.text}
+                            completed={todo.completed}
+                            onComplete={() => completeTodo(todo.text)}
+                            onDelete={() => deleteTodo(todo.text)}
+                        />
+                    ))
                 )}
-            </TodoContext.Consumer>
+            </TodoList> 
+            <CreateTodoButton />
 
-        <CreateTodoButton />
+            {openModal && (
+                <Modal>
+                    hola
+                </Modal>
+            )}
         </>
     );
 }

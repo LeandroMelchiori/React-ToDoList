@@ -14,7 +14,12 @@ function TodoProvider( {children}) {
             'TODOS_V1',
              defaultTodos);
   
-    const [searchValue, setSearchValue] = React.useState('');
+    const [searchValue, setSearchValue] =
+     React.useState('');
+
+    const [openModal, setOpenModal] =
+     React.useState(false);
+
 
     const completedTodos = todos.filter(todo => !!todo.completed).length;
     const totalTodos = todos.length;
@@ -39,6 +44,16 @@ function TodoProvider( {children}) {
         saveTodos(newTodos)
     }
 
+    const addTodo = (text) => {
+        const newTodos = [...todos];
+        newTodos.push({ text, completed: false });
+        saveTodos(newTodos);
+    }
+
+    const toogleModal = () => {
+        setOpenModal(!openModal);
+    }
+
     return (
         <TodoContext.Provider value={{
             searchValue,
@@ -50,13 +65,15 @@ function TodoProvider( {children}) {
             deleteTodo,
             loading,
             error,
+            openModal,
+            toogleModal,
+            addTodo,
         }}>  
             {children}
         </TodoContext.Provider>
     );
 
 }
-
 
 export { TodoContext, TodoProvider };
 
