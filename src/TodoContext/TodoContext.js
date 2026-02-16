@@ -11,8 +11,9 @@ function TodoProvider( {children}) {
         loading,
         error
         } = useLocalStorage(
-            'TODOS_V1',
-             defaultTodos);
+                'TODOS_V1',
+                []
+            );
   
     const [searchValue, setSearchValue] =
      React.useState('');
@@ -33,7 +34,7 @@ function TodoProvider( {children}) {
     const completeTodo = (text) => {
         const newTodos = [...todos];
         const todoIndex = newTodos.findIndex(todo => todo.text === text);
-        newTodos[todoIndex].completed = true;
+        newTodos[todoIndex].completed = !newTodos[todoIndex].completed;
         saveTodos(newTodos);
     }
 
@@ -76,15 +77,6 @@ function TodoProvider( {children}) {
 }
 
 export { TodoContext, TodoProvider };
-
-
-const defaultTodos = [
-  { text: 'Cortar cebolla', completed: false },
-  { text: 'Tomar el curso de intro a React', completed: true },
-  { text: 'LALALALALALLA', completed: false },
-  { text: 'Terminar el proyecto', completed: false },
-  { text: 'Prenderse un churrito', completed: false },
-]
 
 async function api(url) {
   const res = await fetch(url)
