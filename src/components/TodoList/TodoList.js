@@ -10,11 +10,10 @@ function TodoList(props) {
       
       {(!!props.totalTodos && !props.searchTodos.length) && props.onEmptySearchResults()}
 
-      {props.searchTodos.map(props.render)}
-
-      <ul className="TodoList">
-        {props.children}
+      <ul>
+              {props.searchTodos.map(props.render || props.children)}
       </ul>
+
     </section>
   );
 }
