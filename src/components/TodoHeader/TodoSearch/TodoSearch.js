@@ -1,6 +1,6 @@
 import './TodoSearch.css';
 
-function TodoSearch( {searchValue, setSearchValue} ) {
+function TodoSearch( {searchValue, setSearchValue, loading, sincronize} ) {
 
   return (
     <input
@@ -10,6 +10,7 @@ function TodoSearch( {searchValue, setSearchValue} ) {
       onChange={(event) => { 
         setSearchValue(event.target.value);
       }}
+      disabled={loading || sincronize}
     />
   );
 }

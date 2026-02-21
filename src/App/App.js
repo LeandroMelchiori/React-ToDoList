@@ -1,17 +1,18 @@
 import './App.css';
 import React from 'react';
 import { useTodos } from './useTodos';
-import { TodoCounter } from '../components/TodoCounter/TodoCounter';
-import { TodoSearch } from '../components/TodoSearch/TodoSearch';
+import { TodoCounter } from '../components/TodoHeader/TodoCounter/TodoCounter';
+import { TodoSearch } from '../components/TodoHeader/TodoSearch/TodoSearch';
 import { TodoList } from '../components/TodoList/TodoList';
-import { TodoItem } from '../components/TodoItem/TodoItem';
+import { TodoItem } from '../components/TodoList/TodoItem/TodoItem';
 import { CreateTodoButton } from '../components/CreateTodoButton/CreateTodoButton';
 import { Modal } from '../components/Modal/Modal';
-import { TodoForm } from '../components/TodoForm/TodoForm';
+import { TodoForm } from '../components/TodoList/TodoForm/TodoForm';
 import { TodoHeader } from '../components/TodoHeader/TodoHeader';
-import { TodosLoading } from '../components/TodosLoading/TodosLoading';
-import { TodosError } from '../components/TodosError/TodosError';
-import { EmptyTodos } from '../components/EmptyTodos/EmptyTodos';
+import { TodosLoading } from '../components/TodoList/TodosLoading/TodosLoading';
+import { TodosError } from '../components/TodoList/TodosError/TodosError';
+import { EmptyTodos } from '../components/TodoList/EmptyTodos/EmptyTodos';
+import { ChangeAlertWithStorageListener } from '../components/ChangeAlert/ChangeAlert';
 
 function App() {
 
@@ -27,22 +28,25 @@ function App() {
         totalTodos,
         completedTodos,
         searchValue,
-        setSearchValue
+        setSearchValue,
+        sincronizeTodos,
 
     } = useTodos();
 
     return (
         <>
-            <TodoHeader>
-                {loading ? <h1 className="TodoCounter">Cargando...</h1>
-                    :
-                    <TodoCounter
-                        totalTodos={totalTodos}
-                        completedTodos={completedTodos} />
-                }
+            <TodoHeader
+                loading={loading}>
+
+                <TodoCounter
+                    totalTodos={totalTodos}
+                    completedTodos={completedTodos}
+                />
                 <TodoSearch
                     searchValue={searchValue}
-                    setSearchValue={setSearchValue} />
+                    setSearchValue={setSearchValue}
+                    sincronize={sincronizeTodos}
+                />
             </TodoHeader>
 
             <TodoList
@@ -78,32 +82,9 @@ function App() {
                 }
             </TodoList>
 
-        {/*     <TodoList>
-                {loading ? (
-                    <>
-                        <TodosLoading />
-                        <TodosLoading />
-                        <TodosLoading />
-                    </>
-
-                ) : error ? (
-                    <TodosError />
-                ) : !searchTodos.length ? (
-                    <EmptyTodos />
-                ) : (
-                    searchTodos.map(todo => (
-                        <TodoItem
-                            key={todo.text}
-                            text={todo.text}
-                            completed={todo.completed}
-                            onComplete={() => completeTodo(todo.text)}
-                            onDelete={() => deleteTodo(todo.text)}
-                        />
-                    ))
-                )}
-            </TodoList> */}
             <CreateTodoButton
                 toogleModal={toogleModal}
+                loading={loading}
              />
 
             {openModal && (
@@ -114,6 +95,9 @@ function App() {
                     />
                 </Modal>
             )}
+
+            <ChangeAlertWithStorageListener
+                sincronize={sincronizeTodos} />
         </>
     );
 }

@@ -3,8 +3,6 @@ import React from 'react';
 
 
 function TodosLoading() {
- 
-const skeletonClass = "LoadingTodo-skeleton";
 
   return (
     <div className="LoadingTodo-container">

@@ -22,3 +22,13 @@
 .TodoSearch:focus {
   outline-color: #61DAFA;
 }
+
+.TodoSearch:disabled {
+  background: #E0E0E0;
+  border-color: #BDBDBD;
+  color: #9E9E9E;
+  cursor: not-allowed;
+  opacity: 25%;
+}
+
+
