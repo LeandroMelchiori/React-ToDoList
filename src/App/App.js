@@ -12,7 +12,7 @@ import { TodoHeader } from '../components/TodoHeader/TodoHeader';
 import { TodosLoading } from '../components/TodoList/TodosLoading/TodosLoading';
 import { TodosError } from '../components/TodoList/TodosError/TodosError';
 import { EmptyTodos } from '../components/TodoList/EmptyTodos/EmptyTodos';
-import { ChangeAlertWithStorageListener } from '../components/ChangeAlert/ChangeAlert';
+import { ChangeAlert } from '../components/ChangeAlert/ChangeAlert';
 
 function App() {
 
@@ -96,7 +96,7 @@ function App() {
                 </Modal>
             )}
 
-            <ChangeAlertWithStorageListener
+            <ChangeAlert
                 sincronize={sincronizeTodos} />
         </>
     );
