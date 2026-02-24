@@ -2,17 +2,13 @@ import React from 'react';
 import { useLocalStorage } from './useLocalStorage';
 
 function useTodos() {
-
     const { 
         item: todos,
         saveItem: saveTodos,
         sincronizeItem: sincronizeTodos,
         loading,
         error
-        } = useLocalStorage(
-                'TODOS_V1',
-                []
-            );
+        } = useLocalStorage('TODOS_V1',[]);
   
     const [searchValue, setSearchValue] =
      React.useState('');
@@ -54,42 +50,26 @@ function useTodos() {
         setOpenModal(!openModal);
     }
 
-    return {
-            searchValue,
-            setSearchValue,
-            completedTodos,
-            totalTodos,
-            searchTodos,
-            completeTodo,
-            deleteTodo,
-            loading,
-            error,
-            openModal,
-            toogleModal,
-            addTodo,
-            sincronizeTodos
-        }
+    const states = {
+        loading,
+        error,
+        searchValue,
+        totalTodos,
+        completedTodos,
+        searchTodos,
+        openModal,
+    }
+
+    const stateUpdaters = {
+        setSearchValue,
+        completeTodo,
+        deleteTodo,
+        toogleModal,
+        addTodo,
+        sincronizeTodos
+    }
+
+    return { states, stateUpdaters };
 }
 
 export { useTodos }; 
-
-async function api(url) {
-  const res = await fetch(url)
-  const data = await res.json();
-  return data;
-}
-
-function TodoMessage() {
-
-  const [state, setState] = 
-  React.useState({});
-
-  React.useEffect(() => {
-    const data = api();
-    setState(data);
-  }, [])
-
-  return (
-    <p>{state.message || "Cargando mensaje..."}</p>
-  )
-}
