@@ -181,7 +181,8 @@ Esto ejecuta `npm run build` y luego publica el contenido de `/build` en la rama
 ---
 
 ## 📚 Recursos
-
-- [Curso de Introducción a React.js — Platzi](https://platzi.com/reactjs)
 - [Documentación oficial de React](https://react.dev)
-- [Create React App](https://create-react-app.dev)
+
+## 👨‍💻 Autor
+ 
+Desarrollado por Leandro Melchiori
