@@ -1,4 +1,4 @@
-# ✅ React ToDoList
+        # ✅ React ToDoList
 
 Aplicación de gestión de tareas construida con **React 18**, desarrollada como proyecto de la ruta de aprendizaje de React de Platzi. Implementa patrones avanzados de React como custom hooks, Context API, render props y persistencia con `localStorage`.
 
