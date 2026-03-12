@@ -255,10 +255,7 @@ Create React App está en mantenimiento mínimo. Migrar a Vite reduciría drást
  
 **Automatizar el deploy con GitHub Actions**
 El deploy actual es manual (`npm run deploy`). Un workflow de CI/CD que dispare el deploy automáticamente en cada push a `main` eliminaría ese paso y garantizaría que la demo siempre esté actualizada.
- 
-**Lógica de migración para `TODOS_V1`**
-La clave `TODOS_V1` en `localStorage` sugiere que se anticipó versionar el esquema de datos, pero no existe ninguna lógica de migración. Si en el futuro el modelo de `Todo` cambia (por ejemplo al agregar `id`), los usuarios con datos guardados en el formato viejo verían errores. Habría que implementar un mecanismo de migración al leer datos de versiones anteriores.
- 
+
 **Migración a base de datos relacional**
 El almacenamiento en `localStorage` es local al navegador, no escala y no permite multiusuario. El paso natural es reemplazarlo por un backend con una base de datos relacional (PostgreSQL, MySQL) exponiendo una REST API o GraphQL.
  
