@@ -180,6 +180,114 @@ Esto ejecuta `npm run build` y luego publica el contenido de `/build` en la rama
 
 ---
 
+## 🔧 Mejoras Futuras
+ 
+### 🐛 Bugs y deuda técnica
+ 
+**Identificación de tareas por texto (crítico)**
+Las operaciones `completeTodo`, `deleteTodo` y el `key` de React usan `todo.text` como identificador único. Si el usuario crea dos tareas con el mismo texto, ambas se verán afectadas al completar o eliminar una. La solución es generar un `id` único al crear cada tarea (por ejemplo con `crypto.randomUUID()`).
+ 
+```js
+// Actual — frágil
+const todoIndex = newTodos.findIndex(todo => todo.text === text);
+ 
+// Propuesto
+const addTodo = (text) => {
+  newTodos.push({ id: crypto.randomUUID(), text, completed: false });
+};
+```
+ 
+**`setTimeout` de 2 segundos hardcodeado en `useLocalStorage`**
+El delay artificial simula una carga asíncrona pero bloquea la UI innecesariamente en cada sincronización, incluyendo al recargar desde `ChangeAlert`. Debería eliminarse o hacerse configurable.
+ 
+**Render prop duplicado en `App.js`**
+`TodoList` recibe tanto la prop `render` como `children` con exactamente la misma función. Solo uno de los dos se usa (`render || children`), por lo que el otro es código muerto.
+ 
+**`TodoContext copy.js` — refactor abandonado**
+El archivo sugiere una migración a Context API que quedó incompleta. El estado sigue siendo prop-drilling desde `useTodos` hacia abajo. Terminar la migración eliminaría el paso intermedio de `states` / `stateUpdaters`.
+ 
+**Typo consistente: `sincronize` → `synchronize`**
+La palabra aparece mal escrita en múltiples archivos (`sincronizeTodos`, `sincronizeItem`, `useStorageListener`). No rompe funcionalidad, pero dificulta la legibilidad del código.
+ 
+---
+ 
+### 🚀 Features a agregar
+ 
+**Edición de tareas existentes**
+Actualmente solo se puede crear, completar o eliminar. Agregar un modo de edición inline o mediante el mismo modal mejoraría considerablemente la UX.
+ 
+**Fecha de vencimiento y prioridad**
+Extender el modelo de dato de `{ text, completed }` a `{ id, text, completed, priority, dueDate }` abriría la puerta a ordenamiento, filtros avanzados y alertas visuales.
+ 
+**Categorías o etiquetas**
+Permitir agrupar tareas por proyecto o contexto, con filtrado por categoría además de la búsqueda por texto.
+ 
+**Reordenamiento con drag & drop**
+La lista no tiene orden persistido. Integrar una librería como `@dnd-kit` permitiría arrastrar para reorganizar y guardar el orden en `localStorage`.
+ 
+---
+ 
+### 🏗 Calidad de código
+ 
+**Migrar a TypeScript**
+El proyecto no tiene ningún tipado. Agregar TypeScript evitaría errores como el de identificación por texto y documentaría la forma de `Todo`, `states` y `stateUpdaters`.
+ 
+```ts
+interface Todo {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+```
+ 
+**Testing**
+No existe ningún archivo de test. Los custom hooks `useLocalStorage` y `useTodos` son candidatos ideales para tests unitarios con `@testing-library/react-hooks`. Los flujos de crear/completar/eliminar tarea deberían cubrirse con tests de integración.
+ 
+**Accesibilidad (a11y)**
+Los botones de completar y eliminar en `TodoItem` no tienen `aria-label`, lo que los hace inaccesibles para lectores de pantalla. El modal tampoco gestiona el foco ni el atributo `role="dialog"`.
+ 
+**Migración de CRA a Vite**
+Create React App está en mantenimiento mínimo. Migrar a Vite reduciría drásticamente los tiempos de arranque y build, y simplificaría la configuración.
+ 
+---
+ 
+### ☁️ Infraestructura
+ 
+**Automatizar el deploy con GitHub Actions**
+El deploy actual es manual (`npm run deploy`). Un workflow de CI/CD que dispare el deploy automáticamente en cada push a `main` eliminaría ese paso y garantizaría que la demo siempre esté actualizada.
+ 
+**Lógica de migración para `TODOS_V1`**
+La clave `TODOS_V1` en `localStorage` sugiere que se anticipó versionar el esquema de datos, pero no existe ninguna lógica de migración. Si en el futuro el modelo de `Todo` cambia (por ejemplo al agregar `id`), los usuarios con datos guardados en el formato viejo verían errores. Habría que implementar un mecanismo de migración al leer datos de versiones anteriores.
+ 
+**Migración a base de datos relacional**
+El almacenamiento en `localStorage` es local al navegador, no escala y no permite multiusuario. El paso natural es reemplazarlo por un backend con una base de datos relacional (PostgreSQL, MySQL) exponiendo una REST API o GraphQL.
+ 
+El modelo de tabla para las tareas quedaría así:
+ 
+```sql
+CREATE TABLE todos (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     UUID NOT NULL REFERENCES users(id),
+  text        VARCHAR(255) NOT NULL,
+  completed   BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at  TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at  TIMESTAMP NOT NULL DEFAULT NOW(),
+ 
+  CONSTRAINT uq_user_todo_text UNIQUE (user_id, text)
+);
+```
+ 
+Esto resuelve varios problemas del diseño actual de forma estructural:
+ 
+- **Clave primaria (`id`)** — cada tarea tiene un `UUID` irrepetible generado por la base de datos, eliminando el bug de identificación por texto.
+- **Unicidad garantizada a nivel de BD** — el constraint `UNIQUE (user_id, text)` impide tareas duplicadas por usuario directamente en la capa de datos, sin depender de validaciones en el frontend.
+- **Multiusuario** — la columna `user_id` asocia cada tarea a un usuario, habilitando autenticación y datos independientes por cuenta.
+- **Auditoría** — `created_at` y `updated_at` permiten ordenar por fecha de creación, filtrar tareas recientes y registrar la última modificación.
+- **Sincronización real entre dispositivos** — al estar los datos en el servidor, cualquier navegador o dispositivo del mismo usuario siempre ve el mismo estado, reemplazando el workaround actual de `useStorageListener` que solo funciona entre pestañas del mismo navegador.
+ 
+---
+ 
+
 ## 📚 Recursos
 - [Documentación oficial de React](https://react.dev)
 
