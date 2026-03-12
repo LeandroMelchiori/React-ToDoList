@@ -1,75 +1,187 @@
-# Repositorio base del Curso de Introducción a React.js en Platzi
+# ✅ React ToDoList
 
-¡Hola, Platzinauta!
+Aplicación de gestión de tareas construida con **React 18**, desarrollada como proyecto de la ruta de aprendizaje de React de Platzi. Implementa patrones avanzados de React como custom hooks, Context API, render props y persistencia con `localStorage`.
 
-En este repositorio encontrarás el código de todas las clases del [Curso de Introducción a React.js](https://platzi.com/reactjs). Para empezar solo debes clonar este repositorio (`git clone`), instalar sus dependencias (`npm i`) y ejecutar la aplicación (`npm start`).
+🌐 **Demo en vivo:** [leandromelchiori.github.io/React-ToDoList](https://leandromelchiori.github.io/React-ToDoList/)
 
-La rama principal contiene el código con el que eempezamos el curso. En las demás ramas encontrarás el código de las siguientes clases y finalmente el deploy de la aplicación.
+---
 
-¡Mucha suerte aprendiendo React! #NuncaParesDeAprender
+## 📋 Tabla de Contenidos
 
-## Getting Started with Create React App
+- [Características](#-características)
+- [Tecnologías](#-tecnologías)
+- [Estructura del Proyecto](#-estructura-del-proyecto)
+- [Arquitectura](#-arquitectura)
+- [Instalación y Uso](#-instalación-y-uso)
+- [Scripts Disponibles](#-scripts-disponibles)
+- [Deploy](#-deploy)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+---
 
-## Available Scripts
+## ✨ Características
 
-In the project directory, you can run:
+- **Crear tareas** mediante un modal con formulario dedicado
+- **Completar tareas** marcándolas individualmente con toggle
+- **Eliminar tareas** con un solo clic
+- **Buscar y filtrar** tareas en tiempo real por texto
+- **Contador de progreso** que muestra tareas completadas vs. totales
+- **Persistencia automática** en `localStorage` — los datos sobreviven recargas
+- **Sincronización entre pestañas** — alerta al detectar cambios en otra pestaña del navegador
+- **Estados de UI** diferenciados: cargando, error, lista vacía y sin resultados de búsqueda
 
-### `npm start`
+---
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## 🛠 Tecnologías
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+| Tecnología | Versión | Uso |
+|---|---|---|
+| React | ^18 | UI y gestión de estado |
+| React DOM | ^18 | Portales (Modal) |
+| react-icons | ^5.5.0 | Íconos de completar y eliminar |
+| react-scripts | 5.0.1 | Toolchain (CRA) |
+| gh-pages | ^6.3.0 | Deploy a GitHub Pages |
 
-### `npm run build`
+---
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## 📁 Estructura del Proyecto
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```
+src/
+├── index.js                        # Entry point
+├── index.css                       # Estilos globales
+│
+├── App/
+│   ├── App.js                      # Componente raíz — orquesta toda la UI
+│   ├── App.css
+│   ├── useTodos.js                 # Hook principal: estados y lógica de negocio
+│   └── useLocalStorage.js          # Hook de persistencia con useReducer
+│
+├── TodoContext/
+│   └── TodoContext copy.js         # Exploración de Context API (referencia)
+│
+└── components/
+    ├── index.js                    # Barrel de exports
+    ├── index.css
+    │
+    ├── TodoHeader/                 # Cabecera de la app
+    │   ├── TodoHeader.js
+    │   ├── TodoCounter/            # "X de Y completadas"
+    │   └── TodoSearch/             # Input de búsqueda + botón sincronizar
+    │
+    ├── TodoList/                   # Sección principal de lista
+    │   ├── TodoList.js             # Render props / children pattern
+    │   ├── TodoList.css
+    │   ├── TodoItem/               # Ítem individual de tarea
+    │   ├── TodoForm/               # Formulario para nueva tarea
+    │   ├── EmptyTodos/             # Estado: sin tareas creadas
+    │   ├── TodosLoading/           # Estado: cargando desde localStorage
+    │   └── TodosError/             # Estado: error al leer storage
+    │
+    ├── TodoIcon/                   # Íconos reutilizables
+    │   ├── TodoIcon.js             # Componente base
+    │   ├── CompleteIcon.js         # Check verde
+    │   └── DeleteIcon.js           # X roja
+    │
+    ├── CreateTodoButton/           # Botón flotante "+"
+    ├── Modal/                      # Portal de React para el formulario
+    └── ChangeAlert/                # Alerta de cambios entre pestañas
+        ├── ChangeAlert.js
+        └── useStorageListener.js   # Hook: escucha el evento "storage"
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+---
 
-### `npm run eject`
+## 🏗 Arquitectura
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Custom Hooks
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+**`useLocalStorage`** — gestiona la persistencia con un patrón `useReducer`:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```
+Estados: loading → success / error
+Acciones: ERROR | SUCCESS | SYNCRONIZE | SAVE
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Simula latencia con `setTimeout` para mostrar estados de carga reales. La acción `SYNCRONIZE` permite forzar una re-lectura del storage (útil al detectar cambios desde otra pestaña).
 
-## Learn More
+**`useTodos`** — centraliza toda la lógica de negocio:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```
+states        → loading, error, searchValue, totalTodos, completedTodos, searchTodos, openModal
+stateUpdaters → setSearchValue, completeTodo, deleteTodo, toogleModal, addTodo, sincronizeTodos
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+**`useStorageListener`** — escucha el evento nativo `window storage` para detectar cambios realizados en otras pestañas del mismo navegador y mostrar un aviso de recarga.
 
-### Code Splitting
+### Patrón Render Props en `TodoList`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+`TodoList` acepta tanto una prop `render` como `children` como función, delegando el renderizado de cada ítem al componente padre:
 
-### Analyzing the Bundle Size
+```jsx
+<TodoList render={todo => <TodoItem key={todo.text} {...todo} />}>
+  {todo => <TodoItem key={todo.text} {...todo} />}
+</TodoList>
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### Modal con Portal
 
-### Making a Progressive Web App
+El componente `Modal` usa `ReactDOM.createPortal` para renderizar fuera del árbol del DOM principal, montándose en `#modal` (definido en `public/index.html`):
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+```jsx
+ReactDOM.createPortal(<div className="ModalBackground">{children}</div>, document.getElementById("modal"))
+```
 
-### Advanced Configuration
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## 🚀 Instalación y Uso
 
-### Deployment
+**Requisitos:** Node.js 16+
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/leandromelchiori/React-ToDoList.git
+cd React-ToDoList
 
-### `npm run build` fails to minify
+# 2. Instalar dependencias
+npm install
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+# 3. Iniciar el servidor de desarrollo
+npm start
+```
+
+La app estará disponible en [http://localhost:3000](http://localhost:3000).
+
+---
+
+## 📜 Scripts Disponibles
+
+| Comando | Descripción |
+|---|---|
+| `npm start` | Servidor de desarrollo con hot reload |
+| `npm run build` | Build optimizado para producción en `/build` |
+| `npm run deploy` | Build + deploy automático a GitHub Pages |
+| `npm run eject` | Expone la configuración de webpack/Babel (irreversible) |
+
+---
+
+## 🌐 Deploy
+
+El proyecto está configurado para desplegarse en **GitHub Pages** mediante `gh-pages`.
+
+```bash
+npm run deploy
+```
+
+Esto ejecuta `npm run build` y luego publica el contenido de `/build` en la rama `gh-pages` del repositorio. La URL de producción está definida en `package.json`:
+
+```json
+"homepage": "https://leandromelchiori.github.io/React-ToDoList/"
+```
+
+---
+
+## 📚 Recursos
+
+- [Curso de Introducción a React.js — Platzi](https://platzi.com/reactjs)
+- [Documentación oficial de React](https://react.dev)
+- [Create React App](https://create-react-app.dev)
