@@ -2,6 +2,12 @@
 
 [![CI](https://github.com/LeandroMelchiori/React-ToDoList/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/LeandroMelchiori/React-ToDoList/actions/workflows/ci-cd.yml)
 
+<p align="center">
+  <a href="https://taskflow.sachadev.me">
+    <img src="public/og-taskflow.png" alt="Vista previa de TaskFlow" width="100%" />
+  </a>
+</p>
+
 TaskFlow es una aplicacion React para gestionar tareas con busqueda, filtros, edicion, validaciones y persistencia local. El objetivo del proyecto es mostrar como una ToDo List clasica puede evolucionar hacia una experiencia de portfolio mas cuidada: UI clara, estado bien separado, pruebas automatizadas, CI y deploy en produccion.
 
 ## Demo
