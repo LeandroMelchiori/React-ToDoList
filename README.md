@@ -1,8 +1,8 @@
 # TaskFlow - React ToDo List
 
-[![CI/CD](https://github.com/LeandroMelchiori/React-ToDoList/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/LeandroMelchiori/React-ToDoList/actions/workflows/ci-cd.yml)
+[![CI](https://github.com/LeandroMelchiori/React-ToDoList/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/LeandroMelchiori/React-ToDoList/actions/workflows/ci-cd.yml)
 
-TaskFlow es una aplicacion React para gestionar tareas con busqueda, filtros, edicion, validaciones y persistencia local. El objetivo del proyecto es mostrar como una ToDo List clasica puede evolucionar hacia una experiencia de portfolio mas cuidada: UI clara, estado bien separado, pruebas automatizadas, CI/CD y deploy en produccion.
+TaskFlow es una aplicacion React para gestionar tareas con busqueda, filtros, edicion, validaciones y persistencia local. El objetivo del proyecto es mostrar como una ToDo List clasica puede evolucionar hacia una experiencia de portfolio mas cuidada: UI clara, estado bien separado, pruebas automatizadas, CI y deploy en produccion.
 
 ## Demo
 
@@ -18,7 +18,7 @@ Este proyecto esta pensado como una pieza de portfolio para demostrar:
 - Cuidado de UI/UX en estados vacios, carga, error, filtros, busqueda y modal.
 - Validaciones de entrada para evitar tareas vacias o duplicadas.
 - Cobertura de tests sobre helpers y flujos principales de usuario.
-- Pipeline de calidad con audit, tests, build y deploy automatico.
+- Pipeline de calidad con audit, tests y build automatico.
 
 ## Funcionalidades
 
@@ -44,7 +44,6 @@ Este proyecto esta pensado como una pieza de portfolio para demostrar:
 - Jest DOM
 - GitHub Actions
 - Vercel
-- GitHub Pages como publicacion alternativa
 
 ## Decisiones tecnicas
 
@@ -54,7 +53,7 @@ Este proyecto esta pensado como una pieza de portfolio para demostrar:
 - La logica principal vive en hooks (`useTodos`, `useLocalStorage`) para separar estado y presentacion.
 - El formulario se reutiliza para creacion y edicion, manteniendo validaciones consistentes.
 - La UI usa labels, botones accesibles y estados visibles para mejorar navegacion y feedback.
-- El build principal usa base `/` para Vercel y el build de GitHub Pages usa `/React-ToDoList/`.
+- El build usa base `/` para publicar correctamente en Vercel desde `taskflow.sachadev.me`.
 - El toolchain usa Vite para reducir dependencias vulnerables y acelerar desarrollo/build.
 
 ## Estructura
@@ -94,16 +93,10 @@ Ejecutar tests:
 npm test
 ```
 
-Generar build para Vercel:
+Generar build de produccion:
 
 ```bash
 npm run build
-```
-
-Generar build para GitHub Pages:
-
-```bash
-npm run build:github-pages
 ```
 
 Previsualizar el build:
@@ -112,13 +105,13 @@ Previsualizar el build:
 npm run preview
 ```
 
-## CI/CD
+## CI
 
-El proyecto usa GitHub Actions para validar cada cambio y desplegar automaticamente desde `main`.
+El proyecto usa GitHub Actions para validar cada cambio. Vercel toma los cambios de `main` y publica automaticamente la version principal.
 
 - En cada pull request a `main`: instala dependencias con `npm ci`, ejecuta `npm audit --audit-level=moderate`, corre tests y genera build.
-- En cada push a `main`: repite la validacion y publica `dist` en GitHub Pages.
-- Vercel toma los cambios de `main` y publica la version principal en `taskflow.sachadev.me`.
+- En cada push a `main`: repite la validacion.
+- Vercel publica la app en `taskflow.sachadev.me`.
 
 ## Tests
 

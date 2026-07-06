@@ -1,4 +1,4 @@
-name: CI/CD
+name: CI
 
 on:
   push:
@@ -9,10 +9,10 @@ on:
       - main
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: pages
+  group: ci-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -40,13 +40,4 @@ jobs:
         run: npm test
 
       - name: Build app
-        run: npm run build:github-pages
-
-      - name: Deploy to GitHub Pages
-        if: github.event_name == 'push'
-        uses: peaceiris/actions-gh-pages@v4.1.0
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: ./dist
-          force_orphan: true
+        run: npm run build
