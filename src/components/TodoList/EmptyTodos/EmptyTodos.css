@@ -1,7 +1,7 @@
 .EmptyTodo-container {
   align-items: center;
-  background: #ffffff;
-  border: 1px dashed #cbd5e1;
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border-strong);
   border-radius: 16px;
   display: flex;
   gap: 18px;
@@ -13,9 +13,9 @@
 
 .EmptyTodo-completeIcon {
   align-items: center;
-  background: #e0f2fe;
+  background: var(--color-accent-soft);
   border-radius: 999px;
-  color: #0284c7;
+  color: var(--color-accent-hover);
   display: flex;
   flex: 0 0 auto;
   font-size: 32px;
@@ -31,14 +31,14 @@
 }
 
 .EmptyTodo-title {
-  color: #102a43;
+  color: var(--color-text);
   font-size: 20px;
   font-weight: 800;
   margin: 0 0 6px;
 }
 
 .EmptyTodo-text {
-  color: #52616b;
+  color: var(--color-text-muted);
   font-size: 16px;
   line-height: 1.45;
   margin: 0;

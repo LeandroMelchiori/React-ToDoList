@@ -14,10 +14,10 @@
 
 .ChangeAlert-card {
   align-items: center;
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   border-radius: 16px;
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
-  color: #102a43;
+  box-shadow: var(--shadow-modal);
+  color: var(--color-text);
   display: flex;
   gap: 16px;
   max-width: 520px;
@@ -32,7 +32,7 @@
 }
 
 .ChangeAlert button {
-  background-color: #0ea5e9;
+  background-color: var(--color-accent);
   border: none;
   border-radius: 10px;
   color: #ffffff;
@@ -47,7 +47,7 @@
 
 .ChangeAlert button:hover,
 .ChangeAlert button:focus-visible {
-  background-color: #0284c7;
+  background-color: var(--color-accent-hover);
   outline: none;
 }
 

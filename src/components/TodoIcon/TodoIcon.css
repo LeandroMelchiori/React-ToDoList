@@ -21,17 +21,17 @@
 
 .Icon-container:hover,
 .Icon-container:focus-visible {
-  background-color: #f1f5f9;
+  background-color: var(--color-surface-muted);
   outline: none;
   transform: scale(1.04);
 }
 
 .Icon-container-delete:hover {
-  color: #dc2626;
+  color: var(--color-danger);
 }
 
 .Icon-container-edit:hover {
-  color: #0ea5e9;
+  color: var(--color-accent);
 }
 
 .icon-svg {
@@ -40,13 +40,13 @@
 }
 
 .Icon-container-delete:hover .icon-svg {
-  fill: #dc2626;
+  fill: var(--color-danger);
 }
 
 .Icon-container-check:hover .icon-svg {
-  fill: #16a34a;
+  fill: var(--color-success);
 }
 
 .Icon-container-edit:hover .icon-svg {
-  fill: #0ea5e9;
+  fill: var(--color-accent);
 }

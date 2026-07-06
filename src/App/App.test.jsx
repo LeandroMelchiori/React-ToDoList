@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from './App';
 
@@ -14,6 +14,7 @@ describe('App', () => {
   beforeEach(() => {
     localStorage.clear();
     document.body.innerHTML = '';
+    delete document.documentElement.dataset.theme;
   });
 
   test('manages the main todo flow from the UI', async () => {
@@ -78,6 +79,36 @@ describe('App', () => {
 
     expect(screen.getByText('Esa tarea ya existe.')).toBeInTheDocument();
     expect(within(screen.getByRole('dialog')).getByLabelText('Nueva tarea')).toHaveValue('actualizar portfolio');
+  });
+
+  test('toggles and persists dark mode', async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    expect(await screen.findByText('Organiza tu dia con una primera tarea')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(document.documentElement).toHaveAttribute('data-theme', 'light');
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Activar modo oscuro' }));
+
+    expect(document.documentElement).toHaveAttribute('data-theme', 'dark');
+    expect(localStorage.getItem('THEME_V1')).toBe('dark');
+    expect(screen.getByRole('button', { name: 'Activar modo claro' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('loads the persisted dark theme', async () => {
+    localStorage.setItem('THEME_V1', 'dark');
+    renderApp();
+
+    expect(await screen.findByText('Organiza tu dia con una primera tarea')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(document.documentElement).toHaveAttribute('data-theme', 'dark');
+    });
+
+    expect(screen.getByRole('button', { name: 'Activar modo claro' })).toHaveAttribute('aria-pressed', 'true');
   });
 
   test('recovers from invalid stored todos', async () => {

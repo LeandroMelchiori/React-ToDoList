@@ -14,10 +14,13 @@ import { TodosLoading } from '../components/TodoList/TodosLoading/TodosLoading';
 import { TodosError } from '../components/TodoList/TodosError/TodosError';
 import { EmptyTodos } from '../components/TodoList/EmptyTodos/EmptyTodos';
 import { ChangeAlert } from '../components/ChangeAlert/ChangeAlert';
+import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle';
+import { useTheme } from './useTheme';
 
 function App() {
 
     const { states, stateUpdaters } = useTodos();
+    const { isDarkTheme, toggleTheme } = useTheme();
 
     const { 
         loading,
@@ -53,6 +56,11 @@ function App() {
     return (
         <>
             <main className="App">
+                <ThemeToggle
+                    isDarkTheme={isDarkTheme}
+                    onToggleTheme={toggleTheme}
+                />
+
                 <TodoHeader loading={loading}>
 
                 <TodoCounter

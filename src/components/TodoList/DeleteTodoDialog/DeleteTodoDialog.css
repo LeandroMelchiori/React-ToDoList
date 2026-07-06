@@ -1,9 +1,9 @@
 .DeleteTodoDialog {
   align-items: stretch;
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   border-radius: 16px;
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
-  color: #102a43;
+  box-shadow: var(--shadow-modal);
+  color: var(--color-text);
   display: flex;
   flex-direction: column;
   max-width: 420px;
@@ -12,7 +12,7 @@
 }
 
 .DeleteTodoDialog h2 {
-  color: #102a43;
+  color: var(--color-text);
   font-size: 22px;
   font-weight: 800;
   line-height: 1.25;
@@ -20,14 +20,14 @@
 }
 
 .DeleteTodoDialog p {
-  color: #52616b;
+  color: var(--color-text-muted);
   font-size: 16px;
   line-height: 1.5;
   margin: 0;
 }
 
 .DeleteTodoDialog strong {
-  color: #1f2933;
+  color: var(--color-text-strong);
 }
 
 .DeleteTodoDialog-buttonContainer {
@@ -49,29 +49,29 @@
 }
 
 .DeleteTodoDialog-button:focus-visible {
-  box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.16);
+  box-shadow: var(--shadow-focus);
   outline: none;
 }
 
 .DeleteTodoDialog-button-cancel {
-  background-color: #ffffff;
-  border: 1px solid #cbd5e1;
-  color: #52616b;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  color: var(--color-text-muted);
 }
 
 .DeleteTodoDialog-button-cancel:hover {
-  background-color: #f1f5f9;
+  background-color: var(--color-surface-muted);
 }
 
 .DeleteTodoDialog-button-delete {
-  background-color: #dc2626;
-  border: 1px solid #dc2626;
+  background-color: var(--color-danger);
+  border: 1px solid var(--color-danger);
   color: #ffffff;
 }
 
 .DeleteTodoDialog-button-delete:hover {
-  background-color: #b91c1c;
-  border-color: #b91c1c;
+  background-color: var(--color-danger-hover);
+  border-color: var(--color-danger-hover);
 }
 
 @media (max-width: 480px) {

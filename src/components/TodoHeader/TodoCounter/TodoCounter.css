@@ -1,5 +1,5 @@
 .TodoCounter {
-  color: #102a43;
+  color: var(--color-text);
   font-size: clamp(28px, 4vw, 44px);
   line-height: 1.15;
   max-width: 720px;
@@ -10,9 +10,9 @@
 }
 
 .TodoCounter span {
-  color: #0ea5e9;
+  color: var(--color-accent);
 }
 
 .TodoCounter--loading {
-  color: #94a3b8;
+  color: var(--color-text-soft);
 }
