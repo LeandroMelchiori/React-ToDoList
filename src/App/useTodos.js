@@ -37,6 +37,10 @@ function createTodo(text) {
 }
 
 function normalizeTodos(todos) {
+    if (!Array.isArray(todos)) {
+        return [];
+    }
+
     return todos
         .filter(todo => typeof todo.text === 'string' && todo.text.trim())
         .map((todo, index) => ({
@@ -68,7 +72,7 @@ function useTodos() {
         synchronizeItem: syncTodos,
         loading,
         error
-        } = useLocalStorage(STORAGE_KEY, DEFAULT_TODOS);
+        } = useLocalStorage(STORAGE_KEY, DEFAULT_TODOS, Array.isArray);
   
     const [searchValue, setSearchValue] =
      React.useState('');

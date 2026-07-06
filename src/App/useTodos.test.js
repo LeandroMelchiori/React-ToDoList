@@ -29,6 +29,11 @@ describe('todo helpers', () => {
     ]);
   });
 
+  test('normalizes invalid todo collections as an empty list', () => {
+    expect(normalizeTodos(null)).toEqual([]);
+    expect(normalizeTodos({ text: 'No es una lista' })).toEqual([]);
+  });
+
   test('creates a new todo with a generated id and trimmed text', () => {
     const todo = createTodo('  Practicar React  ');
 

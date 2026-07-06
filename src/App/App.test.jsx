@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from './App';
 
@@ -78,6 +78,52 @@ describe('App', () => {
 
     expect(screen.getByText('Esa tarea ya existe.')).toBeInTheDocument();
     expect(within(screen.getByRole('dialog')).getByLabelText('Nueva tarea')).toHaveValue('actualizar portfolio');
+  });
+
+  test('recovers from invalid stored todos', async () => {
+    localStorage.setItem('TODOS_V1', '{"broken":');
+    renderApp();
+
+    expect(await screen.findByText('Organiza tu dia con una primera tarea')).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('TODOS_V1'))).toEqual([]);
+  });
+
+  test('shows an error when localStorage is unavailable', async () => {
+    const getItemSpy = vi.spyOn(Storage.prototype, 'getItem')
+      .mockImplementation(() => {
+        throw new Error('Storage unavailable');
+      });
+
+    renderApp();
+
+    expect(await screen.findByText('No pudimos cargar tus tareas')).toBeInTheDocument();
+
+    getItemSpy.mockRestore();
+  });
+
+  test('synchronizes todos after an external storage change', async () => {
+    const user = userEvent.setup();
+    const updatedTodos = [
+      { id: 'todo-2', text: 'Actualizar desde otra pestana', completed: false },
+    ];
+
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      { id: 'todo-1', text: 'Tarea local', completed: false },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Tarea local')).toBeInTheDocument();
+
+    localStorage.setItem('TODOS_V1', JSON.stringify(updatedTodos));
+    act(() => {
+      window.dispatchEvent(new StorageEvent('storage', { key: 'TODOS_V1' }));
+    });
+
+    const alertDialog = await screen.findByRole('alertdialog', { name: 'Cambios externos detectados' });
+    await user.click(within(alertDialog).getByRole('button', { name: 'Actualizar tareas' }));
+
+    expect(screen.queryByText('Tarea local')).not.toBeInTheDocument();
+    expect(screen.getByText('Actualizar desde otra pestana')).toBeInTheDocument();
   });
 
   test('edits a todo from the modal and validates duplicate text', async () => {

@@ -1,6 +1,26 @@
 import React from 'react';
 
-function useLocalStorage(itemName, initialValue) {
+function parseStoredItem(storedItem, initialValue, isValidItem) {
+  if (!storedItem) {
+    return { item: initialValue, shouldRepair: true };
+  }
+
+  let parsedItem;
+
+  try {
+    parsedItem = JSON.parse(storedItem);
+  } catch {
+    return { item: initialValue, shouldRepair: true };
+  }
+
+  if (!isValidItem(parsedItem)) {
+    return { item: initialValue, shouldRepair: true };
+  }
+
+  return { item: parsedItem, shouldRepair: false };
+}
+
+function useLocalStorage(itemName, initialValue, isValidItem = () => true) {
   const [state, dispatch] = React.useReducer(reducer, initialState(initialValue));
   const {
     synchronizedItem,
@@ -29,20 +49,18 @@ function useLocalStorage(itemName, initialValue) {
 
   React.useEffect(() => {
     try {
-      const localStorageItems = localStorage.getItem(itemName);
-      let parsedItems;
+      const storedItem = localStorage.getItem(itemName);
+      const { item, shouldRepair } = parseStoredItem(storedItem, initialValue, isValidItem);
 
-      if (!localStorageItems) {
+      if (shouldRepair) {
         localStorage.setItem(itemName, JSON.stringify(initialValue));
-        parsedItems = initialValue;
-      } else {
-        parsedItems = JSON.parse(localStorageItems);
       }
-      onSuccess(parsedItems);
+
+      onSuccess(item);
     } catch (error) {
       onError(error);
     }
-  }, [synchronizedItem, itemName, initialValue]);
+  }, [synchronizedItem, itemName, initialValue, isValidItem]);
 
   const saveItem = (newItem) => {
     try {
