@@ -1,20 +1,25 @@
 .TodoItem {
-  background-color: #FAFAFA;
-  position: relative;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.08);
   display: flex;
-  justify-content: center;
   align-items: center;
-  margin-top: 24px;
-  box-shadow: 0px 5px 50px rgba(32, 35, 41, 0.15);
+  gap: 12px;
+  margin-top: 14px;
+  padding: 14px 16px;
 }
 
 .TodoItem-p {
-  margin: 24px 0 24px 24px;
-  width: calc(100% - 120px);
-  font-size: 18px;
-  line-height: 24px;
-  font-weight: 400;
+  color: #1f2933;
+  flex: 1;
+  font-size: 17px;
+  line-height: 1.45;
+  margin: 0;
+  overflow-wrap: anywhere;
 }
+
 .TodoItem-p--complete {
+  color: #64748b;
   text-decoration: line-through;
 }

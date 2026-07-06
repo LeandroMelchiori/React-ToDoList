@@ -1,11 +1,16 @@
 import './CreateTodoButton.css';
-import React from 'react';
 
-
-function CreateTodoButton({ toogleModal }) {
+function CreateTodoButton({ toggleModal, loading }) {
   return (
-    <button className="CreateTodoButton"
-    onClick={() => {toogleModal()}}>+</button>
+    <button
+      type="button"
+      className="CreateTodoButton"
+      aria-label="Crear nueva tarea"
+      disabled={loading}
+      onClick={toggleModal}
+    >
+      +
+    </button>
   );
 }
 

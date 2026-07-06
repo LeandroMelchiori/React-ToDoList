@@ -1,34 +1,46 @@
+.TodoSearch-label {
+  display: block;
+  margin: 0 auto;
+  max-width: 720px;
+}
+
+.TodoSearch-label span {
+  color: #52616b;
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
 .TodoSearch {
-  background: #F9FBFC;
-  border-radius: 2px;
-  border: 2px solid #202329;
-  margin: 0 24px;
-  height: 64px;
-  width: calc(100% - 62px);
-  font-size: 24px;
-  text-align: center;
-  font-family: 'Montserrat';
-  font-weight: 400;
-  color: #1E1E1F;
-  box-shadow: 0px 5px 50px rgba(32, 35, 41, 0.25);
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #d9e2ec;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+  box-sizing: border-box;
+  color: #102a43;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 500;
+  height: 58px;
+  padding: 0 18px;
+  width: 100%;
 }
 
 .TodoSearch::placeholder {
-  color: #A5A5A5;
-  font-family: 'Montserrat';
-  font-weight: 400;
+  color: #94a3b8;
 }
 
-.TodoSearch:focus {
-  outline-color: #61DAFA;
+.TodoSearch:focus,
+.TodoSearch:focus-visible {
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.16);
+  outline: none;
 }
 
 .TodoSearch:disabled {
-  background: #E0E0E0;
-  border-color: #BDBDBD;
-  color: #9E9E9E;
-  cursor: not-allowed;
-  opacity: 25%;
+  background: #e2e8f0;
+  cursor: wait;
+  opacity: 0.65;
 }
-
 

@@ -1,52 +1,53 @@
 .EmptyTodo-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    padding: 40px 20px;
-    text-align: center;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    min-height: 200px;
-    margin: 20px 0;
+  align-items: center;
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 16px;
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  margin: 0;
+  padding: 34px 24px;
+  text-align: left;
+}
+
+.EmptyTodo-completeIcon {
+  align-items: center;
+  background: #e0f2fe;
+  border-radius: 999px;
+  color: #0284c7;
+  display: flex;
+  flex: 0 0 auto;
+  font-size: 32px;
+  font-weight: 900;
+  height: 64px;
+  justify-content: center;
+  margin: 0;
+  width: 64px;
 }
 
 .EmptyTodo-completeIcon::before {
-    content: '✓';
-    font-size: 48px;
-    color: #4caf50;
-    font-weight: bold;
+  content: "+";
+}
+
+.EmptyTodo-title {
+  color: #102a43;
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0 0 6px;
 }
 
 .EmptyTodo-text {
-    font-size: 18px;
-    color: #555;
-    font-weight: 500;
-    margin: 0;
-    letter-spacing: 0.5px;
+  color: #52616b;
+  font-size: 16px;
+  line-height: 1.45;
+  margin: 0;
 }
 
-.EmptyTodo-deleteIcon::before {
-    content: '×';
-    font-size: 48px;
-    color: #ff6b6b;
-    font-weight: bold;
-}
-
-@media (max-width: 600px) {
-    .EmptyTodo-container {
-        flex-direction: column;
-        gap: 12px;
-        min-height: 150px;
-    }
-
-    .EmptyTodo-completeIcon::before,
-    .EmptyTodo-deleteIcon::before {
-        font-size: 36px;
-    }
-
-    .EmptyTodo-text {
-        font-size: 16px;
-    }
+@media (max-width: 560px) {
+  .EmptyTodo-container {
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+  }
 }

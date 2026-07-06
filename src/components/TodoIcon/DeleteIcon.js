@@ -1,11 +1,12 @@
-import React from 'react';
 import { TodoIcon } from './TodoIcon';
 
 function DeleteIcon({ onDelete }) {
     return <TodoIcon
      type="delete"
-     color="gray"
-    onClick={onDelete} />;
+     color="#94a3b8"
+     label="Eliminar tarea"
+     onClick={onDelete}
+    />;
 }
 
 export { DeleteIcon };

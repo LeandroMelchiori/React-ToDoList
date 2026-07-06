@@ -1,8 +1,8 @@
 import './App.css';
-import React from 'react';
 import { useTodos } from './useTodos';
 import { TodoCounter } from '../components/TodoHeader/TodoCounter/TodoCounter';
 import { TodoSearch } from '../components/TodoHeader/TodoSearch/TodoSearch';
+import { TodoFilters } from '../components/TodoHeader/TodoFilters/TodoFilters';
 import { TodoList } from '../components/TodoList/TodoList';
 import { TodoItem } from '../components/TodoList/TodoItem/TodoItem';
 import { CreateTodoButton } from '../components/CreateTodoButton/CreateTodoButton';
@@ -22,25 +22,28 @@ function App() {
         loading,
         error,
         searchValue,
+        filter,
         totalTodos,
         completedTodos,
-        searchTodos,
+        pendingTodos,
+        visibleTodos,
         openModal,
     } = states;
     
     const {
         setSearchValue,
+        setFilter,
         completeTodo,
         deleteTodo,
-        toogleModal,
+        toggleModal,
         addTodo,
-        sincronizeTodos
+        syncTodos
     } = stateUpdaters;
 
     return (
         <>
-            <TodoHeader
-                loading={loading}>
+            <main className="App">
+                <TodoHeader loading={loading}>
 
                 <TodoCounter
                     totalTodos={totalTodos}
@@ -49,59 +52,58 @@ function App() {
                 <TodoSearch
                     searchValue={searchValue}
                     setSearchValue={setSearchValue}
-                    sincronize={sincronizeTodos}
+                />
+                <TodoFilters
+                    filter={filter}
+                    setFilter={setFilter}
+                    totalTodos={totalTodos}
+                    completedTodos={completedTodos}
+                    pendingTodos={pendingTodos}
                 />
             </TodoHeader>
 
             <TodoList
                 error={error}
                 loading={loading}
-                searchTodos={searchTodos}
+                visibleTodos={visibleTodos}
                 totalTodos={totalTodos}
                 searchValue={searchValue}
                 onError={() => <TodosError />}
                 onLoading={() => <TodosLoading />}
                 onEmptyTodos={() => <EmptyTodos />}
-                onEmptySearchResults={() => <p>No hay resultados para "{searchValue}"</p>}
+                onEmptySearchResults={() => (
+                    <p className="TodoList-emptySearch">
+                        No hay tareas que coincidan con tu busqueda.
+                    </p>
+                )}
                 render={todo => (
                     <TodoItem
-                        key={todo.text}
+                        key={todo.id}
                         text={todo.text}
                         completed={todo.completed}
-                        onComplete={() => completeTodo(todo.text)}
-                        onDelete={() => deleteTodo(todo.text)}
+                        onComplete={() => completeTodo(todo.id)}
+                        onDelete={() => deleteTodo(todo.id)}
                     />
                 )}
-            >
-                {
-                    todo => (
-                        <TodoItem
-                            key={todo.text}
-                            text={todo.text}
-                            completed={todo.completed}
-                            onComplete={() => completeTodo(todo.text)}
-                            onDelete={() => deleteTodo(todo.text)}
-                            />
-                    )
-                }
-            </TodoList>
+            />
 
             <CreateTodoButton
-                toogleModal={toogleModal}
+                toggleModal={toggleModal}
                 loading={loading}
              />
+            </main>
 
             {openModal && (
                 <Modal>
                     <TodoForm 
                         addTodo={addTodo}
-                        toogleModal={toogleModal}
+                        toggleModal={toggleModal}
                     />
                 </Modal>
             )}
 
             <ChangeAlert
-                sincronize={sincronizeTodos} />
+                syncTodos={syncTodos} />
         </>
     );
 }

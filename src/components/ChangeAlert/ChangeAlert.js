@@ -1,20 +1,21 @@
-import React from "react";
 import './ChangeAlert.css';
 import { useStorageListener } from "./useStorageListener";
 
-function ChangeAlert({sincronize}) {
-    const { show, toggleShow } = useStorageListener(sincronize);
+function ChangeAlert({ syncTodos }) {
+    const { show, toggleShow } = useStorageListener(syncTodos);
 
     if (show) {
         return (
-            <div className="ChangeAlert">
-                <p>Hubo cambios</p>
-                <button onClick={() => toggleShow()}>Recargar</button>
+            <div className="ChangeAlert" role="alertdialog" aria-label="Cambios externos detectados">
+                <div className="ChangeAlert-card">
+                    <p>Hay cambios guardados en otra pestana.</p>
+                    <button type="button" onClick={toggleShow}>Actualizar tareas</button>
+                </div>
             </div>
         );  
-    } else {
-        return null;
     }
+
+    return null;
 }
 
 export { ChangeAlert};

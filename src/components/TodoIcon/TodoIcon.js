@@ -7,14 +7,16 @@ const iconTypes = {
     "delete": (color) => <DeleteSVG className="icon-svg" fill={color} />
 }
 
-function TodoIcon({type, color, onClick}) {
+function TodoIcon({ type, color, label, onClick }) {
     return (
-        <span
+        <button
+            type="button"
             className={`Icon-container Icon-svg Icon-container-${type}`}
+            aria-label={label}
             onClick={onClick}
         >
             {iconTypes[type](color)}
-        </span>
+        </button>
     );
 }
 

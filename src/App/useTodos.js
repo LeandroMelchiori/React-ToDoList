@@ -1,75 +1,153 @@
 import React from 'react';
 import { useLocalStorage } from './useLocalStorage';
 
+const STORAGE_KEY = 'TODOS_V1';
+const DEFAULT_TODOS = [];
+
+const TODO_FILTERS = {
+    all: 'all',
+    active: 'active',
+    completed: 'completed',
+};
+
+function createTodoId() {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return crypto.randomUUID();
+    }
+
+    return `todo-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function createLegacyTodoId(todo, index) {
+    const text = String(todo.text || 'todo')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+
+    return `legacy-${index}-${text || 'item'}`;
+}
+
+function createTodo(text) {
+    return {
+        id: createTodoId(),
+        text: text.trim(),
+        completed: false,
+        createdAt: new Date().toISOString(),
+    };
+}
+
+function normalizeTodos(todos) {
+    return todos
+        .filter(todo => typeof todo.text === 'string' && todo.text.trim())
+        .map((todo, index) => ({
+            id: todo.id || createLegacyTodoId(todo, index),
+            text: todo.text.trim(),
+            completed: Boolean(todo.completed),
+            createdAt: todo.createdAt || null,
+        }));
+}
+
+function getVisibleTodos(todos, searchValue, filter) {
+    const normalizedSearch = searchValue.trim().toLowerCase();
+
+    return todos.filter(todo => {
+        const matchesSearch = todo.text.toLowerCase().includes(normalizedSearch);
+        const matchesFilter =
+            filter === TODO_FILTERS.completed ? todo.completed :
+            filter === TODO_FILTERS.active ? !todo.completed :
+            true;
+
+        return matchesSearch && matchesFilter;
+    });
+}
+
 function useTodos() {
     const { 
         item: todos,
         saveItem: saveTodos,
-        sincronizeItem: sincronizeTodos,
+        synchronizeItem: syncTodos,
         loading,
         error
-        } = useLocalStorage('TODOS_V1',[]);
+        } = useLocalStorage(STORAGE_KEY, DEFAULT_TODOS);
   
     const [searchValue, setSearchValue] =
      React.useState('');
 
+    const [filter, setFilter] =
+     React.useState(TODO_FILTERS.all);
+
     const [openModal, setOpenModal] =
      React.useState(false);
 
+    const normalizedTodos = normalizeTodos(todos);
 
-    const completedTodos = todos.filter(todo => !!todo.completed).length;
-    const totalTodos = todos.length;
+    const completedTodos = normalizedTodos.filter(todo => todo.completed).length;
+    const totalTodos = normalizedTodos.length;
+    const pendingTodos = totalTodos - completedTodos;
 
-    const searchTodos = todos.filter(todo => {
-        const todoText = todo.text.toLowerCase();
-        const searchText = searchValue.toLowerCase();
-        return todoText.includes(searchText);
-    });
+    const visibleTodos = getVisibleTodos(normalizedTodos, searchValue, filter);
 
-    const completeTodo = (text) => {
-        const newTodos = [...todos];
-        const todoIndex = newTodos.findIndex(todo => todo.text === text);
-        newTodos[todoIndex].completed = !newTodos[todoIndex].completed;
+    const completeTodo = (id) => {
+        const newTodos = normalizedTodos.map(todo =>
+            todo.id === id ? { ...todo, completed: !todo.completed } : todo
+        );
         saveTodos(newTodos);
     }
 
-    const deleteTodo = (text) => {
-        const newTodos = [...todos];
-        const todoIndex = newTodos.findIndex(todo => todo.text === text);
-        newTodos.splice(todoIndex, 1);
+    const deleteTodo = (id) => {
+        const newTodos = normalizedTodos.filter(todo => todo.id !== id);
         saveTodos(newTodos)
     }
 
     const addTodo = (text) => {
-        const newTodos = [...todos];
-        newTodos.push({ text, completed: false });
+        const trimmedText = text.trim();
+
+        if (!trimmedText) {
+            return { ok: false, error: 'Escribe una tarea antes de agregarla.' };
+        }
+
+        const alreadyExists = normalizedTodos.some(todo =>
+            todo.text.toLowerCase() === trimmedText.toLowerCase()
+        );
+
+        if (alreadyExists) {
+            return { ok: false, error: 'Esa tarea ya existe.' };
+        }
+
+        const newTodos = [...normalizedTodos, createTodo(trimmedText)];
         saveTodos(newTodos);
+        setSearchValue('');
+        setFilter(TODO_FILTERS.all);
+        return { ok: true };
     }
 
-    const toogleModal = () => {
-        setOpenModal(!openModal);
+    const toggleModal = () => {
+        setOpenModal(previousOpenModal => !previousOpenModal);
     }
 
     const states = {
         loading,
         error,
         searchValue,
+        filter,
         totalTodos,
         completedTodos,
-        searchTodos,
+        pendingTodos,
+        visibleTodos,
         openModal,
     }
 
     const stateUpdaters = {
         setSearchValue,
+        setFilter,
         completeTodo,
         deleteTodo,
-        toogleModal,
+        toggleModal,
         addTodo,
-        sincronizeTodos
+        syncTodos
     }
 
     return { states, stateUpdaters };
 }
 
-export { useTodos }; 
+export { TODO_FILTERS, createTodo, getVisibleTodos, normalizeTodos, useTodos }; 

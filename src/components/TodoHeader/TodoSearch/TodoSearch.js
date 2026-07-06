@@ -1,17 +1,20 @@
 import './TodoSearch.css';
 
-function TodoSearch( {searchValue, setSearchValue, loading, sincronize} ) {
+function TodoSearch({ searchValue, setSearchValue, loading }) {
 
   return (
-    <input
-      placeholder="Cortar cebolla"
-      className="TodoSearch"
-      value={searchValue}
-      onChange={(event) => { 
-        setSearchValue(event.target.value);
-      }}
-      disabled={loading || sincronize}
-    />
+    <label className="TodoSearch-label">
+      <span>Buscar tareas</span>
+      <input
+        placeholder="Ej: preparar entrevista"
+        className="TodoSearch"
+        value={searchValue}
+        onChange={(event) => {
+          setSearchValue(event.target.value);
+        }}
+        disabled={loading}
+      />
+    </label>
   );
 }
 

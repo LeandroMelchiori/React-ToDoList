@@ -1,21 +1,22 @@
 import './TodoCounter.css';
 
-function TodoCounter( {totalTodos, completedTodos, loading} ) {
+function TodoCounter({ totalTodos, completedTodos, loading }) {
+  if (loading) {
+    return <h1 className="TodoCounter TodoCounter--loading">Cargando...</h1>;
+  }
+
+  if (totalTodos === 0) {
+    return <h1 className="TodoCounter">Organiza tu dia con una primera tarea</h1>;
+  }
+
+  if (completedTodos === totalTodos) {
+    return <h1 className="TodoCounter">Completaste todas tus tareas</h1>;
+  }
 
   return (
-
-    loading ?
-      <h1 className={`TodoCounter TodoCounter--loading`}>Cargando...</h1>
-      :
-      totalTodos === 0 ?
-        <h1 className="TodoCounter">¡No tienes TODOs agendados!</h1>
-        :
-        completedTodos === totalTodos ?
-          <h1 className="TodoCounter">¡Has completado todos tus TODOs!</h1>
-          :
-          <h1 className="TodoCounter">
-            Has completado <span>{completedTodos}</span> de <span>{totalTodos}</span> TODOs
-          </h1>
+    <h1 className="TodoCounter">
+      Completaste <span>{completedTodos}</span> de <span>{totalTodos}</span> tareas
+    </h1>
   );
 }
 

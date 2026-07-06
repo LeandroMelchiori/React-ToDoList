@@ -1,16 +1,18 @@
 .TodoCounter {
-  font-size: 24px;
+  color: #102a43;
+  font-size: clamp(28px, 4vw, 44px);
+  line-height: 1.15;
+  max-width: 720px;
+  margin: 0 auto;
   text-align: center;
-  margin: 0;
-  padding: 48px;
-  font-weight: normal;
+  padding: 56px 16px 24px;
+  font-weight: 800;
 }
 
 .TodoCounter span {
-  font-weight: bold;
+  color: #0ea5e9;
 }
 
 .TodoCounter--loading {
-  color: #A5A5A5;
-  opacity: 25%;
+  color: #94a3b8;
 }
