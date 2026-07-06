@@ -1,10 +1,15 @@
 # TaskFlow - React ToDo List
 
 [![CI](https://github.com/LeandroMelchiori/React-ToDoList/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/LeandroMelchiori/React-ToDoList/actions/workflows/ci-cd.yml)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=061A23)
+![Vite](https://img.shields.io/badge/Vite-build-646CFF?logo=vite&logoColor=white)
+![Vitest](https://img.shields.io/badge/Vitest-tested-6E9F18?logo=vitest&logoColor=white)
+![Playwright](https://img.shields.io/badge/Playwright-E2E-2EAD33?logo=playwright&logoColor=white)
+![Lighthouse](https://img.shields.io/badge/Lighthouse-100%2F100%2F100%2F100-0B57D0?logo=lighthouse&logoColor=white)
 
 <p align="center">
   <a href="https://taskflow.sachadev.me">
-    <img src="public/og-taskflow.png" alt="Vista previa de TaskFlow" width="100%" />
+    <img src="public/demo-taskflow.png" alt="TaskFlow con tareas, filtros y acciones principales" width="100%" />
   </a>
 </p>
 
@@ -14,6 +19,24 @@ TaskFlow es una aplicacion React para gestionar tareas con busqueda, filtros, ed
 
 - Produccion: https://taskflow.sachadev.me
 - Repositorio: https://github.com/LeandroMelchiori/React-ToDoList
+
+## Lectura rapida para recruiters
+
+| Punto | Evidencia |
+| --- | --- |
+| Producto | Flujo completo para crear, buscar, editar, completar y eliminar tareas. |
+| Frontend | React con componentes funcionales, hooks propios y estado inmutable. |
+| UX | Estados vacios, carga, error, filtros, validaciones, confirmacion de borrado y feedback visible. |
+| Calidad | Unit/integration tests con Vitest y React Testing Library, E2E con Playwright y CI en GitHub Actions. |
+| Deploy | Produccion en Vercel con dominio propio: `taskflow.sachadev.me`. |
+
+## Caso de portfolio
+
+**Problema:** una ToDo List suele ser un ejercicio comun y poco diferenciador si solo permite agregar y borrar items.
+
+**Solucion:** convertirla en una app pequena pero completa, con decisiones visibles de producto, arquitectura y calidad: validaciones, persistencia, busqueda, filtros, edicion, sincronizacion por `storage`, pruebas automatizadas y deploy real.
+
+**Resultado:** un proyecto facil de revisar para un reclutador tecnico: se puede usar en produccion, leer el README, mirar el pipeline de CI y comprobar que los flujos principales estan cubiertos por tests.
 
 ## Valor del proyecto
 
@@ -51,6 +74,16 @@ Este proyecto esta pensado como una pieza de portfolio para demostrar:
 - GitHub Actions
 - Vercel
 
+## Calidad y entrega
+
+| Senal | Estado |
+| --- | --- |
+| Auditoria de dependencias | `npm audit --audit-level=moderate` sin vulnerabilidades. |
+| Tests unitarios/integracion | `npm test` cubre hooks y flujos principales de UI. |
+| Tests E2E | `npm run test:e2e` valida el flujo completo sobre el build de produccion local. |
+| Lighthouse | `npm run audit:lighthouse` genera reporte del sitio publicado. Ultima medicion: 100/100/100/100. |
+| CI | GitHub Actions ejecuta audit, tests, Playwright y build en cada push/PR a `main`. |
+
 ## Decisiones tecnicas
 
 - Cada tarea usa un `id` unico para evitar depender del texto como key o identificador.
@@ -61,6 +94,26 @@ Este proyecto esta pensado como una pieza de portfolio para demostrar:
 - La UI usa labels, botones accesibles y estados visibles para mejorar navegacion y feedback.
 - El build usa base `/` para publicar correctamente en Vercel desde `taskflow.sachadev.me`.
 - El toolchain usa Vite para reducir dependencias vulnerables y acelerar desarrollo/build.
+
+## Arquitectura
+
+```mermaid
+flowchart TD
+  App["App.jsx"] --> Header["TodoHeader"]
+  App --> List["TodoList"]
+  App --> Modal["Modal"]
+  App --> Alert["ChangeAlert"]
+  App --> Todos["useTodos"]
+  Todos --> Storage["useLocalStorage"]
+  Storage --> Browser["localStorage TODOS_V1"]
+  Todos --> Filters["search + filter + derived counts"]
+  Todos --> Actions["create / edit / complete / delete"]
+  List --> Item["TodoItem"]
+  Modal --> Form["TodoForm"]
+  Modal --> DeleteDialog["DeleteTodoDialog"]
+```
+
+El estado de negocio vive en `useTodos`; la persistencia y sincronizacion con el navegador quedan aisladas en `useLocalStorage`. Los componentes visuales reciben datos y callbacks, lo que mantiene la UI facil de probar y cambiar.
 
 ## Estructura
 
@@ -109,6 +162,12 @@ Generar auditoria Lighthouse del sitio publicado:
 
 ```bash
 npm run audit:lighthouse
+```
+
+Regenerar la captura demo del README:
+
+```bash
+npm run capture:demo
 ```
 
 Generar build de produccion:

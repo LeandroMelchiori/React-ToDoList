@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:e2e": "node scripts/run-e2e.mjs",
     "audit:lighthouse": "node scripts/run-lighthouse.mjs",
+    "capture:demo": "node scripts/capture-demo.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "preview:e2e": "vite preview --host 127.0.0.1 --port 4173 --strictPort"
