@@ -10,6 +10,8 @@ const TODO_PRIORITIES = {
     high: 'high',
 };
 
+const TODO_BACKUP_VERSION = 1;
+
 function normalizePriority(priority) {
     return Object.values(TODO_PRIORITIES).includes(priority)
         ? priority
@@ -79,12 +81,38 @@ function getVisibleTodos(todos, searchValue, filter) {
     });
 }
 
+function createTodosBackup(todos) {
+    return {
+        version: TODO_BACKUP_VERSION,
+        exportedAt: new Date().toISOString(),
+        todos: normalizeTodos(todos),
+    };
+}
+
+function readTodosBackup(backup) {
+    const backupTodos = Array.isArray(backup) ? backup : backup?.todos;
+
+    if (!Array.isArray(backupTodos)) {
+        return {
+            ok: false,
+            error: 'El archivo no contiene una lista de tareas valida.',
+        };
+    }
+
+    return {
+        ok: true,
+        todos: normalizeTodos(backupTodos),
+    };
+}
+
 export {
     TODO_FILTERS,
     TODO_PRIORITIES,
+    createTodosBackup,
     createTodo,
     getVisibleTodos,
     normalizeDueDate,
     normalizePriority,
     normalizeTodos,
+    readTodosBackup,
 };

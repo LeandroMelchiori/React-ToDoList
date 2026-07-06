@@ -30,6 +30,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - Estados visibles para carga, error, lista vacia y busqueda sin resultados.
 - Sincronizacion cuando el almacenamiento cambia desde otra pestana.
 - Soporte PWA con shell offline para abrir la app sin conexion luego de la primera visita.
+- Exportacion e importacion de backups en JSON.
 - Pruebas automatizadas y validacion continua antes de publicar cambios.
 
 ## Funcionalidades
@@ -44,6 +45,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - Persistir datos en IndexedDB, manteniendo compatibilidad con datos antiguos en `localStorage`.
 - Normalizar tareas antiguas guardadas sin `id`.
 - Detectar cambios hechos en otra pestana y permitir sincronizar.
+- Exportar e importar tareas con un archivo JSON local.
 - Mostrar estados de carga, error, lista vacia y busqueda sin resultados.
 
 ## Stack

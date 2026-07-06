@@ -1,11 +1,13 @@
 import {
   TODO_FILTERS,
   TODO_PRIORITIES,
+  createTodosBackup,
   createTodo,
   getVisibleTodos,
   normalizeDueDate,
   normalizePriority,
   normalizeTodos,
+  readTodosBackup,
 } from './todoModel';
 
 describe('todo helpers', () => {
@@ -81,5 +83,32 @@ describe('todo helpers', () => {
     expect(getVisibleTodos(todos, 'preparar', TODO_FILTERS.completed)).toEqual([
       todos[0],
     ]);
+  });
+
+  test('creates and reads todos backup files', () => {
+    const backup = createTodosBackup([
+      { id: 'todo-1', text: 'Respaldar tareas', completed: false, priority: TODO_PRIORITIES.high },
+    ]);
+
+    expect(backup).toEqual(expect.objectContaining({
+      version: 1,
+      exportedAt: expect.any(String),
+      todos: [
+        expect.objectContaining({
+          id: 'todo-1',
+          text: 'Respaldar tareas',
+          priority: TODO_PRIORITIES.high,
+        }),
+      ],
+    }));
+
+    expect(readTodosBackup(backup)).toEqual({
+      ok: true,
+      todos: backup.todos,
+    });
+    expect(readTodosBackup({ invalid: true })).toEqual({
+      ok: false,
+      error: 'El archivo no contiene una lista de tareas valida.',
+    });
   });
 });

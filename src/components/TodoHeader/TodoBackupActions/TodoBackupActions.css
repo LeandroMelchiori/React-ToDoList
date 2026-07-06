@@ -1,0 +1,58 @@
+.TodoBackupActions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin: 16px auto 0;
+  max-width: 720px;
+}
+
+.TodoBackupActions-button {
+  align-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 16px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+}
+
+.TodoBackupActions-button:hover,
+.TodoBackupActions-button:focus-visible,
+.TodoBackupActions-button:focus-within {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-focus);
+  color: var(--color-text);
+  outline: none;
+}
+
+.TodoBackupActions-button:has(input:disabled),
+.TodoBackupActions-button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.TodoBackupActions-button input {
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  width: 1px;
+}
+
+.TodoBackupActions-status {
+  color: var(--color-text-muted);
+  flex-basis: 100%;
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0;
+  text-align: center;
+}

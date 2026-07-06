@@ -17,6 +17,10 @@ describe('App', () => {
     delete document.documentElement.dataset.theme;
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   test('manages the main todo flow from the UI', async () => {
     const user = userEvent.setup();
     renderApp();
@@ -115,6 +119,79 @@ describe('App', () => {
     });
 
     expect(screen.getByRole('button', { name: 'Activar modo claro' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('exports todos to a JSON backup', async () => {
+    const user = userEvent.setup();
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    const revokeObjectURL = vi.fn();
+    const createObjectURL = vi.fn(() => 'blob:taskflow-backup');
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      value: createObjectURL,
+    });
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      value: revokeObjectURL,
+    });
+
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      { id: 'todo-1', text: 'Exportar tareas', completed: false, priority: 'high', dueDate: '2026-07-20' },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Exportar tareas')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Exportar tareas' }));
+
+    const [backupBlob] = createObjectURL.mock.calls[0];
+    const backup = JSON.parse(await backupBlob.text());
+
+    expect(backup).toEqual(expect.objectContaining({
+      version: 1,
+      exportedAt: expect.any(String),
+      todos: [
+        expect.objectContaining({
+          id: 'todo-1',
+          text: 'Exportar tareas',
+          priority: 'high',
+          dueDate: '2026-07-20',
+        }),
+      ],
+    }));
+    expect(clickSpy).toHaveBeenCalled();
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:taskflow-backup');
+    expect(screen.getByRole('status')).toHaveTextContent('Backup exportado.');
+  });
+
+  test('imports todos from a JSON backup', async () => {
+    const user = userEvent.setup();
+    const backupFile = new File([
+      JSON.stringify({
+        version: 1,
+        todos: [
+          { id: 'todo-imported', text: 'Importar tareas', completed: false, priority: 'low', dueDate: '2026-08-01' },
+        ],
+      }),
+    ], 'taskflow-backup.json', { type: 'application/json' });
+    renderApp();
+
+    expect(await screen.findByText('Organiza tu dia con una primera tarea')).toBeInTheDocument();
+
+    await user.upload(screen.getByLabelText('Importar tareas desde JSON'), backupFile);
+
+    expect(await screen.findByText('Importar tareas')).toBeInTheDocument();
+    expect(screen.getByText('Baja')).toBeInTheDocument();
+    expect(screen.getByText('01/08/2026')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('1 tarea importada.');
+    expect(JSON.parse(localStorage.getItem('TODOS_V1'))).toEqual([
+      expect.objectContaining({
+        id: 'todo-imported',
+        text: 'Importar tareas',
+        priority: 'low',
+        dueDate: '2026-08-01',
+      }),
+    ]);
   });
 
   test('recovers from invalid stored todos', async () => {

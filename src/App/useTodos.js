@@ -2,11 +2,13 @@ import React from 'react';
 import { useLocalStorage } from './useLocalStorage';
 import {
     TODO_FILTERS,
+    createTodosBackup,
     createTodo,
     getVisibleTodos,
     normalizeDueDate,
     normalizePriority,
     normalizeTodos,
+    readTodosBackup,
 } from './todoModel';
 
 const STORAGE_KEY = 'TODOS_V1';
@@ -152,6 +154,25 @@ function useTodos() {
         setDeletingTodoId(null);
     }
 
+    const exportTodos = () => createTodosBackup(normalizedTodos);
+
+    const importTodos = (backup) => {
+        const result = readTodosBackup(backup);
+
+        if (!result.ok) {
+            return result;
+        }
+
+        saveTodos(result.todos);
+        setSearchValue('');
+        setFilter(TODO_FILTERS.all);
+
+        return {
+            ok: true,
+            count: result.todos.length,
+        };
+    }
+
     const states = {
         loading,
         error,
@@ -178,6 +199,8 @@ function useTodos() {
         closeModal,
         addTodo,
         updateTodo,
+        exportTodos,
+        importTodos,
         syncTodos
     }
 

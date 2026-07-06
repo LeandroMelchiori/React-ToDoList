@@ -3,6 +3,7 @@ import { useTodos } from './useTodos';
 import { TodoCounter } from '../components/TodoHeader/TodoCounter/TodoCounter';
 import { TodoSearch } from '../components/TodoHeader/TodoSearch/TodoSearch';
 import { TodoFilters } from '../components/TodoHeader/TodoFilters/TodoFilters';
+import { TodoBackupActions } from '../components/TodoHeader/TodoBackupActions/TodoBackupActions';
 import { TodoList } from '../components/TodoList/TodoList';
 import { TodoItem } from '../components/TodoList/TodoItem/TodoItem';
 import { CreateTodoButton } from '../components/CreateTodoButton/CreateTodoButton';
@@ -47,6 +48,8 @@ function App() {
         closeModal,
         addTodo,
         updateTodo,
+        exportTodos,
+        importTodos,
         syncTodos
     } = stateUpdaters;
 
@@ -77,6 +80,10 @@ function App() {
                     totalTodos={totalTodos}
                     completedTodos={completedTodos}
                     pendingTodos={pendingTodos}
+                />
+                <TodoBackupActions
+                    onExportTodos={exportTodos}
+                    onImportTodos={importTodos}
                 />
             </TodoHeader>
 
