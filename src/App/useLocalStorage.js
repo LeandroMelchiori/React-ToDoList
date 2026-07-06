@@ -1,4 +1,5 @@
 import React from 'react';
+import { getStoredItem, setStoredItem } from './todoStorage';
 
 function parseStoredItem(storedItem, initialValue, isValidItem) {
   if (!storedItem) {
@@ -48,23 +49,37 @@ function useLocalStorage(itemName, initialValue, isValidItem = () => true) {
   });
 
   React.useEffect(() => {
-    try {
-      const storedItem = localStorage.getItem(itemName);
-      const { item, shouldRepair } = parseStoredItem(storedItem, initialValue, isValidItem);
+    let isMounted = true;
 
-      if (shouldRepair) {
-        localStorage.setItem(itemName, JSON.stringify(initialValue));
+    async function loadItem() {
+      try {
+        const storedItem = await getStoredItem(itemName);
+        const { item, shouldRepair } = parseStoredItem(storedItem, initialValue, isValidItem);
+
+        if (shouldRepair) {
+          await setStoredItem(itemName, JSON.stringify(initialValue));
+        }
+
+        if (isMounted) {
+          onSuccess(item);
+        }
+      } catch (error) {
+        if (isMounted) {
+          onError(error);
+        }
       }
-
-      onSuccess(item);
-    } catch (error) {
-      onError(error);
     }
+
+    loadItem();
+
+    return () => {
+      isMounted = false;
+    };
   }, [synchronizedItem, itemName, initialValue, isValidItem]);
 
   const saveItem = (newItem) => {
     try {
-      localStorage.setItem(itemName, JSON.stringify(newItem));
+      setStoredItem(itemName, JSON.stringify(newItem)).catch(onError);
       onSave(newItem);
     } catch (error) {onError(error);}
   }

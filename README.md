@@ -25,7 +25,7 @@ TaskFlow es una aplicacion React para gestionar tareas con busqueda, filtros, ed
 La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de producto sin salir de una arquitectura liviana:
 
 - Gestion completa de tareas: crear, editar, completar, buscar, filtrar y eliminar.
-- Persistencia local con normalizacion de datos guardados previamente.
+- Persistencia local en IndexedDB con migracion desde `localStorage`.
 - Validaciones para evitar entradas vacias y duplicadas.
 - Estados visibles para carga, error, lista vacia y busqueda sin resultados.
 - Sincronizacion cuando el almacenamiento cambia desde otra pestana.
@@ -41,7 +41,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - Eliminar tareas con confirmacion previa.
 - Buscar tareas por texto.
 - Filtrar por todas, pendientes o completadas.
-- Persistir datos en `localStorage`.
+- Persistir datos en IndexedDB, manteniendo compatibilidad con datos antiguos en `localStorage`.
 - Normalizar tareas antiguas guardadas sin `id`.
 - Detectar cambios hechos en otra pestana y permitir sincronizar.
 - Mostrar estados de carga, error, lista vacia y busqueda sin resultados.
