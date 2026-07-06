@@ -13,41 +13,23 @@
   </a>
 </p>
 
-TaskFlow es una aplicacion React para gestionar tareas con busqueda, filtros, edicion, validaciones y persistencia local. El objetivo del proyecto es mostrar como una ToDo List clasica puede evolucionar hacia una experiencia de portfolio mas cuidada: UI clara, estado bien separado, pruebas automatizadas, CI y deploy en produccion.
+TaskFlow es una aplicacion React para gestionar tareas con busqueda, filtros, edicion, validaciones y persistencia local. El proyecto mantiene una base simple, probada y desplegable, con foco en separar estado, UI y persistencia sin agregar complejidad innecesaria.
 
 ## Demo
 
 - Produccion: https://taskflow.sachadev.me
 - Repositorio: https://github.com/LeandroMelchiori/React-ToDoList
 
-## Lectura rapida para recruiters
+## Objetivo y alcance
 
-| Punto | Evidencia |
-| --- | --- |
-| Producto | Flujo completo para crear, buscar, editar, completar y eliminar tareas. |
-| Frontend | React con componentes funcionales, hooks propios y estado inmutable. |
-| UX | Estados vacios, carga, error, filtros, validaciones, confirmacion de borrado y feedback visible. |
-| Calidad | Unit/integration tests con Vitest y React Testing Library, E2E con Playwright y CI en GitHub Actions. |
-| Deploy | Produccion en Vercel con dominio propio: `taskflow.sachadev.me`. |
+La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de producto sin salir de una arquitectura liviana:
 
-## Caso de portfolio
-
-**Problema:** una ToDo List suele ser un ejercicio comun y poco diferenciador si solo permite agregar y borrar items.
-
-**Solucion:** convertirla en una app pequena pero completa, con decisiones visibles de producto, arquitectura y calidad: validaciones, persistencia, busqueda, filtros, edicion, sincronizacion por `storage`, pruebas automatizadas y deploy real.
-
-**Resultado:** un proyecto facil de revisar para un reclutador tecnico: se puede usar en produccion, leer el README, mirar el pipeline de CI y comprobar que los flujos principales estan cubiertos por tests.
-
-## Valor del proyecto
-
-Este proyecto esta pensado como una pieza de portfolio para demostrar:
-
-- Criterio de producto al convertir un ejercicio comun en una app usable.
-- Buenas practicas de React con componentes funcionales, hooks y estado inmutable.
-- Cuidado de UI/UX en estados vacios, carga, error, filtros, busqueda y modal.
-- Validaciones de entrada para evitar tareas vacias o duplicadas.
-- Cobertura de tests sobre helpers y flujos principales de usuario.
-- Pipeline de calidad con audit, tests y build automatico.
+- Gestion completa de tareas: crear, editar, completar, buscar, filtrar y eliminar.
+- Persistencia local con normalizacion de datos guardados previamente.
+- Validaciones para evitar entradas vacias y duplicadas.
+- Estados visibles para carga, error, lista vacia y busqueda sin resultados.
+- Sincronizacion cuando el almacenamiento cambia desde otra pestana.
+- Pruebas automatizadas y validacion continua antes de publicar cambios.
 
 ## Funcionalidades
 
