@@ -1,4 +1,4 @@
-import { TODO_FILTERS } from '../../../App/useTodos';
+import { TODO_FILTERS } from '../../../App/todoModel';
 import './TodoFilters.css';
 
 const filterOptions = [

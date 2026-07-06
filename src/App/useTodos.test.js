@@ -6,7 +6,7 @@ import {
   normalizeDueDate,
   normalizePriority,
   normalizeTodos,
-} from './useTodos';
+} from './todoModel';
 
 describe('todo helpers', () => {
   test('normalizes legacy todos with stable ids and clean text', () => {
