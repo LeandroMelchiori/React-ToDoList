@@ -79,7 +79,11 @@ function useTodos() {
     const [openModal, setOpenModal] =
      React.useState(false);
 
+    const [editingTodoId, setEditingTodoId] =
+     React.useState(null);
+
     const normalizedTodos = normalizeTodos(todos);
+    const editingTodo = normalizedTodos.find(todo => todo.id === editingTodoId) || null;
 
     const completedTodos = normalizedTodos.filter(todo => todo.completed).length;
     const totalTodos = normalizedTodos.length;
@@ -121,8 +125,50 @@ function useTodos() {
         return { ok: true };
     }
 
-    const toggleModal = () => {
-        setOpenModal(previousOpenModal => !previousOpenModal);
+    const updateTodo = (id, text) => {
+        const trimmedText = text.trim();
+
+        if (!trimmedText) {
+            return { ok: false, error: 'Escribe una tarea antes de guardar los cambios.' };
+        }
+
+        const todoExists = normalizedTodos.some(todo => todo.id === id);
+
+        if (!todoExists) {
+            return { ok: false, error: 'No encontramos esa tarea.' };
+        }
+
+        const alreadyExists = normalizedTodos.some(todo =>
+            todo.id !== id && todo.text.toLowerCase() === trimmedText.toLowerCase()
+        );
+
+        if (alreadyExists) {
+            return { ok: false, error: 'Ya existe otra tarea con ese texto.' };
+        }
+
+        const newTodos = normalizedTodos.map(todo =>
+            todo.id === id ? { ...todo, text: trimmedText } : todo
+        );
+        saveTodos(newTodos);
+        setSearchValue('');
+        setFilter(TODO_FILTERS.all);
+        setEditingTodoId(null);
+        return { ok: true };
+    }
+
+    const openCreateModal = () => {
+        setEditingTodoId(null);
+        setOpenModal(true);
+    }
+
+    const startEditingTodo = (id) => {
+        setEditingTodoId(id);
+        setOpenModal(true);
+    }
+
+    const closeModal = () => {
+        setOpenModal(false);
+        setEditingTodoId(null);
     }
 
     const states = {
@@ -135,6 +181,7 @@ function useTodos() {
         pendingTodos,
         visibleTodos,
         openModal,
+        editingTodo,
     }
 
     const stateUpdaters = {
@@ -142,8 +189,11 @@ function useTodos() {
         setFilter,
         completeTodo,
         deleteTodo,
-        toggleModal,
+        openCreateModal,
+        startEditingTodo,
+        closeModal,
         addTodo,
+        updateTodo,
         syncTodos
     }
 

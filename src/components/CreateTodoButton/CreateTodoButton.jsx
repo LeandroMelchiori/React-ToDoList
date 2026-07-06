@@ -1,13 +1,13 @@
 import './CreateTodoButton.css';
 
-function CreateTodoButton({ toggleModal, loading }) {
+function CreateTodoButton({ onCreateTodo, loading }) {
   return (
     <button
       type="button"
       className="CreateTodoButton"
       aria-label="Crear nueva tarea"
       disabled={loading}
-      onClick={toggleModal}
+      onClick={onCreateTodo}
     >
       +
     </button>

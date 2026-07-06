@@ -28,6 +28,7 @@ function App() {
         pendingTodos,
         visibleTodos,
         openModal,
+        editingTodo,
     } = states;
     
     const {
@@ -35,10 +36,15 @@ function App() {
         setFilter,
         completeTodo,
         deleteTodo,
-        toggleModal,
+        openCreateModal,
+        startEditingTodo,
+        closeModal,
         addTodo,
+        updateTodo,
         syncTodos
     } = stateUpdaters;
+
+    const formMode = editingTodo ? 'edit' : 'create';
 
     return (
         <>
@@ -82,22 +88,29 @@ function App() {
                         text={todo.text}
                         completed={todo.completed}
                         onComplete={() => completeTodo(todo.id)}
+                        onEdit={() => startEditingTodo(todo.id)}
                         onDelete={() => deleteTodo(todo.id)}
                     />
                 )}
             />
 
             <CreateTodoButton
-                toggleModal={toggleModal}
+                onCreateTodo={openCreateModal}
                 loading={loading}
              />
             </main>
 
             {openModal && (
-                <Modal>
+                <Modal label={editingTodo ? 'Editar tarea' : 'Crear tarea'}>
                     <TodoForm 
-                        addTodo={addTodo}
-                        toggleModal={toggleModal}
+                        initialValue={editingTodo?.text || ''}
+                        label={editingTodo ? 'Editar tarea' : 'Nueva tarea'}
+                        mode={formMode}
+                        onCancel={closeModal}
+                        onSubmitTodo={(text) => (
+                            editingTodo ? updateTodo(editingTodo.id, text) : addTodo(text)
+                        )}
+                        submitLabel={editingTodo ? 'Guardar' : 'Agregar'}
                     />
                 </Modal>
             )}

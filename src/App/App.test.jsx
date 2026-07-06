@@ -75,4 +75,42 @@ describe('App', () => {
     expect(screen.getByText('Esa tarea ya existe.')).toBeInTheDocument();
     expect(within(screen.getByRole('dialog')).getByLabelText('Nueva tarea')).toHaveValue('actualizar portfolio');
   });
+
+  test('edits a todo from the modal and validates duplicate text', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      { id: 'todo-1', text: 'Actualizar portfolio', completed: false },
+      { id: 'todo-2', text: 'Preparar entrevista', completed: false },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Actualizar portfolio')).toBeInTheDocument();
+
+    await user.click(screen.getAllByRole('button', { name: 'Editar tarea' })[0]);
+
+    const dialog = screen.getByRole('dialog', { name: 'Editar tarea' });
+    const textarea = within(dialog).getByLabelText('Editar tarea');
+    expect(textarea).toHaveValue('Actualizar portfolio');
+
+    await user.clear(textarea);
+    await user.type(textarea, 'preparar entrevista');
+    await user.click(within(dialog).getByRole('button', { name: 'Guardar' }));
+
+    expect(screen.getByText('Ya existe otra tarea con ese texto.')).toBeInTheDocument();
+
+    await user.clear(textarea);
+    await user.type(textarea, 'Actualizar README del portfolio');
+    await user.click(within(dialog).getByRole('button', { name: 'Guardar' }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByText('Actualizar README del portfolio')).toBeInTheDocument();
+    expect(screen.queryByText('Actualizar portfolio')).not.toBeInTheDocument();
+
+    const storedTodos = JSON.parse(localStorage.getItem('TODOS_V1'));
+    expect(storedTodos[0]).toEqual(expect.objectContaining({
+      id: 'todo-1',
+      text: 'Actualizar README del portfolio',
+      completed: false,
+    }));
+  });
 });

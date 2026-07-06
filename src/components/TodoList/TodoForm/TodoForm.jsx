@@ -2,9 +2,17 @@ import React from 'react';
 import './TodoForm.css';
 
 
-function TodoForm({ addTodo, toggleModal }) {
-    const [newTodoValue, setNewTodoValue] = React.useState('');
+function TodoForm({
+    initialValue = '',
+    label = 'Nueva tarea',
+    mode = 'create',
+    onCancel,
+    onSubmitTodo,
+    submitLabel = 'Agregar',
+}) {
+    const [newTodoValue, setNewTodoValue] = React.useState(initialValue);
     const [formError, setFormError] = React.useState('');
+    const inputId = mode === 'edit' ? 'editTodo' : 'newTodo';
 
     const onChange = (event) => {
         setNewTodoValue(event.target.value);
@@ -13,21 +21,21 @@ function TodoForm({ addTodo, toggleModal }) {
 
     const onSubmit = (event) => {
         event.preventDefault();
-        const result = addTodo(newTodoValue);
+        const result = onSubmitTodo(newTodoValue);
 
         if (!result.ok) {
             setFormError(result.error);
             return;
         }
 
-        toggleModal();
+        onCancel();
     }
 
     return (
         <form className="TodoForm" onSubmit={onSubmit}>
-            <label htmlFor="newTodo">Nueva tarea</label>
+            <label htmlFor={inputId}>{label}</label>
             <textarea
-                id="newTodo"
+                id={inputId}
                 placeholder="Ej: repasar preguntas tecnicas"
                 value={newTodoValue}
                 onChange={onChange}
@@ -43,7 +51,7 @@ function TodoForm({ addTodo, toggleModal }) {
                 <button
                     type="button"
                     className="TodoForm-button TodoForm-button-cancel"
-                    onClick={toggleModal}
+                    onClick={onCancel}
                 >
                     Cancelar
                 </button>
@@ -52,7 +60,7 @@ function TodoForm({ addTodo, toggleModal }) {
                     type="submit"
                     className="TodoForm-button TodoForm-button-add"
                 >
-                    Agregar
+                    {submitLabel}
                 </button>
             </div>
         </form>
