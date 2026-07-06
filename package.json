@@ -11,6 +11,7 @@
     "dev": "vite",
     "test": "vitest run",
     "build": "vite build",
+    "build:github-pages": "vite build --base=/React-ToDoList/",
     "preview": "vite preview"
   },
   "browserslist": {
