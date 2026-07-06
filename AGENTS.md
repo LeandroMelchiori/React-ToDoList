@@ -17,7 +17,7 @@ Este repositorio es una aplicacion React de lista de tareas creada con Vite.
 - Configuracion de Vite/Vitest: `vite.config.mjs`.
 - Build: `npm run build`.
 - Desarrollo local: `npm start`.
-- Deploy: `npm run deploy`, via `gh-pages`.
+- Deploy: GitHub Actions publica `dist` en GitHub Pages al pushear a `main`.
 
 Los tests corren con `npm test`, usando Vitest, jsdom y React Testing Library.
 

@@ -1,5 +1,7 @@
 # TaskFlow - React ToDo List
 
+[![CI/CD](https://github.com/LeandroMelchiori/React-ToDoList/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/LeandroMelchiori/React-ToDoList/actions/workflows/ci-cd.yml)
+
 Aplicacion de gestion de tareas construida con React. El proyecto parte de una ToDo List clasica y la lleva a una version mas presentable para portfolio: modelo de datos con ids, validaciones, filtros, busqueda, persistencia local, UI responsive y pruebas automatizadas.
 
 ## Demo
@@ -26,6 +28,7 @@ Aplicacion de gestion de tareas construida con React. El proyecto parte de una T
 - React Testing Library
 - Vitest
 - Jest DOM
+- GitHub Actions
 - GitHub Pages
 
 ## Decisiones tecnicas
@@ -81,11 +84,18 @@ Generar build de produccion:
 npm run build
 ```
 
-Publicar en GitHub Pages:
+Previsualizar el build:
 
 ```bash
-npm run deploy
+npm run preview
 ```
+
+## CI/CD
+
+El proyecto usa GitHub Actions para validar cada cambio y desplegar automaticamente desde `main`.
+
+- En cada pull request a `main`: instala dependencias con `npm ci`, ejecuta `npm audit --audit-level=moderate`, corre tests y genera build.
+- En cada push a `main`: repite la validacion y publica `dist` en GitHub Pages.
 
 ## Tests
 
@@ -105,7 +115,6 @@ La suite actual cubre:
 - Modo oscuro.
 - Drag and drop para reordenar tareas.
 - Migracion a TypeScript.
-- CI con GitHub Actions para correr tests y build en cada pull request.
 - Backend con autenticacion y base de datos relacional para soportar multiusuario y sincronizacion real entre dispositivos.
 
 ## Autor
