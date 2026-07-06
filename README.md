@@ -99,6 +99,18 @@ Ejecutar tests:
 npm test
 ```
 
+Ejecutar E2E sobre el build de produccion:
+
+```bash
+npm run test:e2e
+```
+
+Generar auditoria Lighthouse del sitio publicado:
+
+```bash
+npm run audit:lighthouse
+```
+
 Generar build de produccion:
 
 ```bash
@@ -116,7 +128,7 @@ npm run preview
 El proyecto usa GitHub Actions para validar cada cambio. Vercel toma los cambios de `main` y publica automaticamente la version principal.
 
 - En cada pull request a `main`: instala dependencias con `npm ci`, ejecuta `npm audit --audit-level=moderate`, corre tests y genera build.
-- En cada push a `main`: repite la validacion.
+- En cada push a `main`: repite la validacion, incluyendo el flujo E2E con Playwright.
 - Vercel publica la app en `taskflow.sachadev.me`.
 
 ## Tests
@@ -130,6 +142,7 @@ La suite actual cubre:
 - Validacion de tareas duplicadas desde el formulario de creacion.
 - Edicion de tareas desde modal y validacion de duplicados en edicion.
 - Cancelacion segura antes de eliminar una tarea.
+- Flujo E2E de produccion con Playwright: crear, buscar, editar, completar, cancelar borrado y eliminar.
 
 ## Mejoras futuras
 

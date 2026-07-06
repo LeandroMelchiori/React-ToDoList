@@ -10,8 +10,11 @@
     "start": "vite",
     "dev": "vite",
     "test": "vitest run",
+    "test:e2e": "node scripts/run-e2e.mjs",
+    "audit:lighthouse": "node scripts/run-lighthouse.mjs",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "preview:e2e": "vite preview --host 127.0.0.1 --port 4173 --strictPort"
   },
   "browserslist": {
     "production": [
@@ -27,12 +30,14 @@
   },
   "homepage": "https://taskflow.sachadev.me/",
   "devDependencies": {
-    "@vitejs/plugin-react": "^6.0.3",
+    "@playwright/test": "^1.61.1",
     "@testing-library/dom": "^9.3.4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^14.3.1",
     "@testing-library/user-event": "^14.5.2",
+    "@vitejs/plugin-react": "^6.0.3",
     "jsdom": "^29.1.1",
+    "lighthouse": "^12.6.1",
     "vite": "^8.1.3",
     "vitest": "^4.1.9"
   }
