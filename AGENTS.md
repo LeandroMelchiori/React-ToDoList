@@ -6,19 +6,20 @@ Actua siempre como un programador experto, con criterio senior, buen manejo de U
 
 ## Contexto del proyecto
 
-Este repositorio es una aplicacion React de lista de tareas creada con Create React App.
+Este repositorio es una aplicacion React de lista de tareas creada con Vite.
 
-- Entrada principal: `src/index.js`.
-- Componente raiz: `src/App/App.js`.
+- Entrada principal: `src/index.jsx`.
+- Componente raiz: `src/App/App.jsx`.
 - Estado de todos: `src/App/useTodos.js`.
 - Persistencia: `src/App/useLocalStorage.js`, usando `localStorage` con la clave `TODOS_V1`.
 - Componentes UI: `src/components/`, organizados por dominio visual.
 - Estilos: archivos `.css` junto a cada componente.
+- Configuracion de Vite/Vitest: `vite.config.mjs`.
 - Build: `npm run build`.
 - Desarrollo local: `npm start`.
 - Deploy: `npm run deploy`, via `gh-pages`.
 
-No hay script de tests declarado actualmente en `package.json`; cuando agregues pruebas, incorpora tambien los scripts y dependencias necesarias de forma explicita y justificada.
+Los tests corren con `npm test`, usando Vitest, jsdom y React Testing Library.
 
 ## Forma de trabajar
 

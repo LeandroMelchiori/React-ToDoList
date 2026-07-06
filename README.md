@@ -20,10 +20,11 @@ Aplicacion de gestion de tareas construida con React. El proyecto parte de una T
 ## Stack
 
 - React 18
-- Create React App
+- Vite
 - React Icons
 - CSS modular por componente
 - React Testing Library
+- Vitest
 - Jest DOM
 - GitHub Pages
 
@@ -35,13 +36,14 @@ Aplicacion de gestion de tareas construida con React. El proyecto parte de una T
 - La logica principal vive en hooks (`useTodos`, `useLocalStorage`) para separar estado y presentacion.
 - La UI usa labels, botones accesibles y estados visibles para mejorar navegacion y feedback.
 - La suite de tests valida helpers puros y flujos visibles desde la UI.
+- El toolchain usa Vite para reducir dependencias vulnerables y acelerar desarrollo/build.
 
 ## Estructura
 
 ```txt
 src/
   App/
-    App.js
+    App.jsx
     useTodos.js
     useLocalStorage.js
   components/
@@ -103,7 +105,6 @@ La suite actual cubre:
 - Modo oscuro.
 - Drag and drop para reordenar tareas.
 - Migracion a TypeScript.
-- Migracion de Create React App a Vite.
 - CI con GitHub Actions para correr tests y build en cada pull request.
 - Backend con autenticacion y base de datos relacional para soportar multiusuario y sincronizacion real entre dispositivos.
 
