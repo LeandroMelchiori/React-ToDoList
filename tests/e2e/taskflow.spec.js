@@ -6,6 +6,12 @@ test('manages a todo through the production flow', async ({ page }) => {
   await expect(page.getByText('Organiza tu dia con una primera tarea')).toBeVisible();
 
   await page.getByRole('button', { name: 'Crear nueva tarea' }).click();
+  const initialCreateDialog = page.getByRole('dialog', { name: 'Crear tarea' });
+  await expect(initialCreateDialog.getByRole('textbox', { name: 'Nueva tarea' })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(initialCreateDialog).not.toBeVisible();
+
+  await page.getByRole('button', { name: 'Crear nueva tarea' }).click();
   await page.getByRole('button', { name: 'Agregar' }).click();
   await expect(page.getByText('Escribe una tarea antes de agregarla.')).toBeVisible();
 

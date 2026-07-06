@@ -12,3 +12,14 @@
   padding: 24px;
   z-index: 10;
 }
+
+.ModalContent {
+  display: flex;
+  justify-content: center;
+  outline: none;
+  width: min(100%, 468px);
+}
+
+.ModalContent > * {
+  width: 100%;
+}

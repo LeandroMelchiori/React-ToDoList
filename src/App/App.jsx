@@ -105,7 +105,7 @@ function App() {
             </main>
 
             {openModal && (
-                <Modal label={modalLabel}>
+                <Modal label={modalLabel} onClose={closeModal}>
                     {deletingTodo ? (
                         <DeleteTodoDialog
                             todoText={deletingTodo.text}

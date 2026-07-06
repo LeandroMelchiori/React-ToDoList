@@ -140,4 +140,51 @@ describe('App', () => {
       expect.objectContaining({ id: 'todo-1', text: 'Publicar demo' }),
     ]);
   });
+
+  test('keeps focus inside the modal and closes it with Escape', async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    expect(await screen.findByText('Organiza tu dia con una primera tarea')).toBeInTheDocument();
+
+    const createButton = screen.getByRole('button', { name: 'Crear nueva tarea' });
+    await user.click(createButton);
+
+    const dialog = screen.getByRole('dialog', { name: 'Crear tarea' });
+    const textarea = within(dialog).getByLabelText('Nueva tarea');
+    const cancelButton = within(dialog).getByRole('button', { name: 'Cancelar' });
+    const submitButton = within(dialog).getByRole('button', { name: 'Agregar' });
+
+    expect(textarea).toHaveFocus();
+
+    await user.tab();
+    expect(cancelButton).toHaveFocus();
+
+    await user.tab();
+    expect(submitButton).toHaveFocus();
+
+    await user.tab();
+    expect(textarea).toHaveFocus();
+
+    await user.keyboard('{Escape}');
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(createButton).toHaveFocus();
+  });
+
+  test('closes the modal when the backdrop is clicked', async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    expect(await screen.findByText('Organiza tu dia con una primera tarea')).toBeInTheDocument();
+
+    const createButton = screen.getByRole('button', { name: 'Crear nueva tarea' });
+    await user.click(createButton);
+
+    const dialog = screen.getByRole('dialog', { name: 'Crear tarea' });
+    await user.click(dialog.parentElement);
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(createButton).toHaveFocus();
+  });
 });
