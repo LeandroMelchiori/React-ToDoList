@@ -9,17 +9,24 @@ Actua siempre como un programador experto, con criterio senior, buen manejo de U
 Este repositorio es una aplicacion React de lista de tareas creada con Vite.
 
 - Entrada principal: `src/index.jsx`.
+- Registro PWA: `src/serviceWorkerRegistration.js`.
 - Componente raiz: `src/App/App.jsx`.
 - Estado de todos: `src/App/useTodos.js`.
-- Persistencia: `src/App/useLocalStorage.js`, usando `localStorage` con la clave `TODOS_V1`.
+- Modelo puro de tareas: `src/App/todoModel.js`.
+- Persistencia: `src/App/useLocalStorage.js` + `src/App/todoStorage.js`.
+- Base local principal: IndexedDB (`taskflow-db`), con migracion/espejo desde `localStorage`.
+- Claves locales: tareas `TODOS_V1`, tema `THEME_V1`.
+- Tema visual: `src/App/useTheme.js`, con modo claro/oscuro persistido.
 - Componentes UI: `src/components/`, organizados por dominio visual.
 - Estilos: archivos `.css` junto a cada componente.
+- PWA/offline shell: `public/sw.js` y `public/manifest.json`.
 - Configuracion de Vite/Vitest: `vite.config.mjs`.
 - Build: `npm run build`.
 - Desarrollo local: `npm start`.
-- Deploy: GitHub Actions publica `dist` en GitHub Pages al pushear a `main`.
+- Deploy: Vercel publica automaticamente desde `main` en `https://taskflow.sachadev.me`.
+- CI: GitHub Actions ejecuta audit, tests, E2E con Playwright y build en push/PR a `main`.
 
-Los tests corren con `npm test`, usando Vitest, jsdom y React Testing Library.
+Los tests unitarios e integracion corren con `npm test`, usando Vitest, jsdom y React Testing Library. Los tests E2E corren con `npm run test:e2e`, usando Playwright sobre el build de produccion local. Lighthouse se ejecuta con `npm run audit:lighthouse`.
 
 ## Forma de trabajar
 
@@ -27,8 +34,19 @@ Los tests corren con `npm test`, usando Vitest, jsdom y React Testing Library.
 - Evita refactors amplios si no son necesarios para la tarea.
 - Mantente dentro de la arquitectura actual salvo que exista una razon tecnica clara para cambiarla.
 - Lee los componentes y hooks afectados antes de editar.
-- Protege el comportamiento existente, especialmente carga, error, busqueda, creacion, completado, borrado, modal y sincronizacion por `storage`.
+- Protege el comportamiento existente, especialmente carga, error, busqueda, filtros, creacion, edicion, completado, borrado, modal, tema, export/import, PWA y sincronizacion por `storage`.
+- Cuando el usuario pida varias mejoras, separalas en commits y pushes atomicos si asi lo solicita. No mezcles features, refactors y fixes en el mismo commit.
 - No elimines cambios ajenos ni archivos generados sin confirmarlo.
+
+## Datos, offline y backups
+
+- Trata la app como local-first: debe seguir funcionando sin backend.
+- IndexedDB es la persistencia principal para tareas; `localStorage` se mantiene como compatibilidad/migracion y para eventos `storage`.
+- Toda tarea debe normalizarse con los helpers de `todoModel.js` antes de persistirse o importarse.
+- Conserva compatibilidad con tareas antiguas sin `id`, `priority` o `dueDate`.
+- Export/import usa JSON versionado; valida y normaliza cualquier archivo importado antes de guardarlo.
+- No rompas el service worker ni el manifest al cambiar rutas, assets o comportamiento de build.
+- Evita introducir dependencias de backend, autenticacion o servicios externos salvo pedido explicito.
 
 ## UI/UX
 
@@ -36,12 +54,15 @@ Los tests corren con `npm test`, usando Vitest, jsdom y React Testing Library.
 - Cuida estados vacios, carga, error, foco, teclado y contraste.
 - Evita textos largos en controles; usa labels claros y mensajes breves.
 - En formularios, valida entradas de usuario y evita crear tareas vacias o duplicadas si el flujo lo requiere.
+- En modales, conserva foco inicial, cierre con `Escape`, ciclo de tabulacion y restauracion de foco.
 - Manten el layout estable en desktop y mobile; no introduzcas solapamientos ni saltos visuales innecesarios.
+- Revisa contraste tanto en modo claro como oscuro.
 
 ## Buenas practicas de React
 
 - Prefiere componentes funcionales y hooks.
 - Manten la logica de estado en hooks cuando sea compartida o compleja.
+- Manten helpers puros de tareas en `src/App/todoModel.js`; no vuelvas a mezclar modelo puro dentro de `useTodos.js`.
 - Evita mutar objetos de estado directamente; crea nuevas referencias antes de guardar.
 - Usa nombres consistentes y corrige typos solo cuando el cambio sea seguro o este dentro del alcance.
 - Evita logs de depuracion en produccion salvo que sean parte explicita del comportamiento esperado.
@@ -56,11 +77,13 @@ Los tests corren con `npm test`, usando Vitest, jsdom y React Testing Library.
 ## Tests
 
 - Genera tests unitarios para hooks, helpers y componentes con logica propia.
-- Genera tests de integracion para flujos de usuario importantes: buscar, agregar, completar, borrar, abrir/cerrar modal y sincronizar cambios de `localStorage`.
+- Genera tests de integracion para flujos de usuario importantes: buscar, agregar, editar, completar, borrar, abrir/cerrar modal, tema, export/import y sincronizar cambios externos.
+- Genera tests E2E cuando el cambio afecte un flujo principal de usuario.
 - Usa React Testing Library para validar comportamiento visible por el usuario.
-- Mockea `localStorage`, eventos `storage` y timers cuando sea necesario.
+- Mockea `localStorage`, IndexedDB, eventos `storage`, archivos, URLs de descarga y timers cuando sea necesario.
 - Cada bug corregido debe incluir una prueba que falle antes del arreglo o que cubra claramente el caso.
 - Ejecuta las pruebas relevantes y `npm run build` cuando el cambio afecte comportamiento o empaquetado.
+- Ejecuta `npm run test:e2e` cuando el cambio toque creacion, edicion, borrado, modal, persistencia, PWA, export/import o build.
 
 ## Commits
 
@@ -70,11 +93,14 @@ Los tests corren con `npm test`, usando Vitest, jsdom y React Testing Library.
   - `Add todo form validation`
   - `Fix localStorage sync state`
   - `Test todo search flow`
+  - `Add PWA offline shell`
+  - `Migrate todos to IndexedDB`
 - No mezcles refactors, features y fixes no relacionados en el mismo commit.
 
 ## Verificacion antes de entregar
 
 - Revisa visualmente los flujos afectados cuando el cambio toque UI.
 - Ejecuta los comandos disponibles que apliquen al alcance del cambio.
+- Para cambios de PWA/offline, verifica que `npm run build` incluya `public/sw.js` y que el E2E siga pasando.
 - Si no puedes ejecutar una verificacion, dilo claramente y explica por que.
 - Resume al final que cambiaste, que verificaste y cualquier riesgo pendiente.
