@@ -1,6 +1,7 @@
 {
   "short_name": "TaskFlow",
   "name": "TaskFlow React ToDo List",
+  "description": "Gestor local-first de tareas con busqueda, filtros, prioridad, fechas y persistencia offline.",
   "icons": [
     {
       "src": "favicon.ico",
@@ -18,8 +19,13 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": ".",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "categories": ["productivity", "utilities"],
   "theme_color": "#0ea5e9",
   "background_color": "#f8fafc"
 }

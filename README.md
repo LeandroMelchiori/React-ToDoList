@@ -29,6 +29,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - Validaciones para evitar entradas vacias y duplicadas.
 - Estados visibles para carga, error, lista vacia y busqueda sin resultados.
 - Sincronizacion cuando el almacenamiento cambia desde otra pestana.
+- Soporte PWA con shell offline para abrir la app sin conexion luego de la primera visita.
 - Pruebas automatizadas y validacion continua antes de publicar cambios.
 
 ## Funcionalidades
@@ -53,6 +54,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - CSS por componente
 - React Testing Library
 - Vitest
+- PWA / Service Worker
 - Jest DOM
 - GitHub Actions
 - Vercel
