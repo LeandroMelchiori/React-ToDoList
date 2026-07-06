@@ -56,6 +56,10 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: /Todas/ }));
     await user.click(screen.getByRole('button', { name: 'Eliminar tarea' }));
 
+    const deleteDialog = screen.getByRole('dialog', { name: 'Eliminar tarea' });
+    expect(within(deleteDialog).getByText('Preparar entrevista tecnica')).toBeInTheDocument();
+    await user.click(within(deleteDialog).getByRole('button', { name: 'Eliminar' }));
+
     expect(screen.getByText('Organiza tu dia con una primera tarea')).toBeInTheDocument();
   });
 
@@ -112,5 +116,28 @@ describe('App', () => {
       text: 'Actualizar README del portfolio',
       completed: false,
     }));
+  });
+
+  test('keeps a todo when delete confirmation is cancelled', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      { id: 'todo-1', text: 'Publicar demo', completed: false },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Publicar demo')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Eliminar tarea' }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Eliminar tarea' });
+    expect(within(dialog).getByText('Publicar demo')).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole('button', { name: 'Cancelar' }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByText('Publicar demo')).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('TODOS_V1'))).toEqual([
+      expect.objectContaining({ id: 'todo-1', text: 'Publicar demo' }),
+    ]);
   });
 });

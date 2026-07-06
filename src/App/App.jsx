@@ -8,6 +8,7 @@ import { TodoItem } from '../components/TodoList/TodoItem/TodoItem';
 import { CreateTodoButton } from '../components/CreateTodoButton/CreateTodoButton';
 import { Modal } from '../components/Modal/Modal';
 import { TodoForm } from '../components/TodoList/TodoForm/TodoForm';
+import { DeleteTodoDialog } from '../components/TodoList/DeleteTodoDialog/DeleteTodoDialog';
 import { TodoHeader } from '../components/TodoHeader/TodoHeader';
 import { TodosLoading } from '../components/TodoList/TodosLoading/TodosLoading';
 import { TodosError } from '../components/TodoList/TodosError/TodosError';
@@ -29,15 +30,17 @@ function App() {
         visibleTodos,
         openModal,
         editingTodo,
+        deletingTodo,
     } = states;
     
     const {
         setSearchValue,
         setFilter,
         completeTodo,
-        deleteTodo,
         openCreateModal,
         startEditingTodo,
+        startDeletingTodo,
+        confirmDeleteTodo,
         closeModal,
         addTodo,
         updateTodo,
@@ -45,6 +48,7 @@ function App() {
     } = stateUpdaters;
 
     const formMode = editingTodo ? 'edit' : 'create';
+    const modalLabel = deletingTodo ? 'Eliminar tarea' : editingTodo ? 'Editar tarea' : 'Crear tarea';
 
     return (
         <>
@@ -89,7 +93,7 @@ function App() {
                         completed={todo.completed}
                         onComplete={() => completeTodo(todo.id)}
                         onEdit={() => startEditingTodo(todo.id)}
-                        onDelete={() => deleteTodo(todo.id)}
+                        onDelete={() => startDeletingTodo(todo.id)}
                     />
                 )}
             />
@@ -101,17 +105,25 @@ function App() {
             </main>
 
             {openModal && (
-                <Modal label={editingTodo ? 'Editar tarea' : 'Crear tarea'}>
-                    <TodoForm 
-                        initialValue={editingTodo?.text || ''}
-                        label={editingTodo ? 'Editar tarea' : 'Nueva tarea'}
-                        mode={formMode}
-                        onCancel={closeModal}
-                        onSubmitTodo={(text) => (
-                            editingTodo ? updateTodo(editingTodo.id, text) : addTodo(text)
-                        )}
-                        submitLabel={editingTodo ? 'Guardar' : 'Agregar'}
-                    />
+                <Modal label={modalLabel}>
+                    {deletingTodo ? (
+                        <DeleteTodoDialog
+                            todoText={deletingTodo.text}
+                            onCancel={closeModal}
+                            onConfirm={confirmDeleteTodo}
+                        />
+                    ) : (
+                        <TodoForm 
+                            initialValue={editingTodo?.text || ''}
+                            label={editingTodo ? 'Editar tarea' : 'Nueva tarea'}
+                            mode={formMode}
+                            onCancel={closeModal}
+                            onSubmitTodo={(text) => (
+                                editingTodo ? updateTodo(editingTodo.id, text) : addTodo(text)
+                            )}
+                            submitLabel={editingTodo ? 'Guardar' : 'Agregar'}
+                        />
+                    )}
                 </Modal>
             )}
 

@@ -31,7 +31,7 @@ Este proyecto esta pensado como una pieza de portfolio para demostrar:
 - Crear tareas con validacion de texto vacio y duplicados.
 - Editar tareas desde un modal con validacion de duplicados.
 - Marcar tareas como completadas o pendientes.
-- Eliminar tareas.
+- Eliminar tareas con confirmacion previa.
 - Buscar tareas por texto.
 - Filtrar por todas, pendientes o completadas.
 - Persistir datos en `localStorage`.
@@ -129,10 +129,10 @@ La suite actual cubre:
 - Flujo principal desde la UI: crear, validar, buscar, completar, filtrar y eliminar.
 - Validacion de tareas duplicadas desde el formulario de creacion.
 - Edicion de tareas desde modal y validacion de duplicados en edicion.
+- Cancelacion segura antes de eliminar una tarea.
 
 ## Mejoras futuras
 
-- Confirmacion antes de eliminar tareas.
 - Prioridades y fechas limite.
 - Atajos de teclado para usuarios frecuentes.
 - Modo oscuro.

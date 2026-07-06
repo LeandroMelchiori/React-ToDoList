@@ -82,8 +82,12 @@ function useTodos() {
     const [editingTodoId, setEditingTodoId] =
      React.useState(null);
 
+    const [deletingTodoId, setDeletingTodoId] =
+     React.useState(null);
+
     const normalizedTodos = normalizeTodos(todos);
     const editingTodo = normalizedTodos.find(todo => todo.id === editingTodoId) || null;
+    const deletingTodo = normalizedTodos.find(todo => todo.id === deletingTodoId) || null;
 
     const completedTodos = normalizedTodos.filter(todo => todo.completed).length;
     const totalTodos = normalizedTodos.length;
@@ -158,17 +162,36 @@ function useTodos() {
 
     const openCreateModal = () => {
         setEditingTodoId(null);
+        setDeletingTodoId(null);
         setOpenModal(true);
     }
 
     const startEditingTodo = (id) => {
         setEditingTodoId(id);
+        setDeletingTodoId(null);
         setOpenModal(true);
+    }
+
+    const startDeletingTodo = (id) => {
+        setDeletingTodoId(id);
+        setEditingTodoId(null);
+        setOpenModal(true);
+    }
+
+    const confirmDeleteTodo = () => {
+        if (!deletingTodoId) {
+            return;
+        }
+
+        deleteTodo(deletingTodoId);
+        setDeletingTodoId(null);
+        setOpenModal(false);
     }
 
     const closeModal = () => {
         setOpenModal(false);
         setEditingTodoId(null);
+        setDeletingTodoId(null);
     }
 
     const states = {
@@ -182,6 +205,7 @@ function useTodos() {
         visibleTodos,
         openModal,
         editingTodo,
+        deletingTodo,
     }
 
     const stateUpdaters = {
@@ -191,6 +215,8 @@ function useTodos() {
         deleteTodo,
         openCreateModal,
         startEditingTodo,
+        startDeletingTodo,
+        confirmDeleteTodo,
         closeModal,
         addTodo,
         updateTodo,
