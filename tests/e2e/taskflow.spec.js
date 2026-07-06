@@ -17,8 +17,12 @@ test('manages a todo through the production flow', async ({ page }) => {
 
   const createDialog = page.getByRole('dialog', { name: 'Crear tarea' });
   await createDialog.getByRole('textbox', { name: 'Nueva tarea' }).fill('Preparar demo para recruiter');
+  await createDialog.getByLabel('Prioridad').selectOption('high');
+  await createDialog.getByLabel('Fecha limite').fill('2026-07-20');
   await createDialog.getByRole('button', { name: 'Agregar' }).click();
   await expect(page.getByText('Preparar demo para recruiter')).toBeVisible();
+  await expect(page.getByText('Alta')).toBeVisible();
+  await expect(page.getByText('20/07/2026')).toBeVisible();
 
   await page.getByLabel('Buscar tareas').fill('recruiter');
   await expect(page.getByText('Preparar demo para recruiter')).toBeVisible();
@@ -30,6 +34,8 @@ test('manages a todo through the production flow', async ({ page }) => {
   await editDialog.getByRole('textbox', { name: 'Editar tarea' }).fill('Preparar demo publica');
   await editDialog.getByRole('button', { name: 'Guardar' }).click();
   await expect(page.getByText('Preparar demo publica')).toBeVisible();
+  await expect(page.getByText('Alta')).toBeVisible();
+  await expect(page.getByText('20/07/2026')).toBeVisible();
   await expect(page.getByLabel('Buscar tareas')).toHaveValue('');
 
   await page.getByRole('button', { name: 'Marcar tarea como completada' }).click();

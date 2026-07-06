@@ -10,6 +10,22 @@ const TODO_FILTERS = {
     completed: 'completed',
 };
 
+const TODO_PRIORITIES = {
+    low: 'low',
+    medium: 'medium',
+    high: 'high',
+};
+
+function normalizePriority(priority) {
+    return Object.values(TODO_PRIORITIES).includes(priority)
+        ? priority
+        : TODO_PRIORITIES.medium;
+}
+
+function normalizeDueDate(dueDate) {
+    return typeof dueDate === 'string' && dueDate ? dueDate : null;
+}
+
 function createTodoId() {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
         return crypto.randomUUID();
@@ -27,11 +43,13 @@ function createLegacyTodoId(todo, index) {
     return `legacy-${index}-${text || 'item'}`;
 }
 
-function createTodo(text) {
+function createTodo(text, details = {}) {
     return {
         id: createTodoId(),
         text: text.trim(),
         completed: false,
+        priority: normalizePriority(details.priority),
+        dueDate: normalizeDueDate(details.dueDate),
         createdAt: new Date().toISOString(),
     };
 }
@@ -47,6 +65,8 @@ function normalizeTodos(todos) {
             id: todo.id || createLegacyTodoId(todo, index),
             text: todo.text.trim(),
             completed: Boolean(todo.completed),
+            priority: normalizePriority(todo.priority),
+            dueDate: normalizeDueDate(todo.dueDate),
             createdAt: todo.createdAt || null,
         }));
 }
@@ -111,7 +131,7 @@ function useTodos() {
         saveTodos(newTodos)
     }
 
-    const addTodo = (text) => {
+    const addTodo = (text, details = {}) => {
         const trimmedText = text.trim();
 
         if (!trimmedText) {
@@ -126,14 +146,14 @@ function useTodos() {
             return { ok: false, error: 'Esa tarea ya existe.' };
         }
 
-        const newTodos = [...normalizedTodos, createTodo(trimmedText)];
+        const newTodos = [...normalizedTodos, createTodo(trimmedText, details)];
         saveTodos(newTodos);
         setSearchValue('');
         setFilter(TODO_FILTERS.all);
         return { ok: true };
     }
 
-    const updateTodo = (id, text) => {
+    const updateTodo = (id, text, details = {}) => {
         const trimmedText = text.trim();
 
         if (!trimmedText) {
@@ -155,7 +175,14 @@ function useTodos() {
         }
 
         const newTodos = normalizedTodos.map(todo =>
-            todo.id === id ? { ...todo, text: trimmedText } : todo
+            todo.id === id
+                ? {
+                    ...todo,
+                    text: trimmedText,
+                    priority: normalizePriority(details.priority),
+                    dueDate: normalizeDueDate(details.dueDate),
+                }
+                : todo
         );
         saveTodos(newTodos);
         setSearchValue('');
@@ -230,4 +257,13 @@ function useTodos() {
     return { states, stateUpdaters };
 }
 
-export { TODO_FILTERS, createTodo, getVisibleTodos, normalizeTodos, useTodos }; 
+export {
+    TODO_FILTERS,
+    TODO_PRIORITIES,
+    createTodo,
+    getVisibleTodos,
+    normalizeDueDate,
+    normalizePriority,
+    normalizeTodos,
+    useTodos,
+}; 

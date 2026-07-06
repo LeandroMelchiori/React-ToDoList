@@ -95,13 +95,15 @@ function App() {
                     </p>
                 )}
                 render={todo => (
-                    <TodoItem
-                        key={todo.id}
-                        text={todo.text}
-                        completed={todo.completed}
-                        onComplete={() => completeTodo(todo.id)}
-                        onEdit={() => startEditingTodo(todo.id)}
-                        onDelete={() => startDeletingTodo(todo.id)}
+                        <TodoItem
+                            key={todo.id}
+                            text={todo.text}
+                            completed={todo.completed}
+                            priority={todo.priority}
+                            dueDate={todo.dueDate}
+                            onComplete={() => completeTodo(todo.id)}
+                            onEdit={() => startEditingTodo(todo.id)}
+                            onDelete={() => startDeletingTodo(todo.id)}
                     />
                 )}
             />
@@ -123,11 +125,13 @@ function App() {
                     ) : (
                         <TodoForm 
                             initialValue={editingTodo?.text || ''}
+                            initialPriority={editingTodo?.priority}
+                            initialDueDate={editingTodo?.dueDate}
                             label={editingTodo ? 'Editar tarea' : 'Nueva tarea'}
                             mode={formMode}
                             onCancel={closeModal}
-                            onSubmitTodo={(text) => (
-                                editingTodo ? updateTodo(editingTodo.id, text) : addTodo(text)
+                            onSubmitTodo={(text, details) => (
+                                editingTodo ? updateTodo(editingTodo.id, text, details) : addTodo(text, details)
                             )}
                             submitLabel={editingTodo ? 'Guardar' : 'Agregar'}
                         />

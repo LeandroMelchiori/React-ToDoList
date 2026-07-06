@@ -35,6 +35,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 
 - Crear tareas con validacion de texto vacio y duplicados.
 - Editar tareas desde un modal con validacion de duplicados.
+- Asignar prioridad y fecha limite opcional a cada tarea.
 - Marcar tareas como completadas o pendientes.
 - Eliminar tareas con confirmacion previa.
 - Buscar tareas por texto.

@@ -1,7 +1,10 @@
 import {
   TODO_FILTERS,
+  TODO_PRIORITIES,
   createTodo,
   getVisibleTodos,
+  normalizeDueDate,
+  normalizePriority,
   normalizeTodos,
 } from './useTodos';
 
@@ -18,12 +21,16 @@ describe('todo helpers', () => {
         id: 'legacy-0-preparar-entrevista',
         text: 'Preparar entrevista',
         completed: true,
+        priority: TODO_PRIORITIES.medium,
+        dueDate: null,
         createdAt: null,
       },
       {
         id: 'todo-2',
         text: 'Actualizar CV',
         completed: false,
+        priority: TODO_PRIORITIES.medium,
+        dueDate: null,
         createdAt: null,
       },
     ]);
@@ -34,15 +41,27 @@ describe('todo helpers', () => {
     expect(normalizeTodos({ text: 'No es una lista' })).toEqual([]);
   });
 
-  test('creates a new todo with a generated id and trimmed text', () => {
-    const todo = createTodo('  Practicar React  ');
+  test('creates a new todo with a generated id, priority, due date and trimmed text', () => {
+    const todo = createTodo('  Practicar React  ', {
+      priority: TODO_PRIORITIES.high,
+      dueDate: '2026-07-20',
+    });
 
     expect(todo).toMatchObject({
       text: 'Practicar React',
       completed: false,
+      priority: TODO_PRIORITIES.high,
+      dueDate: '2026-07-20',
     });
     expect(todo.id).toEqual(expect.any(String));
     expect(todo.createdAt).toEqual(expect.any(String));
+  });
+
+  test('normalizes invalid priority and due date values', () => {
+    expect(normalizePriority('urgent')).toBe(TODO_PRIORITIES.medium);
+    expect(normalizePriority(TODO_PRIORITIES.low)).toBe(TODO_PRIORITIES.low);
+    expect(normalizeDueDate('2026-07-20')).toBe('2026-07-20');
+    expect(normalizeDueDate(null)).toBeNull();
   });
 
   test('filters visible todos by text and status', () => {

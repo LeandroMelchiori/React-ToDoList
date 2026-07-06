@@ -1,9 +1,16 @@
 import React from 'react';
 import './TodoForm.css';
 
+const TODO_PRIORITY_OPTIONS = [
+    { value: 'low', label: 'Baja' },
+    { value: 'medium', label: 'Media' },
+    { value: 'high', label: 'Alta' },
+];
 
 function TodoForm({
     initialValue = '',
+    initialPriority = 'medium',
+    initialDueDate = '',
     label = 'Nueva tarea',
     mode = 'create',
     onCancel,
@@ -11,8 +18,12 @@ function TodoForm({
     submitLabel = 'Agregar',
 }) {
     const [newTodoValue, setNewTodoValue] = React.useState(initialValue);
+    const [priorityValue, setPriorityValue] = React.useState(initialPriority || 'medium');
+    const [dueDateValue, setDueDateValue] = React.useState(initialDueDate || '');
     const [formError, setFormError] = React.useState('');
     const inputId = mode === 'edit' ? 'editTodo' : 'newTodo';
+    const priorityId = mode === 'edit' ? 'editTodoPriority' : 'newTodoPriority';
+    const dueDateId = mode === 'edit' ? 'editTodoDueDate' : 'newTodoDueDate';
 
     const onChange = (event) => {
         setNewTodoValue(event.target.value);
@@ -21,7 +32,10 @@ function TodoForm({
 
     const onSubmit = (event) => {
         event.preventDefault();
-        const result = onSubmitTodo(newTodoValue);
+        const result = onSubmitTodo(newTodoValue, {
+            priority: priorityValue,
+            dueDate: dueDateValue,
+        });
 
         if (!result.ok) {
             setFormError(result.error);
@@ -47,6 +61,31 @@ function TodoForm({
                     {formError}
                 </p>
             )}
+            <div className="TodoForm-fields">
+                <label htmlFor={priorityId}>
+                    Prioridad
+                    <select
+                        id={priorityId}
+                        value={priorityValue}
+                        onChange={event => setPriorityValue(event.target.value)}
+                    >
+                        {TODO_PRIORITY_OPTIONS.map(option => (
+                            <option key={option.value} value={option.value}>
+                                {option.label}
+                            </option>
+                        ))}
+                    </select>
+                </label>
+                <label htmlFor={dueDateId}>
+                    Fecha limite
+                    <input
+                        id={dueDateId}
+                        type="date"
+                        value={dueDateValue}
+                        onChange={event => setDueDateValue(event.target.value)}
+                    />
+                </label>
+            </div>
             <div className='TodoForm-buttonContainer'>
                 <button
                     type="button"

@@ -29,9 +29,13 @@ describe('App', () => {
     expect(screen.getByText('Escribe una tarea antes de agregarla.')).toBeInTheDocument();
 
     await user.type(screen.getByLabelText('Nueva tarea'), 'Preparar entrevista tecnica');
+    await user.selectOptions(screen.getByLabelText('Prioridad'), 'high');
+    await user.type(screen.getByLabelText('Fecha limite'), '2026-07-20');
     await user.click(screen.getByRole('button', { name: 'Agregar' }));
 
     expect(screen.getByText('Preparar entrevista tecnica')).toBeInTheDocument();
+    expect(screen.getByText('Alta')).toBeInTheDocument();
+    expect(screen.getByText('20/07/2026')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Completaste 0 de 1 tareas/ })).toBeInTheDocument();
 
     const storedTodos = JSON.parse(localStorage.getItem('TODOS_V1'));
@@ -39,6 +43,8 @@ describe('App', () => {
       id: expect.any(String),
       text: 'Preparar entrevista tecnica',
       completed: false,
+      priority: 'high',
+      dueDate: '2026-07-20',
     }));
 
     await user.type(screen.getByLabelText('Buscar tareas'), 'entrevista');
@@ -229,10 +235,18 @@ describe('App', () => {
 
     const dialog = screen.getByRole('dialog', { name: 'Crear tarea' });
     const textarea = within(dialog).getByLabelText('Nueva tarea');
+    const prioritySelect = within(dialog).getByLabelText('Prioridad');
+    const dueDateInput = within(dialog).getByLabelText('Fecha limite');
     const cancelButton = within(dialog).getByRole('button', { name: 'Cancelar' });
     const submitButton = within(dialog).getByRole('button', { name: 'Agregar' });
 
     expect(textarea).toHaveFocus();
+
+    await user.tab();
+    expect(prioritySelect).toHaveFocus();
+
+    await user.tab();
+    expect(dueDateInput).toHaveFocus();
 
     await user.tab();
     expect(cancelButton).toHaveFocus();
