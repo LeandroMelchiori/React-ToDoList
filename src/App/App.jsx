@@ -17,7 +17,9 @@ import { TodosLoading } from '../components/TodoList/TodosLoading/TodosLoading';
 import { TodosError } from '../components/TodoList/TodosError/TodosError';
 import { EmptyTodos } from '../components/TodoList/EmptyTodos/EmptyTodos';
 import { ChangeAlert } from '../components/ChangeAlert/ChangeAlert';
+import { PwaStatus } from '../components/PwaStatus/PwaStatus';
 import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle';
+import { usePwaStatus } from './usePwaStatus';
 import { useTheme } from './useTheme';
 
 function isEditableTarget(target) {
@@ -33,6 +35,12 @@ function App() {
 
     const { states, stateUpdaters } = useTodos();
     const { isDarkTheme, toggleTheme } = useTheme();
+    const {
+        applyUpdate,
+        hasUpdate,
+        isOfflineReady,
+        isOnline,
+    } = usePwaStatus();
     const searchInputRef = React.useRef(null);
 
     const { 
@@ -116,6 +124,12 @@ function App() {
                 <ThemeToggle
                     isDarkTheme={isDarkTheme}
                     onToggleTheme={toggleTheme}
+                />
+                <PwaStatus
+                    hasUpdate={hasUpdate}
+                    isOfflineReady={isOfflineReady}
+                    isOnline={isOnline}
+                    onApplyUpdate={applyUpdate}
                 />
 
                 <TodoHeader loading={loading}>

@@ -30,6 +30,10 @@ describe('App', () => {
     localStorage.clear();
     document.body.innerHTML = '';
     delete document.documentElement.dataset.theme;
+    Object.defineProperty(window.navigator, 'onLine', {
+      configurable: true,
+      value: true,
+    });
   });
 
   afterEach(() => {
@@ -273,6 +277,32 @@ describe('App', () => {
 
     expect(screen.getByRole('dialog', { name: 'Crear tarea' })).toBeInTheDocument();
     expect(screen.getByLabelText('Nueva tarea')).toHaveFocus();
+  });
+
+  test('shows PWA offline and update status messages', async () => {
+    const worker = { postMessage: vi.fn() };
+    Object.defineProperty(window.navigator, 'onLine', {
+      configurable: true,
+      value: false,
+    });
+    Object.defineProperty(window.navigator, 'serviceWorker', {
+      configurable: true,
+      value: { addEventListener: vi.fn() },
+    });
+    renderApp();
+
+    expect(await screen.findByText('Sin conexion. TaskFlow sigue disponible offline.')).toBeInTheDocument();
+
+    act(() => {
+      window.dispatchEvent(new CustomEvent('taskflow:pwa-update', {
+        detail: { worker },
+      }));
+    });
+
+    expect(screen.getByText('Hay una nueva version disponible.')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Actualizar app' }));
+
+    expect(worker.postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
   });
 
   test('loads the persisted dark theme', async () => {

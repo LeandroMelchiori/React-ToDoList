@@ -51,6 +51,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - Normalizar tareas antiguas guardadas sin `id`.
 - Detectar cambios hechos en otra pestana y permitir sincronizar.
 - Exportar e importar tareas con un archivo JSON local.
+- Mostrar estado offline/PWA y avisar cuando hay una version nueva disponible.
 - Mostrar estados de carga, error, lista vacia y busqueda sin resultados.
 
 ## Stack
