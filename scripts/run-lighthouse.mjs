@@ -61,8 +61,29 @@ function printSummary(reportPath) {
   }
 }
 
+function isCleanupPermissionError(result) {
+  const output = `${result.stdout || ''}\n${result.stderr || ''}`;
+
+  return output.includes('EPERM') &&
+    output.includes('Permission denied') &&
+    output.includes('lighthouse.');
+}
+
+function cleanupTempPath() {
+  try {
+    rmSync(tempPath, {
+      force: true,
+      maxRetries: 3,
+      recursive: true,
+      retryDelay: 100,
+    });
+  } catch (error) {
+    console.warn(`Could not remove Lighthouse temp files: ${error.message}`);
+  }
+}
+
 mkdirSync(reportsPath, { recursive: true });
-rmSync(tempPath, { recursive: true, force: true });
+cleanupTempPath();
 mkdirSync(tempPath, { recursive: true });
 
 const result = spawnSync(
@@ -94,9 +115,13 @@ if (result.error) {
 }
 
 if (result.status !== 0) {
-  console.error(result.stdout);
-  console.error(result.stderr);
-  process.exit(result.status ?? 1);
+  if (!existsSync(outputPath) || !isCleanupPermissionError(result)) {
+    console.error(result.stdout);
+    console.error(result.stderr);
+    process.exit(result.status ?? 1);
+  }
+
+  console.warn('Lighthouse finished, but Chrome cleanup reported a Windows permission warning.');
 }
 
 if (!existsSync(outputPath)) {
@@ -105,4 +130,4 @@ if (!existsSync(outputPath)) {
 }
 
 printSummary(outputPath);
-rmSync(tempPath, { recursive: true, force: true });
+cleanupTempPath();
