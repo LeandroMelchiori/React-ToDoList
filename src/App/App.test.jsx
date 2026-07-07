@@ -183,6 +183,33 @@ describe('App', () => {
     expect(screen.getByText('Ordenar apuntes')).toBeInTheDocument();
   });
 
+  test('moves todos manually and persists the new order', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      { id: 'todo-1', text: 'Primera tarea', completed: false, order: 0 },
+      { id: 'todo-2', text: 'Segunda tarea', completed: false, order: 1 },
+      { id: 'todo-3', text: 'Tercera tarea', completed: false, order: 2 },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Primera tarea')).toBeInTheDocument();
+
+    let items = within(screen.getByRole('list', { name: 'Lista de tareas' })).getAllByRole('listitem');
+    expect(items[0]).toHaveTextContent('Primera tarea');
+    expect(within(items[0]).getByRole('button', { name: 'Subir tarea' })).toBeDisabled();
+
+    await user.click(within(items[0]).getByRole('button', { name: 'Bajar tarea' }));
+
+    items = within(screen.getByRole('list', { name: 'Lista de tareas' })).getAllByRole('listitem');
+    expect(items[0]).toHaveTextContent('Segunda tarea');
+    expect(items[1]).toHaveTextContent('Primera tarea');
+    expect(JSON.parse(localStorage.getItem('TODOS_V1')).map(todo => todo.text)).toEqual([
+      'Segunda tarea',
+      'Primera tarea',
+      'Tercera tarea',
+    ]);
+  });
+
   test('creates and toggles todo subtasks', async () => {
     const user = userEvent.setup();
     renderApp();

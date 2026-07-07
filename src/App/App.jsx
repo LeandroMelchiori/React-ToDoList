@@ -53,6 +53,7 @@ function App() {
         clearFacetFilters,
         completeTodo,
         toggleSubtask,
+        moveTodo,
         openCreateModal,
         startEditingTodo,
         startDeletingTodo,
@@ -137,8 +138,12 @@ function App() {
                             project={todo.project}
                             tags={todo.tags}
                             subtasks={todo.subtasks}
+                            canMoveUp={todo.order > 0}
+                            canMoveDown={todo.order < totalTodos - 1}
                             onComplete={() => completeTodo(todo.id)}
                             onToggleSubtask={(subtaskId) => toggleSubtask(todo.id, subtaskId)}
+                            onMoveUp={() => moveTodo(todo.id, 'up')}
+                            onMoveDown={() => moveTodo(todo.id, 'down')}
                             onFilterProject={() => selectProjectFilter(todo.project)}
                             onFilterTag={selectTagFilter}
                             onEdit={() => startEditingTodo(todo.id)}

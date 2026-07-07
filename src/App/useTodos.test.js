@@ -29,6 +29,7 @@ describe('todo helpers', () => {
         id: 'legacy-0-preparar-entrevista',
         text: 'Preparar entrevista',
         completed: true,
+        order: 0,
         priority: TODO_PRIORITIES.medium,
         dueDate: null,
         project: null,
@@ -40,6 +41,7 @@ describe('todo helpers', () => {
         id: 'todo-2',
         text: 'Actualizar CV',
         completed: false,
+        order: 1,
         priority: TODO_PRIORITIES.medium,
         dueDate: null,
         project: null,
@@ -55,6 +57,18 @@ describe('todo helpers', () => {
     expect(normalizeTodos({ text: 'No es una lista' })).toEqual([]);
   });
 
+  test('sorts and reindexes todos by manual order', () => {
+    expect(normalizeTodos([
+      { id: 'todo-2', text: 'Segunda', order: 1 },
+      { id: 'todo-1', text: 'Primera', order: 0 },
+      { id: 'todo-3', text: 'Tercera' },
+    ])).toEqual([
+      expect.objectContaining({ id: 'todo-1', text: 'Primera', order: 0 }),
+      expect.objectContaining({ id: 'todo-2', text: 'Segunda', order: 1 }),
+      expect.objectContaining({ id: 'todo-3', text: 'Tercera', order: 2 }),
+    ]);
+  });
+
   test('creates a new todo with a generated id, priority, due date and trimmed text', () => {
     const todo = createTodo('  Practicar React  ', {
       priority: TODO_PRIORITIES.high,
@@ -67,6 +81,7 @@ describe('todo helpers', () => {
     expect(todo).toMatchObject({
       text: 'Practicar React',
       completed: false,
+      order: 0,
       priority: TODO_PRIORITIES.high,
       dueDate: '2026-07-20',
       project: 'TaskFlow',

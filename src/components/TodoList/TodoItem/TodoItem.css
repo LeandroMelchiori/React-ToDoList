@@ -18,9 +18,32 @@
   overflow-wrap: anywhere;
 }
 
+.TodoItem-main {
+  display: grid;
+  flex: 1;
+  gap: 10px;
+  min-width: 0;
+}
+
 .TodoItem-content {
   flex: 1;
   min-width: 0;
+}
+
+.TodoItem-orderActions {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 2px;
+}
+
+.TodoItem-orderActions .Icon-container {
+  height: 24px;
+  width: 24px;
+}
+
+.TodoItem-orderActions .icon-svg {
+  height: 20px;
+  width: 20px;
 }
 
 .TodoItem-p--complete {
@@ -131,12 +154,15 @@
   }
 
   .TodoItem-content {
-    flex-basis: calc(100% - 54px);
+    flex-basis: auto;
+  }
+
+  .TodoItem-main {
+    flex-basis: calc(100% - 90px);
   }
 
   .TodoItem-meta {
     flex-basis: 100%;
     justify-content: flex-start;
-    padding-left: 54px;
   }
 }

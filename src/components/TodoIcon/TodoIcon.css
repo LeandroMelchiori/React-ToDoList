@@ -26,11 +26,27 @@
   transform: scale(1.04);
 }
 
+.Icon-container:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+  transform: none;
+}
+
+.Icon-container:disabled:hover {
+  background-color: transparent;
+  transform: none;
+}
+
 .Icon-container-delete:hover {
   color: var(--color-danger);
 }
 
 .Icon-container-edit:hover {
+  color: var(--color-accent);
+}
+
+.Icon-container-moveDown:hover,
+.Icon-container-moveUp:hover {
   color: var(--color-accent);
 }
 
@@ -48,5 +64,10 @@
 }
 
 .Icon-container-edit:hover .icon-svg {
+  fill: var(--color-accent);
+}
+
+.Icon-container-moveDown:hover .icon-svg,
+.Icon-container-moveUp:hover .icon-svg {
   fill: var(--color-accent);
 }

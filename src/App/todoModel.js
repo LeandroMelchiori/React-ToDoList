@@ -25,6 +25,10 @@ function normalizeDueDate(dueDate) {
     return typeof dueDate === 'string' && dueDate ? dueDate : null;
 }
 
+function normalizeOrder(order, fallback = 0) {
+    return Number.isFinite(order) && order >= 0 ? order : fallback;
+}
+
 function getTodayDateValue(date = new Date()) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -141,6 +145,7 @@ function createTodo(text, details = {}) {
         id: createTodoId(),
         text: text.trim(),
         completed: false,
+        order: normalizeOrder(details.order),
         priority: normalizePriority(details.priority),
         dueDate: normalizeDueDate(details.dueDate),
         project: normalizeProject(details.project),
@@ -155,12 +160,13 @@ function normalizeTodos(todos) {
         return [];
     }
 
-    return todos
+    const normalizedTodos = todos
         .filter(todo => typeof todo.text === 'string' && todo.text.trim())
         .map((todo, index) => ({
             id: todo.id || createLegacyTodoId(todo, index),
             text: todo.text.trim(),
             completed: Boolean(todo.completed),
+            order: normalizeOrder(todo.order, index),
             priority: normalizePriority(todo.priority),
             dueDate: normalizeDueDate(todo.dueDate),
             project: normalizeProject(todo.project),
@@ -168,6 +174,17 @@ function normalizeTodos(todos) {
             subtasks: normalizeSubtasks(todo.subtasks),
             createdAt: todo.createdAt || null,
         }));
+
+    return reindexTodos(normalizedTodos.sort((firstTodo, secondTodo) =>
+        firstTodo.order - secondTodo.order
+    ));
+}
+
+function reindexTodos(todos) {
+    return todos.map((todo, index) => ({
+        ...todo,
+        order: index,
+    }));
 }
 
 function getVisibleTodos(todos, searchValue, filter, todayDate = getTodayDateValue(), facetFilters = {}) {
@@ -294,10 +311,12 @@ export {
     getVisibleTodos,
     mergeSubtasks,
     normalizeDueDate,
+    normalizeOrder,
     normalizePriority,
     normalizeProject,
     normalizeSubtasks,
     normalizeTags,
     normalizeTodos,
     readTodosBackup,
+    reindexTodos,
 };

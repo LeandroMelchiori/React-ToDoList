@@ -14,6 +14,7 @@ import {
     normalizeTags,
     normalizeTodos,
     readTodosBackup,
+    reindexTodos,
 } from './todoModel';
 
 const STORAGE_KEY = 'TODOS_V1';
@@ -72,7 +73,7 @@ function useTodos() {
     }
 
     const deleteTodo = (id) => {
-        const newTodos = normalizedTodos.filter(todo => todo.id !== id);
+        const newTodos = reindexTodos(normalizedTodos.filter(todo => todo.id !== id));
         saveTodos(newTodos)
     }
 
@@ -91,7 +92,10 @@ function useTodos() {
             return { ok: false, error: 'Esa tarea ya existe.' };
         }
 
-        const newTodos = [...normalizedTodos, createTodo(trimmedText, details)];
+        const newTodos = [
+            ...normalizedTodos,
+            createTodo(trimmedText, { ...details, order: normalizedTodos.length }),
+        ];
         saveTodos(newTodos);
         setSearchValue('');
         setFilter(TODO_FILTERS.all);
@@ -169,6 +173,22 @@ function useTodos() {
         );
 
         saveTodos(newTodos);
+    }
+
+    const moveTodo = (id, direction) => {
+        const currentIndex = normalizedTodos.findIndex(todo => todo.id === id);
+        const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+
+        if (currentIndex < 0 || targetIndex < 0 || targetIndex >= normalizedTodos.length) {
+            return;
+        }
+
+        const reorderedTodos = [...normalizedTodos];
+        const currentTodo = reorderedTodos[currentIndex];
+        reorderedTodos[currentIndex] = reorderedTodos[targetIndex];
+        reorderedTodos[targetIndex] = currentTodo;
+
+        saveTodos(reindexTodos(reorderedTodos));
     }
 
     const openCreateModal = () => {
@@ -255,6 +275,7 @@ function useTodos() {
         completeTodo,
         deleteTodo,
         toggleSubtask,
+        moveTodo,
         openCreateModal,
         startEditingTodo,
         startDeletingTodo,

@@ -45,6 +45,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - Buscar tareas por texto, proyecto o etiqueta.
 - Filtrar rapidamente por proyecto o etiqueta.
 - Filtrar por todas, pendientes, completadas, vencidas, de hoy o proximas.
+- Reordenar tareas manualmente con controles subir/bajar.
 - Persistir datos en IndexedDB, manteniendo compatibilidad con datos antiguos en `localStorage`.
 - Normalizar tareas antiguas guardadas sin `id`.
 - Detectar cambios hechos en otra pestana y permitir sincronizar.
@@ -198,7 +199,7 @@ La suite actual cubre:
 ## Mejoras futuras
 
 - Atajos de teclado para usuarios frecuentes.
-- Drag and drop para reordenar tareas.
+- Drag and drop opcional para complementar el orden manual.
 - Migracion a TypeScript.
 - Backend con autenticacion y base de datos para soportar multiusuario y sincronizacion real entre dispositivos.
 
