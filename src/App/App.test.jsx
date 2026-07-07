@@ -145,6 +145,34 @@ describe('App', () => {
     expect(screen.queryByText('Enviar avance de hoy')).not.toBeInTheDocument();
   });
 
+  test('creates and toggles todo subtasks', async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    expect(await screen.findByText('Organiza tu dia con una primera tarea')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Crear nueva tarea' }));
+    await user.type(screen.getByLabelText('Nueva tarea'), 'Organizar lanzamiento');
+    await user.type(screen.getByLabelText('Subtareas'), 'Escribir guia{enter}Validar mobile');
+    await user.click(screen.getByRole('button', { name: 'Agregar' }));
+
+    const checklist = screen.getByRole('list', { name: 'Checklist de Organizar lanzamiento' });
+    const firstSubtask = within(checklist).getByLabelText('Escribir guia');
+
+    expect(firstSubtask).not.toBeChecked();
+    expect(within(checklist).getByLabelText('Validar mobile')).toBeInTheDocument();
+
+    await user.click(firstSubtask);
+
+    expect(firstSubtask).toBeChecked();
+    expect(JSON.parse(localStorage.getItem('TODOS_V1'))[0]).toEqual(expect.objectContaining({
+      subtasks: [
+        expect.objectContaining({ text: 'Escribir guia', completed: true }),
+        expect.objectContaining({ text: 'Validar mobile', completed: false }),
+      ],
+    }));
+  });
+
   test('toggles and persists dark mode', async () => {
     const user = userEvent.setup();
     renderApp();
@@ -198,6 +226,7 @@ describe('App', () => {
         dueDate: '2026-07-20',
         project: 'TaskFlow',
         tags: ['backup'],
+        subtasks: [{ id: 'subtask-1', text: 'Revisar JSON', completed: true }],
       },
     ]));
     renderApp();
@@ -220,6 +249,7 @@ describe('App', () => {
           dueDate: '2026-07-20',
           project: 'TaskFlow',
           tags: ['backup'],
+          subtasks: [{ id: 'subtask-1', text: 'Revisar JSON', completed: true }],
         }),
       ],
     }));
@@ -242,6 +272,7 @@ describe('App', () => {
             dueDate: '2026-08-01',
             project: 'Administracion',
             tags: ['json'],
+            subtasks: [{ id: 'subtask-imported', text: 'Validar archivo', completed: false }],
           },
         ],
       }),
@@ -257,6 +288,7 @@ describe('App', () => {
     expect(screen.getByText('01/08/2026')).toBeInTheDocument();
     expect(screen.getByText('Administracion')).toBeInTheDocument();
     expect(screen.getByText('#json')).toBeInTheDocument();
+    expect(screen.getByLabelText('Validar archivo')).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('1 tarea importada.');
     expect(JSON.parse(localStorage.getItem('TODOS_V1'))).toEqual([
       expect.objectContaining({
@@ -266,6 +298,7 @@ describe('App', () => {
         dueDate: '2026-08-01',
         project: 'Administracion',
         tags: ['json'],
+        subtasks: [{ id: 'subtask-imported', text: 'Validar archivo', completed: false }],
       }),
     ]);
   });
@@ -325,6 +358,7 @@ describe('App', () => {
         completed: false,
         project: 'Web',
         tags: ['portfolio'],
+        subtasks: [{ id: 'subtask-1', text: 'Revisar copy', completed: true }],
       },
       { id: 'todo-2', text: 'Preparar entrevista', completed: false },
     ]));
@@ -338,9 +372,11 @@ describe('App', () => {
     const textarea = within(dialog).getByLabelText('Editar tarea');
     const projectInput = within(dialog).getByLabelText('Proyecto');
     const tagsInput = within(dialog).getByLabelText('Etiquetas');
+    const subtasksInput = within(dialog).getByLabelText('Subtareas');
     expect(textarea).toHaveValue('Actualizar portfolio');
     expect(projectInput).toHaveValue('Web');
     expect(tagsInput).toHaveValue('portfolio');
+    expect(subtasksInput).toHaveValue('Revisar copy');
 
     await user.clear(textarea);
     await user.type(textarea, 'preparar entrevista');
@@ -367,6 +403,7 @@ describe('App', () => {
       completed: false,
       project: 'TaskFlow',
       tags: ['docs', 'ui'],
+      subtasks: [{ id: 'subtask-1', text: 'Revisar copy', completed: true }],
     }));
   });
 
@@ -408,6 +445,7 @@ describe('App', () => {
     const dueDateInput = within(dialog).getByLabelText('Fecha limite');
     const projectInput = within(dialog).getByLabelText('Proyecto');
     const tagsInput = within(dialog).getByLabelText('Etiquetas');
+    const subtasksInput = within(dialog).getByLabelText('Subtareas');
     const cancelButton = within(dialog).getByRole('button', { name: 'Cancelar' });
     const submitButton = within(dialog).getByRole('button', { name: 'Agregar' });
 
@@ -424,6 +462,9 @@ describe('App', () => {
 
     await user.tab();
     expect(tagsInput).toHaveFocus();
+
+    await user.tab();
+    expect(subtasksInput).toHaveFocus();
 
     await user.tab();
     expect(cancelButton).toHaveFocus();

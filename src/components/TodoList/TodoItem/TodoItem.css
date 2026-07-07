@@ -12,14 +12,48 @@
 
 .TodoItem-p {
   color: var(--color-text-strong);
-  flex: 1;
   font-size: 17px;
   line-height: 1.45;
   margin: 0;
   overflow-wrap: anywhere;
 }
 
+.TodoItem-content {
+  flex: 1;
+  min-width: 0;
+}
+
 .TodoItem-p--complete {
+  color: var(--color-text-soft);
+  text-decoration: line-through;
+}
+
+.TodoItem-subtasks {
+  display: grid;
+  gap: 6px;
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+}
+
+.TodoItem-subtask label {
+  align-items: center;
+  color: var(--color-text-muted);
+  display: flex;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 8px;
+}
+
+.TodoItem-subtask input {
+  accent-color: var(--color-accent);
+  flex: 0 0 auto;
+  height: 14px;
+  margin: 0;
+  width: 14px;
+}
+
+.TodoItem-subtaskText--complete {
   color: var(--color-text-soft);
   text-decoration: line-through;
 }
@@ -81,7 +115,7 @@
     flex-wrap: wrap;
   }
 
-  .TodoItem-p {
+  .TodoItem-content {
     flex-basis: calc(100% - 54px);
   }
 

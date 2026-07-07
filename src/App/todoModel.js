@@ -77,6 +77,65 @@ function createLegacyTodoId(todo, index) {
     return `legacy-${index}-${text || 'item'}`;
 }
 
+function createLegacySubtaskId(subtask, index) {
+    const text = String(subtask.text || 'subtask')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+
+    return `subtask-${index}-${text || 'item'}`;
+}
+
+function normalizeSubtasks(subtasks) {
+    const rawSubtasks = Array.isArray(subtasks)
+        ? subtasks
+        : typeof subtasks === 'string'
+            ? subtasks.split(/\r?\n/)
+            : [];
+
+    return rawSubtasks
+        .map((subtask, index) => {
+            const text = typeof subtask === 'string'
+                ? subtask.trim()
+                : typeof subtask?.text === 'string'
+                    ? subtask.text.trim()
+                    : '';
+
+            if (!text) {
+                return null;
+            }
+
+            return {
+                id: typeof subtask === 'object' && subtask?.id
+                    ? subtask.id
+                    : createLegacySubtaskId({ text }, index),
+                text,
+                completed: typeof subtask === 'object' ? Boolean(subtask.completed) : false,
+            };
+        })
+        .filter(Boolean);
+}
+
+function mergeSubtasks(existingSubtasks, nextSubtasks) {
+    const normalizedExistingSubtasks = normalizeSubtasks(existingSubtasks);
+
+    return normalizeSubtasks(nextSubtasks).map(subtask => {
+        const existingSubtask = normalizedExistingSubtasks.find(item =>
+            item.text.toLowerCase() === subtask.text.toLowerCase()
+        );
+
+        if (!existingSubtask) {
+            return subtask;
+        }
+
+        return {
+            ...subtask,
+            id: existingSubtask.id,
+            completed: existingSubtask.completed,
+        };
+    });
+}
+
 function createTodo(text, details = {}) {
     return {
         id: createTodoId(),
@@ -86,6 +145,7 @@ function createTodo(text, details = {}) {
         dueDate: normalizeDueDate(details.dueDate),
         project: normalizeProject(details.project),
         tags: normalizeTags(details.tags),
+        subtasks: normalizeSubtasks(details.subtasks),
         createdAt: new Date().toISOString(),
     };
 }
@@ -105,6 +165,7 @@ function normalizeTodos(todos) {
             dueDate: normalizeDueDate(todo.dueDate),
             project: normalizeProject(todo.project),
             tags: normalizeTags(todo.tags),
+            subtasks: normalizeSubtasks(todo.subtasks),
             createdAt: todo.createdAt || null,
         }));
 }
@@ -200,9 +261,11 @@ export {
     getTodoDateStatus,
     getTodosDateCounts,
     getVisibleTodos,
+    mergeSubtasks,
     normalizeDueDate,
     normalizePriority,
     normalizeProject,
+    normalizeSubtasks,
     normalizeTags,
     normalizeTodos,
     readTodosBackup,

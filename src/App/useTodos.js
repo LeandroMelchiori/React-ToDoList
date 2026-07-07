@@ -6,6 +6,7 @@ import {
     createTodo,
     getTodosDateCounts,
     getVisibleTodos,
+    mergeSubtasks,
     normalizeDueDate,
     normalizePriority,
     normalizeProject,
@@ -116,6 +117,7 @@ function useTodos() {
                     dueDate: normalizeDueDate(details.dueDate),
                     project: normalizeProject(details.project),
                     tags: normalizeTags(details.tags),
+                    subtasks: mergeSubtasks(todo.subtasks, details.subtasks),
                 }
                 : todo
         );
@@ -124,6 +126,23 @@ function useTodos() {
         setFilter(TODO_FILTERS.all);
         setEditingTodoId(null);
         return { ok: true };
+    }
+
+    const toggleSubtask = (todoId, subtaskId) => {
+        const newTodos = normalizedTodos.map(todo =>
+            todo.id === todoId
+                ? {
+                    ...todo,
+                    subtasks: todo.subtasks.map(subtask =>
+                        subtask.id === subtaskId
+                            ? { ...subtask, completed: !subtask.completed }
+                            : subtask
+                    ),
+                }
+                : todo
+        );
+
+        saveTodos(newTodos);
     }
 
     const openCreateModal = () => {
@@ -201,6 +220,7 @@ function useTodos() {
         setFilter,
         completeTodo,
         deleteTodo,
+        toggleSubtask,
         openCreateModal,
         startEditingTodo,
         startDeletingTodo,

@@ -15,6 +15,10 @@ const demoTodos = [
     dueDate: '2026-07-20',
     project: 'TaskFlow',
     tags: ['frontend', 'testing'],
+    subtasks: [
+      { id: 'demo-1-subtask-1', text: 'Revisar copy', completed: true },
+      { id: 'demo-1-subtask-2', text: 'Validar responsive', completed: false },
+    ],
     createdAt: '2026-07-06T12:00:00.000Z',
   },
   {
@@ -25,6 +29,9 @@ const demoTodos = [
     dueDate: '2026-07-18',
     project: 'TaskFlow',
     tags: ['ux'],
+    subtasks: [
+      { id: 'demo-2-subtask-1', text: 'Probar cierre con Escape', completed: true },
+    ],
     createdAt: '2026-07-06T12:10:00.000Z',
   },
   {
@@ -35,6 +42,7 @@ const demoTodos = [
     dueDate: null,
     project: 'Documentacion',
     tags: ['decisiones'],
+    subtasks: [],
     createdAt: '2026-07-06T12:20:00.000Z',
   },
   {
@@ -45,6 +53,7 @@ const demoTodos = [
     dueDate: '2026-07-22',
     project: 'Deploy',
     tags: ['ci'],
+    subtasks: [],
     createdAt: '2026-07-06T12:30:00.000Z',
   },
 ];

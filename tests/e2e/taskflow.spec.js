@@ -21,6 +21,7 @@ test('manages a todo through the production flow', async ({ page }) => {
   await createDialog.getByLabel('Fecha limite').fill('2026-07-20');
   await createDialog.getByLabel('Proyecto').fill('TaskFlow');
   await createDialog.getByLabel('Etiquetas').fill('frontend, testing');
+  await createDialog.getByLabel('Subtareas').fill('Revisar copy\nValidar responsive');
   await createDialog.getByRole('button', { name: 'Agregar' }).click();
   await expect(page.getByText('Preparar demo del proyecto')).toBeVisible();
   await expect(page.getByText('Alta')).toBeVisible();
@@ -28,6 +29,11 @@ test('manages a todo through the production flow', async ({ page }) => {
   await expect(page.getByText('TaskFlow')).toBeVisible();
   await expect(page.getByText('#frontend')).toBeVisible();
   await expect(page.getByText('#testing')).toBeVisible();
+  await expect(page.getByLabel('Revisar copy')).toBeVisible();
+  await expect(page.getByLabel('Validar responsive')).toBeVisible();
+
+  await page.getByLabel('Revisar copy').check();
+  await expect(page.getByLabel('Revisar copy')).toBeChecked();
 
   await page.getByLabel('Buscar tareas').fill('frontend');
   await expect(page.getByText('Preparar demo del proyecto')).toBeVisible();
@@ -37,6 +43,7 @@ test('manages a todo through the production flow', async ({ page }) => {
   await expect(editDialog.getByRole('textbox', { name: 'Editar tarea' })).toHaveValue('Preparar demo del proyecto');
   await expect(editDialog.getByLabel('Proyecto')).toHaveValue('TaskFlow');
   await expect(editDialog.getByLabel('Etiquetas')).toHaveValue('frontend, testing');
+  await expect(editDialog.getByLabel('Subtareas')).toHaveValue('Revisar copy\nValidar responsive');
 
   await editDialog.getByRole('textbox', { name: 'Editar tarea' }).fill('Preparar demo publica');
   await editDialog.getByLabel('Etiquetas').fill('frontend, qa');

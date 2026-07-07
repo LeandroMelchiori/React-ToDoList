@@ -39,6 +39,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - Editar tareas desde un modal con validacion de duplicados.
 - Asignar prioridad y fecha limite opcional a cada tarea.
 - Organizar tareas por proyecto y etiquetas opcionales.
+- Dividir tareas en subtareas tipo checklist.
 - Marcar tareas como completadas o pendientes.
 - Eliminar tareas con confirmacion previa.
 - Buscar tareas por texto, proyecto o etiqueta.
@@ -186,6 +187,7 @@ La suite actual cubre:
 - Creacion de tareas con ids y texto limpio.
 - Filtros por busqueda y estado.
 - Filtros temporales por tareas vencidas, de hoy y proximas.
+- Creacion y marcado de subtareas.
 - Flujo principal desde la UI: crear, validar, buscar, completar, filtrar y eliminar.
 - Validacion de tareas duplicadas desde el formulario de creacion.
 - Edicion de tareas desde modal y validacion de duplicados en edicion.
@@ -194,7 +196,6 @@ La suite actual cubre:
 
 ## Mejoras futuras
 
-- Subtareas o checklists dentro de una tarea.
 - Atajos de teclado para usuarios frecuentes.
 - Drag and drop para reordenar tareas.
 - Migracion a TypeScript.

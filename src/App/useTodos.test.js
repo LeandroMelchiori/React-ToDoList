@@ -9,6 +9,7 @@ import {
   normalizeDueDate,
   normalizePriority,
   normalizeProject,
+  normalizeSubtasks,
   normalizeTags,
   normalizeTodos,
   readTodosBackup,
@@ -31,6 +32,7 @@ describe('todo helpers', () => {
         dueDate: null,
         project: null,
         tags: [],
+        subtasks: [],
         createdAt: null,
       },
       {
@@ -41,6 +43,7 @@ describe('todo helpers', () => {
         dueDate: null,
         project: null,
         tags: [],
+        subtasks: [],
         createdAt: null,
       },
     ]);
@@ -57,6 +60,7 @@ describe('todo helpers', () => {
       dueDate: '2026-07-20',
       project: 'TaskFlow',
       tags: 'React, testing, React',
+      subtasks: 'Armar caso\nValidar UI',
     });
 
     expect(todo).toMatchObject({
@@ -66,6 +70,10 @@ describe('todo helpers', () => {
       dueDate: '2026-07-20',
       project: 'TaskFlow',
       tags: ['React', 'testing'],
+      subtasks: [
+        { id: 'subtask-0-armar-caso', text: 'Armar caso', completed: false },
+        { id: 'subtask-1-validar-ui', text: 'Validar UI', completed: false },
+      ],
     });
     expect(todo.id).toEqual(expect.any(String));
     expect(todo.createdAt).toEqual(expect.any(String));
@@ -87,6 +95,21 @@ describe('todo helpers', () => {
       'UI',
     ]);
     expect(normalizeTags(null)).toEqual([]);
+  });
+
+  test('normalizes subtasks from text and legacy objects', () => {
+    expect(normalizeSubtasks('  Revisar copy  \n\nValidar mobile')).toEqual([
+      { id: 'subtask-0-revisar-copy', text: 'Revisar copy', completed: false },
+      { id: 'subtask-2-validar-mobile', text: 'Validar mobile', completed: false },
+    ]);
+    expect(normalizeSubtasks([
+      { id: 'step-1', text: 'Configurar deploy', completed: true },
+      { text: '  ' },
+      { text: 'Probar offline' },
+    ])).toEqual([
+      { id: 'step-1', text: 'Configurar deploy', completed: true },
+      { id: 'subtask-2-probar-offline', text: 'Probar offline', completed: false },
+    ]);
   });
 
   test('filters visible todos by text, project, tags and status', () => {
@@ -149,6 +172,7 @@ describe('todo helpers', () => {
         priority: TODO_PRIORITIES.high,
         project: 'TaskFlow',
         tags: ['backup'],
+        subtasks: [{ id: 'subtask-1', text: 'Verificar archivo', completed: true }],
       },
     ]);
 
@@ -162,6 +186,7 @@ describe('todo helpers', () => {
           priority: TODO_PRIORITIES.high,
           project: 'TaskFlow',
           tags: ['backup'],
+          subtasks: [{ id: 'subtask-1', text: 'Verificar archivo', completed: true }],
         }),
       ],
     }));

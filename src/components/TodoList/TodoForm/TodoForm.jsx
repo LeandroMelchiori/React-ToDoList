@@ -13,6 +13,7 @@ function TodoForm({
     initialDueDate = '',
     initialProject = '',
     initialTags = [],
+    initialSubtasks = [],
     label = 'Nueva tarea',
     mode = 'create',
     onCancel,
@@ -24,12 +25,18 @@ function TodoForm({
     const [dueDateValue, setDueDateValue] = React.useState(initialDueDate || '');
     const [projectValue, setProjectValue] = React.useState(initialProject || '');
     const [tagsValue, setTagsValue] = React.useState(Array.isArray(initialTags) ? initialTags.join(', ') : '');
+    const [subtasksValue, setSubtasksValue] = React.useState(
+        Array.isArray(initialSubtasks)
+            ? initialSubtasks.map(subtask => subtask.text).join('\n')
+            : ''
+    );
     const [formError, setFormError] = React.useState('');
     const inputId = mode === 'edit' ? 'editTodo' : 'newTodo';
     const priorityId = mode === 'edit' ? 'editTodoPriority' : 'newTodoPriority';
     const dueDateId = mode === 'edit' ? 'editTodoDueDate' : 'newTodoDueDate';
     const projectId = mode === 'edit' ? 'editTodoProject' : 'newTodoProject';
     const tagsId = mode === 'edit' ? 'editTodoTags' : 'newTodoTags';
+    const subtasksId = mode === 'edit' ? 'editTodoSubtasks' : 'newTodoSubtasks';
 
     const onChange = (event) => {
         setNewTodoValue(event.target.value);
@@ -43,6 +50,7 @@ function TodoForm({
             dueDate: dueDateValue,
             project: projectValue,
             tags: tagsValue,
+            subtasks: subtasksValue,
         });
 
         if (!result.ok) {
@@ -114,6 +122,15 @@ function TodoForm({
                     />
                 </label>
             </div>
+            <label className="TodoForm-subtasks" htmlFor={subtasksId}>
+                Subtareas
+                <textarea
+                    id={subtasksId}
+                    placeholder="Una subtarea por linea"
+                    value={subtasksValue}
+                    onChange={event => setSubtasksValue(event.target.value)}
+                />
+            </label>
             <div className='TodoForm-buttonContainer'>
                 <button
                     type="button"

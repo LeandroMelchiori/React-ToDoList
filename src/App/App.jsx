@@ -44,6 +44,7 @@ function App() {
         setSearchValue,
         setFilter,
         completeTodo,
+        toggleSubtask,
         openCreateModal,
         startEditingTodo,
         startDeletingTodo,
@@ -118,7 +119,9 @@ function App() {
                             dueDate={todo.dueDate}
                             project={todo.project}
                             tags={todo.tags}
+                            subtasks={todo.subtasks}
                             onComplete={() => completeTodo(todo.id)}
+                            onToggleSubtask={(subtaskId) => toggleSubtask(todo.id, subtaskId)}
                             onEdit={() => startEditingTodo(todo.id)}
                             onDelete={() => startDeletingTodo(todo.id)}
                     />
@@ -146,6 +149,7 @@ function App() {
                             initialDueDate={editingTodo?.dueDate}
                             initialProject={editingTodo?.project}
                             initialTags={editingTodo?.tags}
+                            initialSubtasks={editingTodo?.subtasks}
                             label={editingTodo ? 'Editar tarea' : 'Nueva tarea'}
                             mode={formMode}
                             onCancel={closeModal}
