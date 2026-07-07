@@ -6,6 +6,7 @@ function CreateTodoButton({ onCreateTodo, loading }) {
       type="button"
       className="CreateTodoButton"
       aria-label="Crear nueva tarea"
+      aria-keyshortcuts="N"
       disabled={loading}
       onClick={onCreateTodo}
     >

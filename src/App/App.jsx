@@ -1,3 +1,4 @@
+import React from 'react';
 import './App.css';
 import { useTodos } from './useTodos';
 import { TodoCounter } from '../components/TodoHeader/TodoCounter/TodoCounter';
@@ -19,10 +20,20 @@ import { ChangeAlert } from '../components/ChangeAlert/ChangeAlert';
 import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle';
 import { useTheme } from './useTheme';
 
+function isEditableTarget(target) {
+    if (!(target instanceof HTMLElement)) {
+        return false;
+    }
+
+    return target.isContentEditable ||
+        ['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName);
+}
+
 function App() {
 
     const { states, stateUpdaters } = useTodos();
     const { isDarkTheme, toggleTheme } = useTheme();
+    const searchInputRef = React.useRef(null);
 
     const { 
         loading,
@@ -69,6 +80,36 @@ function App() {
     const formMode = editingTodo ? 'edit' : 'create';
     const modalLabel = deletingTodo ? 'Eliminar tarea' : editingTodo ? 'Editar tarea' : 'Crear tarea';
 
+    React.useEffect(() => {
+        const handleKeyboardShortcuts = (event) => {
+            if (
+                event.defaultPrevented ||
+                event.altKey ||
+                event.ctrlKey ||
+                event.metaKey ||
+                isEditableTarget(event.target)
+            ) {
+                return;
+            }
+
+            if (event.key === '/') {
+                event.preventDefault();
+                searchInputRef.current?.focus();
+            }
+
+            if (event.key.toLowerCase() === 'n') {
+                event.preventDefault();
+                openCreateModal();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyboardShortcuts);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyboardShortcuts);
+        };
+    }, [openCreateModal]);
+
     return (
         <>
             <main className="App">
@@ -84,6 +125,7 @@ function App() {
                     completedTodos={completedTodos}
                 />
                 <TodoSearch
+                    ref={searchInputRef}
                     searchValue={searchValue}
                     setSearchValue={setSearchValue}
                 />

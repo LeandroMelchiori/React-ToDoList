@@ -255,6 +255,26 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'Activar modo claro' })).toHaveAttribute('aria-pressed', 'true');
   });
 
+  test('supports keyboard shortcuts for search and creating todos', async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    expect(await screen.findByText('Organiza tu dia con una primera tarea')).toBeInTheDocument();
+
+    await user.keyboard('/');
+    expect(screen.getByLabelText('Buscar tareas')).toHaveFocus();
+
+    await user.keyboard('n');
+    expect(screen.queryByRole('dialog', { name: 'Crear tarea' })).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Buscar tareas')).toHaveValue('n');
+
+    screen.getByLabelText('Buscar tareas').blur();
+    await user.keyboard('n');
+
+    expect(screen.getByRole('dialog', { name: 'Crear tarea' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Nueva tarea')).toHaveFocus();
+  });
+
   test('loads the persisted dark theme', async () => {
     localStorage.setItem('THEME_V1', 'dark');
     renderApp();
