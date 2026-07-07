@@ -8,6 +8,7 @@ import {
     createTodo,
     getTodoFacets,
     getTodoGroups,
+    getTodoInsights,
     getTodosDateCounts,
     getVisibleTodos,
     mergeSubtasks,
@@ -64,6 +65,7 @@ function useTodos() {
     const totalTodos = normalizedTodos.length;
     const pendingTodos = totalTodos - completedTodos;
     const dateCounts = getTodosDateCounts(normalizedTodos);
+    const insights = getTodoInsights(normalizedTodos);
     const facets = getTodoFacets(normalizedTodos);
 
     const visibleTodos = getVisibleTodos(normalizedTodos, searchValue, filter, undefined, {
@@ -74,7 +76,13 @@ function useTodos() {
 
     const completeTodo = (id) => {
         const newTodos = normalizedTodos.map(todo =>
-            todo.id === id ? { ...todo, completed: !todo.completed } : todo
+            todo.id === id
+                ? {
+                    ...todo,
+                    completed: !todo.completed,
+                    completedAt: todo.completed ? null : new Date().toISOString(),
+                }
+                : todo
         );
         saveTodos(newTodos);
     }
@@ -308,6 +316,7 @@ function useTodos() {
         overdueTodos: dateCounts[TODO_FILTERS.overdue],
         todayTodos: dateCounts[TODO_FILTERS.today],
         upcomingTodos: dateCounts[TODO_FILTERS.upcoming],
+        insights,
         projectOptions: facets.projects,
         tagOptions: facets.tags,
         activeProject,

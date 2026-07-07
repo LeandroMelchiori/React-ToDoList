@@ -83,6 +83,10 @@ describe('App', () => {
 
     await user.click(screen.getByRole('button', { name: 'Marcar tarea como completada' }));
     expect(screen.getByText('Completaste todas tus tareas')).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('TODOS_V1'))[0]).toEqual(expect.objectContaining({
+      completed: true,
+      completedAt: expect.any(String),
+    }));
 
     await user.click(screen.getByRole('button', { name: /Completadas/ }));
     expect(screen.getByText('Preparar entrevista tecnica')).toBeInTheDocument();
@@ -203,6 +207,58 @@ describe('App', () => {
       expect.stringContaining('Sin fecha asignada'),
       expect.stringContaining('Ya completada'),
     ]);
+  });
+
+  test('shows local productivity metrics from current todos', async () => {
+    const yesterday = getRelativeDateInputValue(-1);
+    const tomorrow = getRelativeDateInputValue(1);
+    const recentCompletedAt = new Date().toISOString();
+    const oldCompletedAt = new Date();
+    oldCompletedAt.setDate(oldCompletedAt.getDate() - 12);
+
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      {
+        id: 'todo-1',
+        text: 'Terminada reciente',
+        completed: true,
+        completedAt: recentCompletedAt,
+        order: 0,
+      },
+      {
+        id: 'todo-2',
+        text: 'Terminada antigua',
+        completed: true,
+        completedAt: oldCompletedAt.toISOString(),
+        order: 1,
+      },
+      {
+        id: 'todo-3',
+        text: 'Urgente vencida',
+        completed: false,
+        dueDate: yesterday,
+        priority: 'high',
+        order: 2,
+      },
+      {
+        id: 'todo-4',
+        text: 'Proxima normal',
+        completed: false,
+        dueDate: tomorrow,
+        priority: 'medium',
+        order: 3,
+      },
+    ]));
+    renderApp();
+
+    const metrics = await screen.findByRole('region', { name: 'Metricas locales' });
+
+    expect(within(metrics).getByText('Progreso')).toBeInTheDocument();
+    expect(within(metrics).getByText('50%')).toBeInTheDocument();
+    expect(within(metrics).getByText('2 de 4 tareas')).toBeInTheDocument();
+    expect(within(metrics).getByText('Ultimos 7 dias')).toBeInTheDocument();
+    expect(within(metrics).getByText('Vencidas')).toBeInTheDocument();
+    expect(within(metrics).getByText('Alta prioridad')).toBeInTheDocument();
+    expect(within(metrics).getAllByText('1')).toHaveLength(3);
   });
 
   test('filters todos by project and tag facets', async () => {

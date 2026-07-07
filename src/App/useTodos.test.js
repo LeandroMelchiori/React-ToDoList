@@ -9,6 +9,7 @@ import {
   getTodoFacets,
   getTodoDateStatus,
   getTodoGroups,
+  getTodoInsights,
   getTodosDateCounts,
   getVisibleTodos,
   moveTodoToPosition,
@@ -41,6 +42,7 @@ describe('todo helpers', () => {
         tags: [],
         subtasks: [],
         createdAt: null,
+        completedAt: null,
       },
       {
         id: 'todo-2',
@@ -53,6 +55,7 @@ describe('todo helpers', () => {
         tags: [],
         subtasks: [],
         createdAt: null,
+        completedAt: null,
       },
     ]);
   });
@@ -115,6 +118,7 @@ describe('todo helpers', () => {
         { id: 'subtask-0-armar-caso', text: 'Armar caso', completed: false },
         { id: 'subtask-1-validar-ui', text: 'Validar UI', completed: false },
       ],
+      completedAt: null,
     });
     expect(todo.id).toEqual(expect.any(String));
     expect(todo.createdAt).toEqual(expect.any(String));
@@ -269,6 +273,50 @@ describe('todo helpers', () => {
         todos: [todos[1]],
       },
     ]);
+  });
+
+  test('calculates local productivity insights', () => {
+    const todos = [
+      {
+        id: '1',
+        text: 'Completada reciente',
+        completed: true,
+        completedAt: '2026-07-07T10:00:00.000Z',
+        dueDate: '2026-07-05',
+        priority: TODO_PRIORITIES.medium,
+      },
+      {
+        id: '2',
+        text: 'Completada antigua',
+        completed: true,
+        completedAt: '2026-06-20T10:00:00.000Z',
+        priority: TODO_PRIORITIES.low,
+      },
+      {
+        id: '3',
+        text: 'Pendiente vencida',
+        completed: false,
+        dueDate: '2026-07-05',
+        priority: TODO_PRIORITIES.high,
+      },
+      {
+        id: '4',
+        text: 'Pendiente normal',
+        completed: false,
+        dueDate: '2026-07-08',
+        priority: TODO_PRIORITIES.medium,
+      },
+    ];
+
+    expect(getTodoInsights(todos, '2026-07-07')).toEqual({
+      totalTodos: 4,
+      completedTodos: 2,
+      pendingTodos: 2,
+      completionRate: 50,
+      completedLast7Days: 1,
+      overdueTodos: 1,
+      highPriorityPendingTodos: 1,
+    });
   });
 
   test('creates and reads todos backup files', () => {

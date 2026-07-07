@@ -16,8 +16,18 @@
  *   tags: string[],
  *   subtasks: TodoSubtask[],
  *   createdAt: string | null,
+ *   completedAt: string | null,
  * }} Todo
  * @typedef {{ id: TodoGroup, title: string, todos: Todo[] }} TodoGroupView
+ * @typedef {{
+ *   totalTodos: number,
+ *   completedTodos: number,
+ *   pendingTodos: number,
+ *   completionRate: number,
+ *   completedLast7Days: number,
+ *   overdueTodos: number,
+ *   highPriorityPendingTodos: number,
+ * }} TodoInsights
  */
 
 /** @type {{ all: TodoFilter, active: TodoFilter, completed: TodoFilter, overdue: TodoFilter, today: TodoFilter, upcoming: TodoFilter }} */
@@ -103,6 +113,26 @@ function getTodayDateValue(date = new Date()) {
     const day = String(date.getDate()).padStart(2, '0');
 
     return `${year}-${month}-${day}`;
+}
+
+/**
+ * @param {string} dateValue
+ * @param {number} offsetDays
+ * @returns {string}
+ */
+function getDateValueOffset(dateValue, offsetDays) {
+    const date = new Date(`${dateValue}T00:00:00`);
+    date.setDate(date.getDate() + offsetDays);
+
+    return getTodayDateValue(date);
+}
+
+/**
+ * @param {unknown} dateValue
+ * @returns {string | null}
+ */
+function normalizeDateTime(dateValue) {
+    return typeof dateValue === 'string' && dateValue ? dateValue : null;
 }
 
 /**
@@ -255,6 +285,7 @@ function createTodo(text, details = {}) {
         tags: normalizeTags('tags' in details ? details.tags : undefined),
         subtasks: normalizeSubtasks('subtasks' in details ? details.subtasks : undefined),
         createdAt: new Date().toISOString(),
+        completedAt: null,
     };
 }
 
@@ -280,6 +311,7 @@ function normalizeTodos(todos) {
             tags: normalizeTags(todo.tags),
             subtasks: normalizeSubtasks(todo.subtasks),
             createdAt: todo.createdAt || null,
+            completedAt: normalizeDateTime(todo.completedAt),
         }));
 
     return reindexTodos(normalizedTodos.sort((firstTodo, secondTodo) =>
@@ -441,6 +473,37 @@ function getTodosDateCounts(todos, todayDate = getTodayDateValue()) {
         [TODO_FILTERS.today]: 0,
         [TODO_FILTERS.upcoming]: 0,
     });
+}
+
+/**
+ * @param {Todo[]} todos
+ * @param {string} [todayDate]
+ * @returns {TodoInsights}
+ */
+function getTodoInsights(todos, todayDate = getTodayDateValue()) {
+    const normalizedTodos = normalizeTodos(todos);
+    const totalTodos = normalizedTodos.length;
+    const completedTodos = normalizedTodos.filter(todo => todo.completed).length;
+    const pendingTodos = totalTodos - completedTodos;
+    const dateCounts = getTodosDateCounts(normalizedTodos, todayDate);
+    const sevenDaysAgo = getDateValueOffset(todayDate, -6);
+    const completedLast7Days = normalizedTodos.filter(todo => {
+        const completedDate = todo.completedAt?.slice(0, 10);
+
+        return completedDate && completedDate >= sevenDaysAgo && completedDate <= todayDate;
+    }).length;
+
+    return {
+        totalTodos,
+        completedTodos,
+        pendingTodos,
+        completionRate: totalTodos ? Math.round((completedTodos / totalTodos) * 100) : 0,
+        completedLast7Days,
+        overdueTodos: dateCounts[TODO_FILTERS.overdue],
+        highPriorityPendingTodos: normalizedTodos.filter(todo =>
+            !todo.completed && todo.priority === TODO_PRIORITIES.high
+        ).length,
+    };
 }
 
 /**
@@ -620,6 +683,7 @@ export {
     getTodoFacets,
     getTodoDateStatus,
     getTodoGroups,
+    getTodoInsights,
     getTodosDateCounts,
     getVisibleTodos,
     mergeSubtasks,

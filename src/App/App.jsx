@@ -4,6 +4,7 @@ import { useTodos } from './useTodos';
 import { TodoCounter } from '../components/TodoHeader/TodoCounter/TodoCounter';
 import { TodoSearch } from '../components/TodoHeader/TodoSearch/TodoSearch';
 import { TodoFilters } from '../components/TodoHeader/TodoFilters/TodoFilters';
+import { TodoInsights } from '../components/TodoHeader/TodoInsights/TodoInsights';
 import { TodoFacetFilters } from '../components/TodoHeader/TodoFacetFilters/TodoFacetFilters';
 import { TodoBackupActions } from '../components/TodoHeader/TodoBackupActions/TodoBackupActions';
 import { TodoList } from '../components/TodoList/TodoList';
@@ -66,6 +67,7 @@ function App() {
         overdueTodos,
         todayTodos,
         upcomingTodos,
+        insights,
         projectOptions,
         tagOptions,
         activeProject,
@@ -245,6 +247,7 @@ function App() {
                     todayTodos={todayTodos}
                     upcomingTodos={upcomingTodos}
                 />
+                <TodoInsights insights={insights} />
                 <TodoFacetFilters
                     projectOptions={projectOptions}
                     tagOptions={tagOptions}
