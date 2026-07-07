@@ -4,6 +4,7 @@ import {
     TODO_FILTERS,
     createTodosBackup,
     createTodo,
+    getTodosDateCounts,
     getVisibleTodos,
     normalizeDueDate,
     normalizePriority,
@@ -47,6 +48,7 @@ function useTodos() {
     const completedTodos = normalizedTodos.filter(todo => todo.completed).length;
     const totalTodos = normalizedTodos.length;
     const pendingTodos = totalTodos - completedTodos;
+    const dateCounts = getTodosDateCounts(normalizedTodos);
 
     const visibleTodos = getVisibleTodos(normalizedTodos, searchValue, filter);
 
@@ -185,6 +187,9 @@ function useTodos() {
         totalTodos,
         completedTodos,
         pendingTodos,
+        overdueTodos: dateCounts[TODO_FILTERS.overdue],
+        todayTodos: dateCounts[TODO_FILTERS.today],
+        upcomingTodos: dateCounts[TODO_FILTERS.upcoming],
         visibleTodos,
         openModal,
         editingTodo,

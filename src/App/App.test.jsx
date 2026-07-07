@@ -10,6 +10,21 @@ function renderApp() {
   return render(<App />);
 }
 
+function toDateInputValue(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
+function getRelativeDateInputValue(offsetDays) {
+  const date = new Date();
+  date.setDate(date.getDate() + offsetDays);
+
+  return toDateInputValue(date);
+}
+
 describe('App', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -96,6 +111,38 @@ describe('App', () => {
 
     expect(screen.getByText('Esa tarea ya existe.')).toBeInTheDocument();
     expect(within(screen.getByRole('dialog')).getByLabelText('Nueva tarea')).toHaveValue('actualizar portfolio');
+  });
+
+  test('filters todos by due date status', async () => {
+    const user = userEvent.setup();
+    const yesterday = getRelativeDateInputValue(-1);
+    const today = getRelativeDateInputValue(0);
+    const tomorrow = getRelativeDateInputValue(1);
+
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      { id: 'todo-1', text: 'Resolver deuda vencida', completed: false, dueDate: yesterday },
+      { id: 'todo-2', text: 'Enviar avance de hoy', completed: false, dueDate: today },
+      { id: 'todo-3', text: 'Preparar proxima mejora', completed: false, dueDate: tomorrow },
+      { id: 'todo-4', text: 'Tarea vencida completada', completed: true, dueDate: yesterday },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Resolver deuda vencida')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Vencidas: 1' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Hoy: 1' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Proximas: 1' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /Vencidas/ }));
+    expect(screen.getByText('Resolver deuda vencida')).toBeInTheDocument();
+    expect(screen.queryByText('Enviar avance de hoy')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /Hoy/ }));
+    expect(screen.getByText('Enviar avance de hoy')).toBeInTheDocument();
+    expect(screen.queryByText('Resolver deuda vencida')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /Proximas/ }));
+    expect(screen.getByText('Preparar proxima mejora')).toBeInTheDocument();
+    expect(screen.queryByText('Enviar avance de hoy')).not.toBeInTheDocument();
   });
 
   test('toggles and persists dark mode', async () => {

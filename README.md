@@ -42,7 +42,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - Marcar tareas como completadas o pendientes.
 - Eliminar tareas con confirmacion previa.
 - Buscar tareas por texto, proyecto o etiqueta.
-- Filtrar por todas, pendientes o completadas.
+- Filtrar por todas, pendientes, completadas, vencidas, de hoy o proximas.
 - Persistir datos en IndexedDB, manteniendo compatibilidad con datos antiguos en `localStorage`.
 - Normalizar tareas antiguas guardadas sin `id`.
 - Detectar cambios hechos en otra pestana y permitir sincronizar.
@@ -185,6 +185,7 @@ La suite actual cubre:
 - Normalizacion de tareas antiguas.
 - Creacion de tareas con ids y texto limpio.
 - Filtros por busqueda y estado.
+- Filtros temporales por tareas vencidas, de hoy y proximas.
 - Flujo principal desde la UI: crear, validar, buscar, completar, filtrar y eliminar.
 - Validacion de tareas duplicadas desde el formulario de creacion.
 - Edicion de tareas desde modal y validacion de duplicados en edicion.
@@ -193,7 +194,6 @@ La suite actual cubre:
 
 ## Mejoras futuras
 
-- Vistas por fecha limite y tareas vencidas.
 - Subtareas o checklists dentro de una tarea.
 - Atajos de teclado para usuarios frecuentes.
 - Drag and drop para reordenar tareas.

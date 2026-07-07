@@ -3,6 +3,8 @@ import {
   TODO_PRIORITIES,
   createTodosBackup,
   createTodo,
+  getTodoDateStatus,
+  getTodosDateCounts,
   getVisibleTodos,
   normalizeDueDate,
   normalizePriority,
@@ -106,6 +108,35 @@ describe('todo helpers', () => {
     ]);
     expect(getVisibleTodos(todos, 'preparar', TODO_FILTERS.completed)).toEqual([
       todos[0],
+    ]);
+  });
+
+  test('filters todos by due date status', () => {
+    const todos = [
+      { id: '1', text: 'Tarea vencida', completed: false, dueDate: '2026-07-05' },
+      { id: '2', text: 'Tarea de hoy', completed: false, dueDate: '2026-07-06' },
+      { id: '3', text: 'Tarea proxima', completed: false, dueDate: '2026-07-07' },
+      { id: '4', text: 'Tarea completada vencida', completed: true, dueDate: '2026-07-05' },
+      { id: '5', text: 'Tarea sin fecha', completed: false, dueDate: null },
+    ];
+
+    expect(getTodoDateStatus(todos[0], '2026-07-06')).toBe(TODO_FILTERS.overdue);
+    expect(getTodoDateStatus(todos[1], '2026-07-06')).toBe(TODO_FILTERS.today);
+    expect(getTodoDateStatus(todos[2], '2026-07-06')).toBe(TODO_FILTERS.upcoming);
+    expect(getTodoDateStatus(todos[3], '2026-07-06')).toBeNull();
+    expect(getTodosDateCounts(todos, '2026-07-06')).toEqual({
+      overdue: 1,
+      today: 1,
+      upcoming: 1,
+    });
+    expect(getVisibleTodos(todos, '', TODO_FILTERS.overdue, '2026-07-06')).toEqual([
+      todos[0],
+    ]);
+    expect(getVisibleTodos(todos, '', TODO_FILTERS.today, '2026-07-06')).toEqual([
+      todos[1],
+    ]);
+    expect(getVisibleTodos(todos, '', TODO_FILTERS.upcoming, '2026-07-06')).toEqual([
+      todos[2],
     ]);
   });
 

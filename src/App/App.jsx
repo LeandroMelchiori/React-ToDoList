@@ -31,6 +31,9 @@ function App() {
         totalTodos,
         completedTodos,
         pendingTodos,
+        overdueTodos,
+        todayTodos,
+        upcomingTodos,
         visibleTodos,
         openModal,
         editingTodo,
@@ -80,6 +83,9 @@ function App() {
                     totalTodos={totalTodos}
                     completedTodos={completedTodos}
                     pendingTodos={pendingTodos}
+                    overdueTodos={overdueTodos}
+                    todayTodos={todayTodos}
+                    upcomingTodos={upcomingTodos}
                 />
                 <TodoBackupActions
                     onExportTodos={exportTodos}
@@ -98,7 +104,9 @@ function App() {
                 onEmptyTodos={() => <EmptyTodos />}
                 onEmptySearchResults={() => (
                     <p className="TodoList-emptySearch">
-                        No hay tareas que coincidan con tu busqueda.
+                        {searchValue
+                            ? 'No hay tareas que coincidan con tu busqueda.'
+                            : 'No hay tareas para este filtro.'}
                     </p>
                 )}
                 render={todo => (

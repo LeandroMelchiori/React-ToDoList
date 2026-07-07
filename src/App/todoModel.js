@@ -2,6 +2,9 @@ const TODO_FILTERS = {
     all: 'all',
     active: 'active',
     completed: 'completed',
+    overdue: 'overdue',
+    today: 'today',
+    upcoming: 'upcoming',
 };
 
 const TODO_PRIORITIES = {
@@ -20,6 +23,14 @@ function normalizePriority(priority) {
 
 function normalizeDueDate(dueDate) {
     return typeof dueDate === 'string' && dueDate ? dueDate : null;
+}
+
+function getTodayDateValue(date = new Date()) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
 }
 
 function normalizeProject(project) {
@@ -98,7 +109,7 @@ function normalizeTodos(todos) {
         }));
 }
 
-function getVisibleTodos(todos, searchValue, filter) {
+function getVisibleTodos(todos, searchValue, filter, todayDate = getTodayDateValue()) {
     const normalizedSearch = searchValue.trim().toLowerCase();
 
     return todos.filter(todo => {
@@ -111,12 +122,48 @@ function getVisibleTodos(todos, searchValue, filter) {
             .join(' ')
             .toLowerCase();
         const matchesSearch = searchableText.includes(normalizedSearch);
+        const dateStatus = getTodoDateStatus(todo, todayDate);
         const matchesFilter =
             filter === TODO_FILTERS.completed ? todo.completed :
             filter === TODO_FILTERS.active ? !todo.completed :
+            filter === TODO_FILTERS.overdue ? dateStatus === TODO_FILTERS.overdue :
+            filter === TODO_FILTERS.today ? dateStatus === TODO_FILTERS.today :
+            filter === TODO_FILTERS.upcoming ? dateStatus === TODO_FILTERS.upcoming :
             true;
 
         return matchesSearch && matchesFilter;
+    });
+}
+
+function getTodoDateStatus(todo, todayDate = getTodayDateValue()) {
+    if (todo.completed || !todo.dueDate) {
+        return null;
+    }
+
+    if (todo.dueDate < todayDate) {
+        return TODO_FILTERS.overdue;
+    }
+
+    if (todo.dueDate === todayDate) {
+        return TODO_FILTERS.today;
+    }
+
+    return TODO_FILTERS.upcoming;
+}
+
+function getTodosDateCounts(todos, todayDate = getTodayDateValue()) {
+    return todos.reduce((counts, todo) => {
+        const dateStatus = getTodoDateStatus(todo, todayDate);
+
+        if (dateStatus) {
+            counts[dateStatus] += 1;
+        }
+
+        return counts;
+    }, {
+        [TODO_FILTERS.overdue]: 0,
+        [TODO_FILTERS.today]: 0,
+        [TODO_FILTERS.upcoming]: 0,
     });
 }
 
@@ -149,6 +196,9 @@ export {
     TODO_PRIORITIES,
     createTodosBackup,
     createTodo,
+    getTodayDateValue,
+    getTodoDateStatus,
+    getTodosDateCounts,
     getVisibleTodos,
     normalizeDueDate,
     normalizePriority,
