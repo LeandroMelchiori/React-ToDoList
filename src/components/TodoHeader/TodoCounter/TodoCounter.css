@@ -1,9 +1,11 @@
 .TodoCounter {
+  box-sizing: border-box;
   color: var(--color-text);
   font-size: clamp(28px, 4vw, 44px);
   line-height: 1.15;
   max-width: 720px;
   margin: 0 auto;
+  min-height: 148px;
   text-align: center;
   padding: 56px 16px 24px;
   font-weight: 800;

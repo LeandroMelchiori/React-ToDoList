@@ -1,9 +1,7 @@
 import './PwaStatus.css';
 
 function PwaStatus({ hasUpdate, isOfflineReady, isOnline, onApplyUpdate }) {
-  if (!hasUpdate && isOnline && !isOfflineReady) {
-    return null;
-  }
+  const shouldShowStatus = hasUpdate || !isOnline || isOfflineReady;
 
   const message = hasUpdate
     ? 'Hay una nueva version disponible.'
@@ -12,12 +10,16 @@ function PwaStatus({ hasUpdate, isOfflineReady, isOnline, onApplyUpdate }) {
       : 'TaskFlow esta listo para usarse offline.';
 
   return (
-    <div className="PwaStatus" role="status" aria-live="polite">
-      <span>{message}</span>
-      {hasUpdate && (
-        <button type="button" onClick={onApplyUpdate}>
-          Actualizar app
-        </button>
+    <div className="PwaStatusSlot" aria-hidden={shouldShowStatus ? undefined : 'true'}>
+      {shouldShowStatus && (
+        <div className="PwaStatus" role="status" aria-live="polite">
+          <span>{message}</span>
+          {hasUpdate && (
+            <button type="button" onClick={onApplyUpdate}>
+              Actualizar app
+            </button>
+          )}
+        </div>
       )}
     </div>
   );

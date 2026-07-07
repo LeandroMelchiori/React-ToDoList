@@ -1,3 +1,9 @@
+.PwaStatusSlot {
+  box-sizing: border-box;
+  min-height: 50px;
+  padding-top: 14px;
+}
+
 .PwaStatus {
   align-items: center;
   background: var(--color-surface);
@@ -10,7 +16,7 @@
   font-weight: 800;
   gap: 10px;
   justify-content: center;
-  margin: 14px auto 0;
+  margin: 0 auto;
   max-width: min(100%, 620px);
   padding: 8px 14px;
 }
