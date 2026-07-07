@@ -2,6 +2,8 @@ import {
   TODO_FILTERS,
   TODO_GROUPS,
   TODO_PRIORITIES,
+  analyzeTodosImport,
+  applyTodosImport,
   createTodosBackup,
   createTodo,
   getTodoFacets,
@@ -305,5 +307,48 @@ describe('todo helpers', () => {
       ok: false,
       error: 'El archivo no contiene una lista de tareas valida.',
     });
+  });
+
+  test('previews imports with duplicate counts before saving', () => {
+    const result = analyzeTodosImport([
+      { id: 'todo-1', text: 'Preparar demo', completed: false },
+      { id: 'todo-2', text: 'Revisar README', completed: false },
+    ], {
+      todos: [
+        { id: 'todo-3', text: 'Nueva tarea' },
+        { id: 'todo-4', text: 'preparar demo' },
+        { id: 'todo-1', text: 'Otro texto' },
+      ],
+    });
+
+    expect(result).toEqual(expect.objectContaining({
+      ok: true,
+      totalCount: 3,
+      newCount: 1,
+      duplicateCount: 2,
+    }));
+  });
+
+  test('merges imports without duplicating existing todos', () => {
+    const result = applyTodosImport([
+      { id: 'todo-1', text: 'Preparar demo', completed: false, order: 0 },
+    ], {
+      todos: [
+        { id: 'todo-2', text: 'Preparar demo' },
+        { id: 'todo-3', text: 'Nueva tarea' },
+        { id: 'todo-4', text: 'Nueva tarea' },
+      ],
+    }, 'merge');
+
+    expect(result).toEqual(expect.objectContaining({
+      ok: true,
+      totalCount: 3,
+      importedCount: 1,
+      skippedDuplicates: 2,
+    }));
+    expect(result.todos).toEqual([
+      expect.objectContaining({ id: 'todo-1', text: 'Preparar demo', order: 0 }),
+      expect.objectContaining({ id: 'todo-3', text: 'Nueva tarea', order: 1 }),
+    ]);
   });
 });

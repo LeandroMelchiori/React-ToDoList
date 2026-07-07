@@ -572,13 +572,17 @@ describe('App', () => {
 
     await user.upload(screen.getByLabelText('Importar tareas desde JSON'), backupFile);
 
+    expect(screen.getByRole('region', { name: 'Previsualizacion de importacion' })).toBeInTheDocument();
+    expect(screen.getByText('taskflow-backup.json: 1 tarea encontrada.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Reemplazar tareas' }));
+
     expect(await screen.findByText('Importar tareas')).toBeInTheDocument();
     expect(screen.getByText('Baja')).toBeInTheDocument();
     expect(screen.getByText('01/08/2026')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Filtrar por proyecto Administracion' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Filtrar por etiqueta json' })).toBeInTheDocument();
     expect(screen.getByLabelText('Validar archivo')).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('1 tarea importada.');
+    expect(screen.getByRole('status')).toHaveTextContent('1 tarea importada. Tus tareas anteriores fueron reemplazadas.');
     expect(JSON.parse(localStorage.getItem('TODOS_V1'))).toEqual([
       expect.objectContaining({
         id: 'todo-imported',
@@ -589,6 +593,40 @@ describe('App', () => {
         tags: ['json'],
         subtasks: [{ id: 'subtask-imported', text: 'Validar archivo', completed: false }],
       }),
+    ]);
+  });
+
+  test('merges imported todos and skips duplicates after preview', async () => {
+    const user = userEvent.setup();
+    const backupFile = new File([
+      JSON.stringify({
+        version: 1,
+        todos: [
+          { id: 'todo-2', text: 'Preparar demo', completed: false },
+          { id: 'todo-3', text: 'Nueva tarea importada', completed: false, project: 'Import' },
+        ],
+      }),
+    ], 'taskflow-merge.json', { type: 'application/json' });
+
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      { id: 'todo-1', text: 'Preparar demo', completed: false, order: 0 },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Preparar demo')).toBeInTheDocument();
+
+    await user.upload(screen.getByLabelText('Importar tareas desde JSON'), backupFile);
+
+    expect(screen.getByText('taskflow-merge.json: 2 tareas encontradas.')).toBeInTheDocument();
+    expect(screen.getByText('Al fusionar: 1 tarea agregada y 1 duplicada omitida.')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Fusionar sin duplicados' }));
+
+    expect(screen.getByText('Nueva tarea importada')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('1 tarea agregada. 1 duplicada omitida.');
+    expect(JSON.parse(localStorage.getItem('TODOS_V1')).map(todo => todo.text)).toEqual([
+      'Preparar demo',
+      'Nueva tarea importada',
     ]);
   });
 

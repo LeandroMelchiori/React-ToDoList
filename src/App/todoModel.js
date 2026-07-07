@@ -512,10 +512,108 @@ function readTodosBackup(backup) {
     };
 }
 
+/**
+ * @param {Todo} todo
+ * @returns {string[]}
+ */
+function getTodoDuplicateKeys(todo) {
+    return [
+        todo.id ? `id:${todo.id}` : null,
+        `text:${todo.text.toLowerCase()}`,
+    ].filter(Boolean);
+}
+
+/**
+ * @param {Todo[]} existingTodos
+ * @param {Todo[]} importedTodos
+ * @returns {{ newTodos: Todo[], duplicateTodos: Todo[] }}
+ */
+function splitImportedTodos(existingTodos, importedTodos) {
+    const seenKeys = new Set(normalizeTodos(existingTodos).flatMap(getTodoDuplicateKeys));
+
+    return normalizeTodos(importedTodos).reduce((result, todo) => {
+        const todoKeys = getTodoDuplicateKeys(todo);
+        const isDuplicate = todoKeys.some(key => seenKeys.has(key));
+
+        todoKeys.forEach(key => seenKeys.add(key));
+
+        if (isDuplicate) {
+            result.duplicateTodos.push(todo);
+        } else {
+            result.newTodos.push(todo);
+        }
+
+        return result;
+    }, {
+        newTodos: [],
+        duplicateTodos: [],
+    });
+}
+
+/**
+ * @param {Todo[]} existingTodos
+ * @param {unknown} backup
+ * @returns {{ ok: true, todos: Todo[], totalCount: number, newCount: number, duplicateCount: number } | { ok: false, error: string }}
+ */
+function analyzeTodosImport(existingTodos, backup) {
+    const result = readTodosBackup(backup);
+
+    if (!result.ok) {
+        return result;
+    }
+
+    const { newTodos, duplicateTodos } = splitImportedTodos(existingTodos, result.todos);
+
+    return {
+        ok: true,
+        todos: result.todos,
+        totalCount: result.todos.length,
+        newCount: newTodos.length,
+        duplicateCount: duplicateTodos.length,
+    };
+}
+
+/**
+ * @param {Todo[]} existingTodos
+ * @param {unknown} backup
+ * @param {'merge' | 'replace'} [mode]
+ * @returns {{ ok: true, todos: Todo[], totalCount: number, importedCount: number, skippedDuplicates: number } | { ok: false, error: string }}
+ */
+function applyTodosImport(existingTodos, backup, mode = 'replace') {
+    const result = readTodosBackup(backup);
+
+    if (!result.ok) {
+        return result;
+    }
+
+    if (mode !== 'merge') {
+        return {
+            ok: true,
+            todos: result.todos,
+            totalCount: result.todos.length,
+            importedCount: result.todos.length,
+            skippedDuplicates: 0,
+        };
+    }
+
+    const normalizedExistingTodos = normalizeTodos(existingTodos);
+    const { newTodos, duplicateTodos } = splitImportedTodos(normalizedExistingTodos, result.todos);
+
+    return {
+        ok: true,
+        todos: reindexTodos([...normalizedExistingTodos, ...newTodos]),
+        totalCount: result.todos.length,
+        importedCount: newTodos.length,
+        skippedDuplicates: duplicateTodos.length,
+    };
+}
+
 export {
     TODO_FILTERS,
     TODO_GROUPS,
     TODO_PRIORITIES,
+    analyzeTodosImport,
+    applyTodosImport,
     createTodosBackup,
     createTodo,
     getTodayDateValue,

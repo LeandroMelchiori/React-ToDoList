@@ -2,6 +2,8 @@ import React from 'react';
 import { useLocalStorage } from './useLocalStorage';
 import {
     TODO_FILTERS,
+    analyzeTodosImport,
+    applyTodosImport,
     createTodosBackup,
     createTodo,
     getTodoFacets,
@@ -15,7 +17,6 @@ import {
     normalizeProject,
     normalizeTags,
     normalizeTodos,
-    readTodosBackup,
     reindexTodos,
 } from './todoModel';
 
@@ -272,8 +273,11 @@ function useTodos() {
 
     const exportTodos = () => createTodosBackup(normalizedTodos);
 
-    const importTodos = (backup) => {
-        const result = readTodosBackup(backup);
+    const previewTodosImport = (backup) => analyzeTodosImport(normalizedTodos, backup);
+
+    const importTodos = (backup, options = {}) => {
+        const mode = options.mode === 'merge' ? 'merge' : 'replace';
+        const result = applyTodosImport(normalizedTodos, backup, mode);
 
         if (!result.ok) {
             return result;
@@ -286,7 +290,10 @@ function useTodos() {
 
         return {
             ok: true,
-            count: result.todos.length,
+            count: result.importedCount,
+            skippedDuplicates: result.skippedDuplicates,
+            totalCount: result.totalCount,
+            mode,
         };
     }
 
@@ -334,6 +341,7 @@ function useTodos() {
         addTodo,
         updateTodo,
         exportTodos,
+        previewTodosImport,
         importTodos,
         syncTodos
     }

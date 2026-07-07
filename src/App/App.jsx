@@ -98,6 +98,7 @@ function App() {
         addTodo,
         updateTodo,
         exportTodos,
+        previewTodosImport,
         importTodos,
         syncTodos
     } = stateUpdaters;
@@ -255,6 +256,7 @@ function App() {
                 />
                 <TodoBackupActions
                     onExportTodos={exportTodos}
+                    onPreviewImport={previewTodosImport}
                     onImportTodos={importTodos}
                 />
             </TodoHeader>
