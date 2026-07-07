@@ -3,6 +3,7 @@ import { CompleteIcon } from '../../TodoIcon/CompleteIcon';
 import { DeleteIcon } from '../../TodoIcon/DeleteIcon';
 import { EditIcon } from '../../TodoIcon/EditIcon';
 import { MoveIcon } from '../../TodoIcon/MoveIcon';
+import { handleButtonGroupNavigation } from '../../buttonGroupNavigation';
 
 const TODO_PRIORITY_LABELS = {
     low: 'Baja',
@@ -32,7 +33,12 @@ function TodoItem(props) {
 
   return (
     <li className="TodoItem">
-      <div className="TodoItem-orderActions" aria-label="Ordenar tarea">
+      <div
+        className="TodoItem-orderActions"
+        role="group"
+        aria-label={`Ordenar tarea ${props.text}`}
+        onKeyDown={handleButtonGroupNavigation}
+      >
         <MoveIcon
           direction="up"
           disabled={!props.canMoveUp}

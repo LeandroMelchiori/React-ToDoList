@@ -1,3 +1,4 @@
+import { handleButtonGroupNavigation } from '../../buttonGroupNavigation';
 import './TodoFacetFilters.css';
 
 function TodoFacetFilters({
@@ -18,7 +19,12 @@ function TodoFacetFilters({
   }
 
   return (
-    <div className="TodoFacetFilters" role="group" aria-label="Filtrar por proyecto o etiqueta">
+    <div
+      className="TodoFacetFilters"
+      role="group"
+      aria-label="Filtrar por proyecto o etiqueta"
+      onKeyDown={handleButtonGroupNavigation}
+    >
       {hasProjects && (
         <div className="TodoFacetFilters-group" role="group" aria-label="Proyectos">
           <span>Proyectos</span>

@@ -244,6 +244,74 @@ describe('App', () => {
     ]);
   });
 
+  test('moves focus through filters with arrow keys', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      { id: 'todo-1', text: 'Preparar demo', completed: false, project: 'TaskFlow', tags: ['frontend'] },
+      { id: 'todo-2', text: 'Ordenar docs', completed: true, project: 'Docs', tags: ['contenido'] },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Preparar demo')).toBeInTheDocument();
+
+    const filtersGroup = screen.getByRole('group', { name: 'Filtrar tareas' });
+    const allFilter = within(filtersGroup).getByRole('button', { name: /Todas/ });
+    const pendingFilter = within(filtersGroup).getByRole('button', { name: /Pendientes/ });
+    const todayFilter = within(filtersGroup).getByRole('button', { name: /Hoy/ });
+    const upcomingFilter = within(filtersGroup).getByRole('button', { name: /Proximas/ });
+
+    allFilter.focus();
+    await user.keyboard('{ArrowRight}');
+    expect(pendingFilter).toHaveFocus();
+
+    await user.keyboard('{End}');
+    expect(upcomingFilter).toHaveFocus();
+
+    await user.keyboard('{ArrowLeft}');
+    expect(todayFilter).toHaveFocus();
+
+    const projectsGroup = screen.getByRole('group', { name: 'Proyectos' });
+    const docsProject = within(projectsGroup).getByRole('button', { name: /Docs/ });
+    const taskFlowProject = within(projectsGroup).getByRole('button', { name: /TaskFlow/ });
+
+    docsProject.focus();
+    await user.keyboard('{ArrowRight}');
+
+    expect(taskFlowProject).toHaveFocus();
+  });
+
+  test('moves focus through order buttons with arrow keys', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      { id: 'todo-1', text: 'Primera tarea', completed: false, order: 0 },
+      { id: 'todo-2', text: 'Segunda tarea', completed: false, order: 1 },
+      { id: 'todo-3', text: 'Tercera tarea', completed: false, order: 2 },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Primera tarea')).toBeInTheDocument();
+
+    const items = within(screen.getByRole('list', { name: 'Lista de tareas' })).getAllByRole('listitem');
+    const orderGroup = within(items[1]).getByRole('group', { name: 'Ordenar tarea Segunda tarea' });
+    const moveUpButton = within(orderGroup).getByRole('button', { name: 'Subir tarea' });
+    const moveDownButton = within(orderGroup).getByRole('button', { name: 'Bajar tarea' });
+
+    moveUpButton.focus();
+    await user.keyboard('{ArrowDown}');
+    expect(moveDownButton).toHaveFocus();
+
+    await user.keyboard('{ArrowUp}');
+    expect(moveUpButton).toHaveFocus();
+
+    await user.keyboard('{Enter}');
+
+    expect(JSON.parse(localStorage.getItem('TODOS_V1')).map(todo => todo.text)).toEqual([
+      'Segunda tarea',
+      'Primera tarea',
+      'Tercera tarea',
+    ]);
+  });
+
   test('creates and toggles todo subtasks', async () => {
     const user = userEvent.setup();
     renderApp();

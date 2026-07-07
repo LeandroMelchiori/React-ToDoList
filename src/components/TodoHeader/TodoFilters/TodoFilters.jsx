@@ -1,4 +1,5 @@
 import { TODO_FILTERS } from '../../../App/todoModel';
+import { handleButtonGroupNavigation } from '../../buttonGroupNavigation';
 import './TodoFilters.css';
 
 const filterOptions = [
@@ -22,7 +23,12 @@ function TodoFilters({
   upcomingTodos,
 }) {
   return (
-    <div className="TodoFilters" role="group" aria-label="Filtrar tareas">
+    <div
+      className="TodoFilters"
+      role="group"
+      aria-label="Filtrar tareas"
+      onKeyDown={handleButtonGroupNavigation}
+    >
       {filterOptions.map(option => {
         const isActive = filter === option.value;
         const count = option.getCount({
