@@ -643,6 +643,32 @@ describe('App', () => {
     ]);
   });
 
+  test('undoes a deleted todo and restores its order', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      { id: 'todo-1', text: 'Publicar demo', completed: false, order: 0 },
+      { id: 'todo-2', text: 'Revisar metricas', completed: false, order: 1 },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Publicar demo')).toBeInTheDocument();
+
+    await user.click(screen.getAllByRole('button', { name: 'Eliminar tarea' })[0]);
+    await user.click(within(screen.getByRole('dialog', { name: 'Eliminar tarea' })).getByRole('button', { name: 'Eliminar' }));
+
+    expect(screen.queryByText('Publicar demo')).not.toBeInTheDocument();
+    expect(screen.getByText('Eliminaste "Publicar demo".')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Deshacer' }));
+
+    expect(screen.getByText('Publicar demo')).toBeInTheDocument();
+    expect(screen.queryByText('Eliminaste "Publicar demo".')).not.toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('TODOS_V1')).map(todo => todo.text)).toEqual([
+      'Publicar demo',
+      'Revisar metricas',
+    ]);
+  });
+
   test('keeps focus inside the modal and closes it with Escape', async () => {
     const user = userEvent.setup();
     renderApp();

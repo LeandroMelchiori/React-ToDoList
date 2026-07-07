@@ -19,6 +19,7 @@ import { EmptyTodos } from '../components/TodoList/EmptyTodos/EmptyTodos';
 import { ChangeAlert } from '../components/ChangeAlert/ChangeAlert';
 import { PwaStatus } from '../components/PwaStatus/PwaStatus';
 import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle';
+import { UndoToast } from '../components/UndoToast/UndoToast';
 import { usePwaStatus } from './usePwaStatus';
 import { useTheme } from './useTheme';
 
@@ -63,6 +64,7 @@ function App() {
         openModal,
         editingTodo,
         deletingTodo,
+        recentlyDeletedTodo,
     } = states;
     
     const {
@@ -78,6 +80,8 @@ function App() {
         startEditingTodo,
         startDeletingTodo,
         confirmDeleteTodo,
+        undoDeleteTodo,
+        dismissUndoDelete,
         closeModal,
         addTodo,
         updateTodo,
@@ -246,6 +250,11 @@ function App() {
 
             <ChangeAlert
                 syncTodos={syncTodos} />
+            <UndoToast
+                message={recentlyDeletedTodo ? `Eliminaste "${recentlyDeletedTodo.text}".` : ''}
+                onDismiss={dismissUndoDelete}
+                onUndo={undoDeleteTodo}
+            />
         </>
     );
 }

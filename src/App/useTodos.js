@@ -51,6 +51,9 @@ function useTodos() {
     const [deletingTodoId, setDeletingTodoId] =
      React.useState(null);
 
+    const [recentlyDeletedTodo, setRecentlyDeletedTodo] =
+     React.useState(null);
+
     const normalizedTodos = normalizeTodos(todos);
     const editingTodo = normalizedTodos.find(todo => todo.id === editingTodoId) || null;
     const deletingTodo = normalizedTodos.find(todo => todo.id === deletingTodoId) || null;
@@ -75,8 +78,15 @@ function useTodos() {
     }
 
     const deleteTodo = (id) => {
+        const todoToDelete = normalizedTodos.find(todo => todo.id === id);
+
+        if (!todoToDelete) {
+            return;
+        }
+
         const newTodos = reindexTodos(normalizedTodos.filter(todo => todo.id !== id));
-        saveTodos(newTodos)
+        saveTodos(newTodos);
+        setRecentlyDeletedTodo(todoToDelete);
     }
 
     const addTodo = (text, details = {}) => {
@@ -221,6 +231,27 @@ function useTodos() {
         setOpenModal(false);
     }
 
+    const undoDeleteTodo = () => {
+        if (!recentlyDeletedTodo) {
+            return;
+        }
+
+        if (normalizedTodos.some(todo => todo.id === recentlyDeletedTodo.id)) {
+            setRecentlyDeletedTodo(null);
+            return;
+        }
+
+        const restoredTodos = [...normalizedTodos];
+        const restoredIndex = Math.min(recentlyDeletedTodo.order, restoredTodos.length);
+        restoredTodos.splice(restoredIndex, 0, recentlyDeletedTodo);
+        saveTodos(reindexTodos(restoredTodos));
+        setRecentlyDeletedTodo(null);
+    }
+
+    const dismissUndoDelete = () => {
+        setRecentlyDeletedTodo(null);
+    }
+
     const closeModal = () => {
         setOpenModal(false);
         setEditingTodoId(null);
@@ -267,6 +298,7 @@ function useTodos() {
         openModal,
         editingTodo,
         deletingTodo,
+        recentlyDeletedTodo,
     }
 
     const stateUpdaters = {
@@ -283,6 +315,8 @@ function useTodos() {
         startEditingTodo,
         startDeletingTodo,
         confirmDeleteTodo,
+        undoDeleteTodo,
+        dismissUndoDelete,
         closeModal,
         addTodo,
         updateTodo,
