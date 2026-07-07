@@ -45,7 +45,7 @@ function TodoFilters({
             key={option.value}
             type="button"
             className={`TodoFilters-button ${isActive ? 'TodoFilters-button--active' : ''}`}
-            aria-label={`${option.label}: ${count}`}
+            aria-label={`${option.label} ${count} tareas`}
             aria-pressed={isActive}
             disabled={loading}
             onClick={() => setFilter(option.value)}

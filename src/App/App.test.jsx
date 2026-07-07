@@ -132,9 +132,9 @@ describe('App', () => {
     renderApp();
 
     expect(await screen.findByText('Resolver deuda vencida')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Vencidas: 1' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Hoy: 1' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Proximas: 1' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Vencidas 1 tareas' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Hoy 1 tareas' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Proximas 1 tareas' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /Vencidas/ }));
     expect(screen.getByText('Resolver deuda vencida')).toBeInTheDocument();
