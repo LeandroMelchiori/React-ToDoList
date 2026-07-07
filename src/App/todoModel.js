@@ -1,3 +1,26 @@
+// @ts-check
+
+/**
+ * @typedef {'all' | 'active' | 'completed' | 'overdue' | 'today' | 'upcoming'} TodoFilter
+ * @typedef {'low' | 'medium' | 'high'} TodoPriority
+ * @typedef {'overdue' | 'today' | 'upcoming' | 'unscheduled' | 'completed'} TodoGroup
+ * @typedef {{ id: string, text: string, completed: boolean }} TodoSubtask
+ * @typedef {{
+ *   id: string,
+ *   text: string,
+ *   completed: boolean,
+ *   order: number,
+ *   priority: TodoPriority,
+ *   dueDate: string | null,
+ *   project: string | null,
+ *   tags: string[],
+ *   subtasks: TodoSubtask[],
+ *   createdAt: string | null,
+ * }} Todo
+ * @typedef {{ id: TodoGroup, title: string, todos: Todo[] }} TodoGroupView
+ */
+
+/** @type {{ all: TodoFilter, active: TodoFilter, completed: TodoFilter, overdue: TodoFilter, today: TodoFilter, upcoming: TodoFilter }} */
 const TODO_FILTERS = {
     all: 'all',
     active: 'active',
@@ -7,12 +30,14 @@ const TODO_FILTERS = {
     upcoming: 'upcoming',
 };
 
+/** @type {{ low: TodoPriority, medium: TodoPriority, high: TodoPriority }} */
 const TODO_PRIORITIES = {
     low: 'low',
     medium: 'medium',
     high: 'high',
 };
 
+/** @type {{ overdue: TodoGroup, today: TodoGroup, upcoming: TodoGroup, unscheduled: TodoGroup, completed: TodoGroup }} */
 const TODO_GROUPS = {
     overdue: 'overdue',
     today: 'today',
@@ -21,6 +46,7 @@ const TODO_GROUPS = {
     completed: 'completed',
 };
 
+/** @type {Record<TodoGroup, string>} */
 const TODO_GROUP_LABELS = {
     [TODO_GROUPS.overdue]: 'Vencidas',
     [TODO_GROUPS.today]: 'Hoy',
@@ -29,6 +55,7 @@ const TODO_GROUP_LABELS = {
     [TODO_GROUPS.completed]: 'Completadas',
 };
 
+/** @type {TodoGroup[]} */
 const TODO_GROUP_ORDER = [
     TODO_GROUPS.overdue,
     TODO_GROUPS.today,
@@ -39,20 +66,37 @@ const TODO_GROUP_ORDER = [
 
 const TODO_BACKUP_VERSION = 1;
 
+/**
+ * @param {unknown} priority
+ * @returns {TodoPriority}
+ */
 function normalizePriority(priority) {
-    return Object.values(TODO_PRIORITIES).includes(priority)
-        ? priority
-        : TODO_PRIORITIES.medium;
+    const validPriority = Object.values(TODO_PRIORITIES).find(value => value === priority);
+
+    return validPriority || TODO_PRIORITIES.medium;
 }
 
+/**
+ * @param {unknown} dueDate
+ * @returns {string | null}
+ */
 function normalizeDueDate(dueDate) {
     return typeof dueDate === 'string' && dueDate ? dueDate : null;
 }
 
+/**
+ * @param {unknown} order
+ * @param {number} [fallback]
+ * @returns {number}
+ */
 function normalizeOrder(order, fallback = 0) {
-    return Number.isFinite(order) && order >= 0 ? order : fallback;
+    return typeof order === 'number' && Number.isFinite(order) && order >= 0 ? order : fallback;
 }
 
+/**
+ * @param {Date} [date]
+ * @returns {string}
+ */
 function getTodayDateValue(date = new Date()) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -61,10 +105,18 @@ function getTodayDateValue(date = new Date()) {
     return `${year}-${month}-${day}`;
 }
 
+/**
+ * @param {unknown} project
+ * @returns {string | null}
+ */
 function normalizeProject(project) {
     return typeof project === 'string' && project.trim() ? project.trim() : null;
 }
 
+/**
+ * @param {unknown} tags
+ * @returns {string[]}
+ */
 function normalizeTags(tags) {
     const rawTags = Array.isArray(tags)
         ? tags
@@ -88,6 +140,9 @@ function normalizeTags(tags) {
         .slice(0, 8);
 }
 
+/**
+ * @returns {string}
+ */
 function createTodoId() {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
         return crypto.randomUUID();
@@ -96,6 +151,11 @@ function createTodoId() {
     return `todo-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+/**
+ * @param {{ text?: unknown }} todo
+ * @param {number} index
+ * @returns {string}
+ */
 function createLegacyTodoId(todo, index) {
     const text = String(todo.text || 'todo')
         .toLowerCase()
@@ -105,6 +165,11 @@ function createLegacyTodoId(todo, index) {
     return `legacy-${index}-${text || 'item'}`;
 }
 
+/**
+ * @param {{ text?: unknown }} subtask
+ * @param {number} index
+ * @returns {string}
+ */
 function createLegacySubtaskId(subtask, index) {
     const text = String(subtask.text || 'subtask')
         .toLowerCase()
@@ -114,6 +179,10 @@ function createLegacySubtaskId(subtask, index) {
     return `subtask-${index}-${text || 'item'}`;
 }
 
+/**
+ * @param {unknown} subtasks
+ * @returns {TodoSubtask[]}
+ */
 function normalizeSubtasks(subtasks) {
     const rawSubtasks = Array.isArray(subtasks)
         ? subtasks
@@ -144,6 +213,11 @@ function normalizeSubtasks(subtasks) {
         .filter(Boolean);
 }
 
+/**
+ * @param {unknown} existingSubtasks
+ * @param {unknown} nextSubtasks
+ * @returns {TodoSubtask[]}
+ */
 function mergeSubtasks(existingSubtasks, nextSubtasks) {
     const normalizedExistingSubtasks = normalizeSubtasks(existingSubtasks);
 
@@ -164,21 +238,30 @@ function mergeSubtasks(existingSubtasks, nextSubtasks) {
     });
 }
 
+/**
+ * @param {string} text
+ * @param {object} [details]
+ * @returns {Todo}
+ */
 function createTodo(text, details = {}) {
     return {
         id: createTodoId(),
         text: text.trim(),
         completed: false,
-        order: normalizeOrder(details.order),
-        priority: normalizePriority(details.priority),
-        dueDate: normalizeDueDate(details.dueDate),
-        project: normalizeProject(details.project),
-        tags: normalizeTags(details.tags),
-        subtasks: normalizeSubtasks(details.subtasks),
+        order: normalizeOrder('order' in details ? details.order : undefined),
+        priority: normalizePriority('priority' in details ? details.priority : undefined),
+        dueDate: normalizeDueDate('dueDate' in details ? details.dueDate : undefined),
+        project: normalizeProject('project' in details ? details.project : undefined),
+        tags: normalizeTags('tags' in details ? details.tags : undefined),
+        subtasks: normalizeSubtasks('subtasks' in details ? details.subtasks : undefined),
         createdAt: new Date().toISOString(),
     };
 }
 
+/**
+ * @param {unknown} todos
+ * @returns {Todo[]}
+ */
 function normalizeTodos(todos) {
     if (!Array.isArray(todos)) {
         return [];
@@ -201,9 +284,13 @@ function normalizeTodos(todos) {
 
     return reindexTodos(normalizedTodos.sort((firstTodo, secondTodo) =>
         firstTodo.order - secondTodo.order
-    ));
+        ));
 }
 
+/**
+ * @param {Todo[]} todos
+ * @returns {Todo[]}
+ */
 function reindexTodos(todos) {
     return todos.map((todo, index) => ({
         ...todo,
@@ -211,6 +298,14 @@ function reindexTodos(todos) {
     }));
 }
 
+/**
+ * @param {Todo[]} todos
+ * @param {string} searchValue
+ * @param {TodoFilter} filter
+ * @param {string} [todayDate]
+ * @param {{ project?: unknown, tag?: unknown }} [facetFilters]
+ * @returns {Todo[]}
+ */
 function getVisibleTodos(todos, searchValue, filter, todayDate = getTodayDateValue(), facetFilters = {}) {
     const normalizedSearch = searchValue.trim().toLowerCase();
     const projectFilter = normalizeProject(facetFilters.project);
@@ -244,6 +339,10 @@ function getVisibleTodos(todos, searchValue, filter, todayDate = getTodayDateVal
     });
 }
 
+/**
+ * @param {(string | null)[]} values
+ * @returns {{ name: string, count: number }[]}
+ */
 function mapFacetCounts(values) {
     const facets = new Map();
 
@@ -260,6 +359,10 @@ function mapFacetCounts(values) {
     return [...facets.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
+/**
+ * @param {Todo[]} todos
+ * @returns {{ projects: { name: string, count: number }[], tags: { name: string, count: number }[] }}
+ */
 function getTodoFacets(todos) {
     return {
         projects: mapFacetCounts(todos.map(todo => todo.project)),
@@ -267,6 +370,11 @@ function getTodoFacets(todos) {
     };
 }
 
+/**
+ * @param {Todo} todo
+ * @param {string} [todayDate]
+ * @returns {TodoFilter | null}
+ */
 function getTodoDateStatus(todo, todayDate = getTodayDateValue()) {
     if (todo.completed || !todo.dueDate) {
         return null;
@@ -283,6 +391,11 @@ function getTodoDateStatus(todo, todayDate = getTodayDateValue()) {
     return TODO_FILTERS.upcoming;
 }
 
+/**
+ * @param {Todo[]} todos
+ * @param {string} [todayDate]
+ * @returns {Record<'overdue' | 'today' | 'upcoming', number>}
+ */
 function getTodosDateCounts(todos, todayDate = getTodayDateValue()) {
     return todos.reduce((counts, todo) => {
         const dateStatus = getTodoDateStatus(todo, todayDate);
@@ -299,6 +412,11 @@ function getTodosDateCounts(todos, todayDate = getTodayDateValue()) {
     });
 }
 
+/**
+ * @param {Todo} todo
+ * @param {string} todayDate
+ * @returns {TodoGroup}
+ */
 function getTodoGroupId(todo, todayDate) {
     if (todo.completed) {
         return TODO_GROUPS.completed;
@@ -307,6 +425,11 @@ function getTodoGroupId(todo, todayDate) {
     return getTodoDateStatus(todo, todayDate) || TODO_GROUPS.unscheduled;
 }
 
+/**
+ * @param {Todo[]} todos
+ * @param {string} [todayDate]
+ * @returns {TodoGroupView[]}
+ */
 function getTodoGroups(todos, todayDate = getTodayDateValue()) {
     const groupsById = new Map(TODO_GROUP_ORDER.map(groupId => [
         groupId,
@@ -326,6 +449,10 @@ function getTodoGroups(todos, todayDate = getTodayDateValue()) {
         .filter(group => group.todos.length > 0);
 }
 
+/**
+ * @param {Todo[]} todos
+ * @returns {{ version: number, exportedAt: string, todos: Todo[] }}
+ */
 function createTodosBackup(todos) {
     return {
         version: TODO_BACKUP_VERSION,
@@ -334,6 +461,10 @@ function createTodosBackup(todos) {
     };
 }
 
+/**
+ * @param {unknown} backup
+ * @returns {{ ok: true, todos: Todo[] } | { ok: false, error: string }}
+ */
 function readTodosBackup(backup) {
     const backupTodos = Array.isArray(backup) ? backup : backup?.todos;
 
