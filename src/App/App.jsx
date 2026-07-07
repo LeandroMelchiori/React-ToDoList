@@ -32,6 +32,12 @@ function isEditableTarget(target) {
         ['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName);
 }
 
+function getTodoDropPosition(event) {
+    const { top, height } = event.currentTarget.getBoundingClientRect();
+
+    return event.clientY > top + height / 2 ? 'after' : 'before';
+}
+
 function App() {
 
     const { states, stateUpdaters } = useTodos();
@@ -43,6 +49,11 @@ function App() {
         isOnline,
     } = usePwaStatus();
     const searchInputRef = React.useRef(null);
+    const [dragState, setDragState] = React.useState({
+        draggedTodoId: null,
+        targetTodoId: null,
+        position: null,
+    });
 
     const { 
         loading,
@@ -76,6 +87,7 @@ function App() {
         completeTodo,
         toggleSubtask,
         moveTodo,
+        moveTodoToPosition,
         openCreateModal,
         startEditingTodo,
         startDeletingTodo,
@@ -92,6 +104,79 @@ function App() {
 
     const formMode = editingTodo ? 'edit' : 'create';
     const modalLabel = deletingTodo ? 'Eliminar tarea' : editingTodo ? 'Editar tarea' : 'Crear tarea';
+    const clearDragState = React.useCallback(() => {
+        setDragState({
+            draggedTodoId: null,
+            targetTodoId: null,
+            position: null,
+        });
+    }, []);
+
+    const startTodoDrag = React.useCallback((todoId, event) => {
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', todoId);
+        setDragState({
+            draggedTodoId: todoId,
+            targetTodoId: null,
+            position: null,
+        });
+    }, []);
+
+    const updateTodoDropTarget = React.useCallback((todoId, event) => {
+        const draggedTodoId = dragState.draggedTodoId || event.dataTransfer.getData('text/plain');
+
+        if (!draggedTodoId || draggedTodoId === todoId) {
+            return;
+        }
+
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+
+        const position = getTodoDropPosition(event);
+
+        setDragState(currentState => {
+            if (
+                currentState.draggedTodoId === draggedTodoId &&
+                currentState.targetTodoId === todoId &&
+                currentState.position === position
+            ) {
+                return currentState;
+            }
+
+            return {
+                draggedTodoId,
+                targetTodoId: todoId,
+                position,
+            };
+        });
+    }, [dragState.draggedTodoId]);
+
+    const clearTodoDropTarget = React.useCallback((todoId, event) => {
+        if (
+            event.relatedTarget instanceof Node &&
+            event.currentTarget.contains(event.relatedTarget)
+        ) {
+            return;
+        }
+
+        setDragState(currentState =>
+            currentState.targetTodoId === todoId
+                ? { ...currentState, targetTodoId: null, position: null }
+                : currentState
+        );
+    }, []);
+
+    const dropTodo = React.useCallback((todoId, event) => {
+        event.preventDefault();
+
+        const draggedTodoId = dragState.draggedTodoId || event.dataTransfer.getData('text/plain');
+
+        if (draggedTodoId && draggedTodoId !== todoId) {
+            moveTodoToPosition(draggedTodoId, todoId, dragState.position || getTodoDropPosition(event));
+        }
+
+        clearDragState();
+    }, [clearDragState, dragState.draggedTodoId, dragState.position, moveTodoToPosition]);
 
     React.useEffect(() => {
         const handleKeyboardShortcuts = (event) => {
@@ -207,10 +292,17 @@ function App() {
                             subtasks={todo.subtasks}
                             canMoveUp={todo.order > 0}
                             canMoveDown={todo.order < totalTodos - 1}
+                            isDragging={dragState.draggedTodoId === todo.id}
+                            dropPosition={dragState.targetTodoId === todo.id ? dragState.position : null}
                             onComplete={() => completeTodo(todo.id)}
                             onToggleSubtask={(subtaskId) => toggleSubtask(todo.id, subtaskId)}
                             onMoveUp={() => moveTodo(todo.id, 'up')}
                             onMoveDown={() => moveTodo(todo.id, 'down')}
+                            onDragStart={(event) => startTodoDrag(todo.id, event)}
+                            onDragOver={(event) => updateTodoDropTarget(todo.id, event)}
+                            onDragLeave={(event) => clearTodoDropTarget(todo.id, event)}
+                            onDrop={(event) => dropTodo(todo.id, event)}
+                            onDragEnd={clearDragState}
                             onFilterProject={() => selectProjectFilter(todo.project)}
                             onFilterTag={selectTagFilter}
                             onEdit={() => startEditingTodo(todo.id)}

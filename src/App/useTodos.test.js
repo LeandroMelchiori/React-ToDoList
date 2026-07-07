@@ -9,6 +9,7 @@ import {
   getTodoGroups,
   getTodosDateCounts,
   getVisibleTodos,
+  moveTodoToPosition,
   normalizeDueDate,
   normalizePriority,
   normalizeProject,
@@ -68,6 +69,26 @@ describe('todo helpers', () => {
       expect.objectContaining({ id: 'todo-1', text: 'Primera', order: 0 }),
       expect.objectContaining({ id: 'todo-2', text: 'Segunda', order: 1 }),
       expect.objectContaining({ id: 'todo-3', text: 'Tercera', order: 2 }),
+    ]);
+  });
+
+  test('moves a todo before or after another todo and reindexes the list', () => {
+    const todos = [
+      { id: 'todo-1', text: 'Primera', order: 0 },
+      { id: 'todo-2', text: 'Segunda', order: 1 },
+      { id: 'todo-3', text: 'Tercera', order: 2 },
+    ];
+
+    expect(moveTodoToPosition(todos, 'todo-3', 'todo-1')).toEqual([
+      expect.objectContaining({ id: 'todo-3', order: 0 }),
+      expect.objectContaining({ id: 'todo-1', order: 1 }),
+      expect.objectContaining({ id: 'todo-2', order: 2 }),
+    ]);
+
+    expect(moveTodoToPosition(todos, 'todo-1', 'todo-3', 'after')).toEqual([
+      expect.objectContaining({ id: 'todo-2', order: 0 }),
+      expect.objectContaining({ id: 'todo-3', order: 1 }),
+      expect.objectContaining({ id: 'todo-1', order: 2 }),
     ]);
   });
 

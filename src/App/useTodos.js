@@ -9,6 +9,7 @@ import {
     getTodosDateCounts,
     getVisibleTodos,
     mergeSubtasks,
+    moveTodoToPosition as reorderTodoToPosition,
     normalizeDueDate,
     normalizePriority,
     normalizeProject,
@@ -203,6 +204,17 @@ function useTodos() {
         saveTodos(reindexTodos(reorderedTodos));
     }
 
+    const moveTodoToPosition = (sourceId, targetId, placement) => {
+        const reorderedTodos = reorderTodoToPosition(normalizedTodos, sourceId, targetId, placement);
+        const didChangeOrder = reorderedTodos.some((todo, index) =>
+            todo.id !== normalizedTodos[index]?.id
+        );
+
+        if (didChangeOrder) {
+            saveTodos(reorderedTodos);
+        }
+    }
+
     const openCreateModal = () => {
         setEditingTodoId(null);
         setDeletingTodoId(null);
@@ -311,6 +323,7 @@ function useTodos() {
         deleteTodo,
         toggleSubtask,
         moveTodo,
+        moveTodoToPosition,
         openCreateModal,
         startEditingTodo,
         startDeletingTodo,

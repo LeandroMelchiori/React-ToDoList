@@ -300,6 +300,37 @@ function reindexTodos(todos) {
 
 /**
  * @param {Todo[]} todos
+ * @param {string} sourceId
+ * @param {string} targetId
+ * @param {'before' | 'after'} [placement]
+ * @returns {Todo[]}
+ */
+function moveTodoToPosition(todos, sourceId, targetId, placement = 'before') {
+    const normalizedTodos = normalizeTodos(todos);
+
+    if (!sourceId || !targetId || sourceId === targetId) {
+        return normalizedTodos;
+    }
+
+    const sourceIndex = normalizedTodos.findIndex(todo => todo.id === sourceId);
+    const targetIndex = normalizedTodos.findIndex(todo => todo.id === targetId);
+
+    if (sourceIndex < 0 || targetIndex < 0) {
+        return normalizedTodos;
+    }
+
+    const reorderedTodos = [...normalizedTodos];
+    const [sourceTodo] = reorderedTodos.splice(sourceIndex, 1);
+    const nextTargetIndex = reorderedTodos.findIndex(todo => todo.id === targetId);
+    const insertIndex = placement === 'after' ? nextTargetIndex + 1 : nextTargetIndex;
+
+    reorderedTodos.splice(insertIndex, 0, sourceTodo);
+
+    return reindexTodos(reorderedTodos);
+}
+
+/**
+ * @param {Todo[]} todos
  * @param {string} searchValue
  * @param {TodoFilter} filter
  * @param {string} [todayDate]
@@ -494,6 +525,7 @@ export {
     getTodosDateCounts,
     getVisibleTodos,
     mergeSubtasks,
+    moveTodoToPosition,
     normalizeDueDate,
     normalizeOrder,
     normalizePriority,

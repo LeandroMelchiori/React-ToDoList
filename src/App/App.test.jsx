@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from './App';
 
@@ -267,6 +267,43 @@ describe('App', () => {
       'Segunda tarea',
       'Primera tarea',
       'Tercera tarea',
+    ]);
+  });
+
+  test('reorders todos with drag and drop', async () => {
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      { id: 'todo-1', text: 'Primera tarea', completed: false, order: 0 },
+      { id: 'todo-2', text: 'Segunda tarea', completed: false, order: 1 },
+      { id: 'todo-3', text: 'Tercera tarea', completed: false, order: 2 },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Primera tarea')).toBeInTheDocument();
+
+    const dataTransfer = {
+      dropEffect: '',
+      effectAllowed: '',
+      getData: vi.fn(() => 'todo-3'),
+      setData: vi.fn(),
+    };
+    let items = within(screen.getByRole('list', { name: 'Lista de tareas' })).getAllByRole('listitem');
+
+    fireEvent.dragStart(items[2], { dataTransfer });
+    fireEvent.dragOver(items[0], { clientY: -1, dataTransfer });
+    fireEvent.drop(items[0], { clientY: -1, dataTransfer });
+
+    expect(dataTransfer.setData).toHaveBeenCalledWith('text/plain', 'todo-3');
+
+    await waitFor(() => {
+      items = within(screen.getByRole('list', { name: 'Lista de tareas' })).getAllByRole('listitem');
+      expect(items[0]).toHaveTextContent('Tercera tarea');
+      expect(items[1]).toHaveTextContent('Primera tarea');
+      expect(items[2]).toHaveTextContent('Segunda tarea');
+    });
+    expect(JSON.parse(localStorage.getItem('TODOS_V1')).map(todo => todo.text)).toEqual([
+      'Tercera tarea',
+      'Primera tarea',
+      'Segunda tarea',
     ]);
   });
 

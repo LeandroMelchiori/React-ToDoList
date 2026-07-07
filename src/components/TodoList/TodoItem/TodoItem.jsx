@@ -30,9 +30,23 @@ function TodoItem(props) {
   const priorityLabel = TODO_PRIORITY_LABELS[props.priority] || TODO_PRIORITY_LABELS.medium;
   const tags = Array.isArray(props.tags) ? props.tags : [];
   const subtasks = Array.isArray(props.subtasks) ? props.subtasks : [];
+  const itemClassName = [
+    'TodoItem',
+    props.isDragging ? 'TodoItem--dragging' : '',
+    props.dropPosition === 'before' ? 'TodoItem--dropBefore' : '',
+    props.dropPosition === 'after' ? 'TodoItem--dropAfter' : '',
+  ].filter(Boolean).join(' ');
 
   return (
-    <li className="TodoItem">
+    <li
+      className={itemClassName}
+      draggable={Boolean(props.onDragStart)}
+      onDragStart={props.onDragStart}
+      onDragOver={props.onDragOver}
+      onDragLeave={props.onDragLeave}
+      onDrop={props.onDrop}
+      onDragEnd={props.onDragEnd}
+    >
       <div
         className="TodoItem-orderActions"
         role="group"
