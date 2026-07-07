@@ -6,6 +6,8 @@ import {
   getVisibleTodos,
   normalizeDueDate,
   normalizePriority,
+  normalizeProject,
+  normalizeTags,
   normalizeTodos,
   readTodosBackup,
 } from './todoModel';
@@ -25,6 +27,8 @@ describe('todo helpers', () => {
         completed: true,
         priority: TODO_PRIORITIES.medium,
         dueDate: null,
+        project: null,
+        tags: [],
         createdAt: null,
       },
       {
@@ -33,6 +37,8 @@ describe('todo helpers', () => {
         completed: false,
         priority: TODO_PRIORITIES.medium,
         dueDate: null,
+        project: null,
+        tags: [],
         createdAt: null,
       },
     ]);
@@ -47,6 +53,8 @@ describe('todo helpers', () => {
     const todo = createTodo('  Practicar React  ', {
       priority: TODO_PRIORITIES.high,
       dueDate: '2026-07-20',
+      project: 'TaskFlow',
+      tags: 'React, testing, React',
     });
 
     expect(todo).toMatchObject({
@@ -54,6 +62,8 @@ describe('todo helpers', () => {
       completed: false,
       priority: TODO_PRIORITIES.high,
       dueDate: '2026-07-20',
+      project: 'TaskFlow',
+      tags: ['React', 'testing'],
     });
     expect(todo.id).toEqual(expect.any(String));
     expect(todo.createdAt).toEqual(expect.any(String));
@@ -66,15 +76,29 @@ describe('todo helpers', () => {
     expect(normalizeDueDate(null)).toBeNull();
   });
 
-  test('filters visible todos by text and status', () => {
+  test('normalizes project and tags values', () => {
+    expect(normalizeProject('  TaskFlow  ')).toBe('TaskFlow');
+    expect(normalizeProject('   ')).toBeNull();
+    expect(normalizeTags('React, testing, React, , UI')).toEqual([
+      'React',
+      'testing',
+      'UI',
+    ]);
+    expect(normalizeTags(null)).toEqual([]);
+  });
+
+  test('filters visible todos by text, project, tags and status', () => {
     const todos = [
-      { id: '1', text: 'Preparar entrevista', completed: true },
-      { id: '2', text: 'Actualizar portfolio', completed: false },
-      { id: '3', text: 'Practicar testing', completed: false },
+      { id: '1', text: 'Preparar entrevista', completed: true, project: 'Carrera', tags: [] },
+      { id: '2', text: 'Actualizar contenido', completed: false, project: 'TaskFlow', tags: ['portfolio'] },
+      { id: '3', text: 'Practicar testing', completed: false, project: null, tags: ['calidad'] },
     ];
 
-    expect(getVisibleTodos(todos, 'portfolio', TODO_FILTERS.all)).toEqual([
+    expect(getVisibleTodos(todos, 'taskflow', TODO_FILTERS.all)).toEqual([
       todos[1],
+    ]);
+    expect(getVisibleTodos(todos, 'calidad', TODO_FILTERS.all)).toEqual([
+      todos[2],
     ]);
     expect(getVisibleTodos(todos, '', TODO_FILTERS.active)).toEqual([
       todos[1],
@@ -87,7 +111,14 @@ describe('todo helpers', () => {
 
   test('creates and reads todos backup files', () => {
     const backup = createTodosBackup([
-      { id: 'todo-1', text: 'Respaldar tareas', completed: false, priority: TODO_PRIORITIES.high },
+      {
+        id: 'todo-1',
+        text: 'Respaldar tareas',
+        completed: false,
+        priority: TODO_PRIORITIES.high,
+        project: 'TaskFlow',
+        tags: ['backup'],
+      },
     ]);
 
     expect(backup).toEqual(expect.objectContaining({
@@ -98,6 +129,8 @@ describe('todo helpers', () => {
           id: 'todo-1',
           text: 'Respaldar tareas',
           priority: TODO_PRIORITIES.high,
+          project: 'TaskFlow',
+          tags: ['backup'],
         }),
       ],
     }));

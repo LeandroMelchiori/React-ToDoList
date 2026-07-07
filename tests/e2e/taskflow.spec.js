@@ -16,26 +16,37 @@ test('manages a todo through the production flow', async ({ page }) => {
   await expect(page.getByText('Escribe una tarea antes de agregarla.')).toBeVisible();
 
   const createDialog = page.getByRole('dialog', { name: 'Crear tarea' });
-  await createDialog.getByRole('textbox', { name: 'Nueva tarea' }).fill('Preparar demo para recruiter');
+  await createDialog.getByRole('textbox', { name: 'Nueva tarea' }).fill('Preparar demo del proyecto');
   await createDialog.getByLabel('Prioridad').selectOption('high');
   await createDialog.getByLabel('Fecha limite').fill('2026-07-20');
+  await createDialog.getByLabel('Proyecto').fill('TaskFlow');
+  await createDialog.getByLabel('Etiquetas').fill('frontend, testing');
   await createDialog.getByRole('button', { name: 'Agregar' }).click();
-  await expect(page.getByText('Preparar demo para recruiter')).toBeVisible();
+  await expect(page.getByText('Preparar demo del proyecto')).toBeVisible();
   await expect(page.getByText('Alta')).toBeVisible();
   await expect(page.getByText('20/07/2026')).toBeVisible();
+  await expect(page.getByText('TaskFlow')).toBeVisible();
+  await expect(page.getByText('#frontend')).toBeVisible();
+  await expect(page.getByText('#testing')).toBeVisible();
 
-  await page.getByLabel('Buscar tareas').fill('recruiter');
-  await expect(page.getByText('Preparar demo para recruiter')).toBeVisible();
+  await page.getByLabel('Buscar tareas').fill('frontend');
+  await expect(page.getByText('Preparar demo del proyecto')).toBeVisible();
 
   await page.getByRole('button', { name: 'Editar tarea' }).click();
   const editDialog = page.getByRole('dialog', { name: 'Editar tarea' });
-  await expect(editDialog.getByRole('textbox', { name: 'Editar tarea' })).toHaveValue('Preparar demo para recruiter');
+  await expect(editDialog.getByRole('textbox', { name: 'Editar tarea' })).toHaveValue('Preparar demo del proyecto');
+  await expect(editDialog.getByLabel('Proyecto')).toHaveValue('TaskFlow');
+  await expect(editDialog.getByLabel('Etiquetas')).toHaveValue('frontend, testing');
 
   await editDialog.getByRole('textbox', { name: 'Editar tarea' }).fill('Preparar demo publica');
+  await editDialog.getByLabel('Etiquetas').fill('frontend, qa');
   await editDialog.getByRole('button', { name: 'Guardar' }).click();
   await expect(page.getByText('Preparar demo publica')).toBeVisible();
   await expect(page.getByText('Alta')).toBeVisible();
   await expect(page.getByText('20/07/2026')).toBeVisible();
+  await expect(page.getByText('TaskFlow')).toBeVisible();
+  await expect(page.getByText('#frontend')).toBeVisible();
+  await expect(page.getByText('#qa')).toBeVisible();
   await expect(page.getByLabel('Buscar tareas')).toHaveValue('');
 
   await page.getByRole('button', { name: 'Marcar tarea como completada' }).click();

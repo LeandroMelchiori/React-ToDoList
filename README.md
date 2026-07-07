@@ -38,9 +38,10 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - Crear tareas con validacion de texto vacio y duplicados.
 - Editar tareas desde un modal con validacion de duplicados.
 - Asignar prioridad y fecha limite opcional a cada tarea.
+- Organizar tareas por proyecto y etiquetas opcionales.
 - Marcar tareas como completadas o pendientes.
 - Eliminar tareas con confirmacion previa.
-- Buscar tareas por texto.
+- Buscar tareas por texto, proyecto o etiqueta.
 - Filtrar por todas, pendientes o completadas.
 - Persistir datos en IndexedDB, manteniendo compatibilidad con datos antiguos en `localStorage`.
 - Normalizar tareas antiguas guardadas sin `id`.
@@ -74,7 +75,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 ## Decisiones tecnicas
 
 - Cada tarea usa un `id` unico para evitar depender del texto como key o identificador.
-- Los datos antiguos guardados sin `id` se normalizan para mantener compatibilidad con usuarios existentes.
+- Los datos antiguos se normalizan para mantener compatibilidad con tareas sin `id`, prioridad, proyecto o etiquetas.
 - Las operaciones sobre tareas son inmutables: completar, borrar, agregar y editar generan nuevas referencias.
 - La logica principal vive en hooks (`useTodos`, `useLocalStorage`) para separar estado y presentacion.
 - El formulario se reutiliza para creacion y edicion, manteniendo validaciones consistentes.
@@ -192,9 +193,9 @@ La suite actual cubre:
 
 ## Mejoras futuras
 
-- Prioridades y fechas limite.
+- Vistas por fecha limite y tareas vencidas.
+- Subtareas o checklists dentro de una tarea.
 - Atajos de teclado para usuarios frecuentes.
-- Modo oscuro.
 - Drag and drop para reordenar tareas.
 - Migracion a TypeScript.
 - Backend con autenticacion y base de datos para soportar multiusuario y sincronizacion real entre dispositivos.

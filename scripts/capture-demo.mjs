@@ -9,10 +9,12 @@ const screenshotPath = 'public/demo-taskflow.png';
 const demoTodos = [
   {
     id: 'demo-1',
-    text: 'Preparar demo para recruiter',
+    text: 'Preparar demo del proyecto',
     completed: false,
     priority: 'high',
     dueDate: '2026-07-20',
+    project: 'TaskFlow',
+    tags: ['frontend', 'testing'],
     createdAt: '2026-07-06T12:00:00.000Z',
   },
   {
@@ -21,6 +23,8 @@ const demoTodos = [
     completed: true,
     priority: 'medium',
     dueDate: '2026-07-18',
+    project: 'TaskFlow',
+    tags: ['ux'],
     createdAt: '2026-07-06T12:10:00.000Z',
   },
   {
@@ -29,6 +33,8 @@ const demoTodos = [
     completed: false,
     priority: 'medium',
     dueDate: null,
+    project: 'Documentacion',
+    tags: ['decisiones'],
     createdAt: '2026-07-06T12:20:00.000Z',
   },
   {
@@ -37,6 +43,8 @@ const demoTodos = [
     completed: false,
     priority: 'low',
     dueDate: '2026-07-22',
+    project: 'Deploy',
+    tags: ['ci'],
     createdAt: '2026-07-06T12:30:00.000Z',
   },
 ];
@@ -103,7 +111,7 @@ try {
   }, demoTodos);
 
   await page.goto(previewUrl);
-  await page.getByText('Preparar demo para recruiter').waitFor();
+  await page.getByText('Preparar demo del proyecto').waitFor();
   await page.screenshot({ path: screenshotPath, fullPage: true });
   await browser.close();
 

@@ -108,6 +108,8 @@ function App() {
                             completed={todo.completed}
                             priority={todo.priority}
                             dueDate={todo.dueDate}
+                            project={todo.project}
+                            tags={todo.tags}
                             onComplete={() => completeTodo(todo.id)}
                             onEdit={() => startEditingTodo(todo.id)}
                             onDelete={() => startDeletingTodo(todo.id)}
@@ -134,6 +136,8 @@ function App() {
                             initialValue={editingTodo?.text || ''}
                             initialPriority={editingTodo?.priority}
                             initialDueDate={editingTodo?.dueDate}
+                            initialProject={editingTodo?.project}
+                            initialTags={editingTodo?.tags}
                             label={editingTodo ? 'Editar tarea' : 'Nueva tarea'}
                             mode={formMode}
                             onCancel={closeModal}

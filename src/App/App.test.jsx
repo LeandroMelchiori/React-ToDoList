@@ -35,11 +35,16 @@ describe('App', () => {
     await user.type(screen.getByLabelText('Nueva tarea'), 'Preparar entrevista tecnica');
     await user.selectOptions(screen.getByLabelText('Prioridad'), 'high');
     await user.type(screen.getByLabelText('Fecha limite'), '2026-07-20');
+    await user.type(screen.getByLabelText('Proyecto'), 'TaskFlow');
+    await user.type(screen.getByLabelText('Etiquetas'), 'React, testing');
     await user.click(screen.getByRole('button', { name: 'Agregar' }));
 
     expect(screen.getByText('Preparar entrevista tecnica')).toBeInTheDocument();
     expect(screen.getByText('Alta')).toBeInTheDocument();
     expect(screen.getByText('20/07/2026')).toBeInTheDocument();
+    expect(screen.getByText('TaskFlow')).toBeInTheDocument();
+    expect(screen.getByText('#React')).toBeInTheDocument();
+    expect(screen.getByText('#testing')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Completaste 0 de 1 tareas/ })).toBeInTheDocument();
 
     const storedTodos = JSON.parse(localStorage.getItem('TODOS_V1'));
@@ -49,9 +54,11 @@ describe('App', () => {
       completed: false,
       priority: 'high',
       dueDate: '2026-07-20',
+      project: 'TaskFlow',
+      tags: ['React', 'testing'],
     }));
 
-    await user.type(screen.getByLabelText('Buscar tareas'), 'entrevista');
+    await user.type(screen.getByLabelText('Buscar tareas'), 'testing');
     expect(screen.getByText('Preparar entrevista tecnica')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Marcar tarea como completada' }));
@@ -136,7 +143,15 @@ describe('App', () => {
     });
 
     localStorage.setItem('TODOS_V1', JSON.stringify([
-      { id: 'todo-1', text: 'Exportar tareas', completed: false, priority: 'high', dueDate: '2026-07-20' },
+      {
+        id: 'todo-1',
+        text: 'Exportar tareas',
+        completed: false,
+        priority: 'high',
+        dueDate: '2026-07-20',
+        project: 'TaskFlow',
+        tags: ['backup'],
+      },
     ]));
     renderApp();
 
@@ -156,6 +171,8 @@ describe('App', () => {
           text: 'Exportar tareas',
           priority: 'high',
           dueDate: '2026-07-20',
+          project: 'TaskFlow',
+          tags: ['backup'],
         }),
       ],
     }));
@@ -170,7 +187,15 @@ describe('App', () => {
       JSON.stringify({
         version: 1,
         todos: [
-          { id: 'todo-imported', text: 'Importar tareas', completed: false, priority: 'low', dueDate: '2026-08-01' },
+          {
+            id: 'todo-imported',
+            text: 'Importar tareas',
+            completed: false,
+            priority: 'low',
+            dueDate: '2026-08-01',
+            project: 'Administracion',
+            tags: ['json'],
+          },
         ],
       }),
     ], 'taskflow-backup.json', { type: 'application/json' });
@@ -183,6 +208,8 @@ describe('App', () => {
     expect(await screen.findByText('Importar tareas')).toBeInTheDocument();
     expect(screen.getByText('Baja')).toBeInTheDocument();
     expect(screen.getByText('01/08/2026')).toBeInTheDocument();
+    expect(screen.getByText('Administracion')).toBeInTheDocument();
+    expect(screen.getByText('#json')).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('1 tarea importada.');
     expect(JSON.parse(localStorage.getItem('TODOS_V1'))).toEqual([
       expect.objectContaining({
@@ -190,6 +217,8 @@ describe('App', () => {
         text: 'Importar tareas',
         priority: 'low',
         dueDate: '2026-08-01',
+        project: 'Administracion',
+        tags: ['json'],
       }),
     ]);
   });
@@ -243,7 +272,13 @@ describe('App', () => {
   test('edits a todo from the modal and validates duplicate text', async () => {
     const user = userEvent.setup();
     localStorage.setItem('TODOS_V1', JSON.stringify([
-      { id: 'todo-1', text: 'Actualizar portfolio', completed: false },
+      {
+        id: 'todo-1',
+        text: 'Actualizar portfolio',
+        completed: false,
+        project: 'Web',
+        tags: ['portfolio'],
+      },
       { id: 'todo-2', text: 'Preparar entrevista', completed: false },
     ]));
     renderApp();
@@ -254,7 +289,11 @@ describe('App', () => {
 
     const dialog = screen.getByRole('dialog', { name: 'Editar tarea' });
     const textarea = within(dialog).getByLabelText('Editar tarea');
+    const projectInput = within(dialog).getByLabelText('Proyecto');
+    const tagsInput = within(dialog).getByLabelText('Etiquetas');
     expect(textarea).toHaveValue('Actualizar portfolio');
+    expect(projectInput).toHaveValue('Web');
+    expect(tagsInput).toHaveValue('portfolio');
 
     await user.clear(textarea);
     await user.type(textarea, 'preparar entrevista');
@@ -264,6 +303,10 @@ describe('App', () => {
 
     await user.clear(textarea);
     await user.type(textarea, 'Actualizar README del portfolio');
+    await user.clear(projectInput);
+    await user.type(projectInput, 'TaskFlow');
+    await user.clear(tagsInput);
+    await user.type(tagsInput, 'docs, ui');
     await user.click(within(dialog).getByRole('button', { name: 'Guardar' }));
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -275,6 +318,8 @@ describe('App', () => {
       id: 'todo-1',
       text: 'Actualizar README del portfolio',
       completed: false,
+      project: 'TaskFlow',
+      tags: ['docs', 'ui'],
     }));
   });
 
@@ -314,6 +359,8 @@ describe('App', () => {
     const textarea = within(dialog).getByLabelText('Nueva tarea');
     const prioritySelect = within(dialog).getByLabelText('Prioridad');
     const dueDateInput = within(dialog).getByLabelText('Fecha limite');
+    const projectInput = within(dialog).getByLabelText('Proyecto');
+    const tagsInput = within(dialog).getByLabelText('Etiquetas');
     const cancelButton = within(dialog).getByRole('button', { name: 'Cancelar' });
     const submitButton = within(dialog).getByRole('button', { name: 'Agregar' });
 
@@ -324,6 +371,12 @@ describe('App', () => {
 
     await user.tab();
     expect(dueDateInput).toHaveFocus();
+
+    await user.tab();
+    expect(projectInput).toHaveFocus();
+
+    await user.tab();
+    expect(tagsInput).toHaveFocus();
 
     await user.tab();
     expect(cancelButton).toHaveFocus();

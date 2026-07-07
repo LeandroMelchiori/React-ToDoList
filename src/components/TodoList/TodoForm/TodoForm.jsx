@@ -11,6 +11,8 @@ function TodoForm({
     initialValue = '',
     initialPriority = 'medium',
     initialDueDate = '',
+    initialProject = '',
+    initialTags = [],
     label = 'Nueva tarea',
     mode = 'create',
     onCancel,
@@ -20,10 +22,14 @@ function TodoForm({
     const [newTodoValue, setNewTodoValue] = React.useState(initialValue);
     const [priorityValue, setPriorityValue] = React.useState(initialPriority || 'medium');
     const [dueDateValue, setDueDateValue] = React.useState(initialDueDate || '');
+    const [projectValue, setProjectValue] = React.useState(initialProject || '');
+    const [tagsValue, setTagsValue] = React.useState(Array.isArray(initialTags) ? initialTags.join(', ') : '');
     const [formError, setFormError] = React.useState('');
     const inputId = mode === 'edit' ? 'editTodo' : 'newTodo';
     const priorityId = mode === 'edit' ? 'editTodoPriority' : 'newTodoPriority';
     const dueDateId = mode === 'edit' ? 'editTodoDueDate' : 'newTodoDueDate';
+    const projectId = mode === 'edit' ? 'editTodoProject' : 'newTodoProject';
+    const tagsId = mode === 'edit' ? 'editTodoTags' : 'newTodoTags';
 
     const onChange = (event) => {
         setNewTodoValue(event.target.value);
@@ -35,6 +41,8 @@ function TodoForm({
         const result = onSubmitTodo(newTodoValue, {
             priority: priorityValue,
             dueDate: dueDateValue,
+            project: projectValue,
+            tags: tagsValue,
         });
 
         if (!result.ok) {
@@ -83,6 +91,26 @@ function TodoForm({
                         type="date"
                         value={dueDateValue}
                         onChange={event => setDueDateValue(event.target.value)}
+                    />
+                </label>
+                <label htmlFor={projectId}>
+                    Proyecto
+                    <input
+                        id={projectId}
+                        type="text"
+                        placeholder="Ej: TaskFlow"
+                        value={projectValue}
+                        onChange={event => setProjectValue(event.target.value)}
+                    />
+                </label>
+                <label htmlFor={tagsId}>
+                    Etiquetas
+                    <input
+                        id={tagsId}
+                        type="text"
+                        placeholder="react, testing"
+                        value={tagsValue}
+                        onChange={event => setTagsValue(event.target.value)}
                     />
                 </label>
             </div>

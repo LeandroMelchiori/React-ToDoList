@@ -34,7 +34,9 @@
 }
 
 .TodoItem-priority,
-.TodoItem-dueDate {
+.TodoItem-dueDate,
+.TodoItem-project,
+.TodoItem-tag {
   border-radius: 999px;
   font-size: 12px;
   font-weight: 800;
@@ -59,6 +61,16 @@
 }
 
 .TodoItem-dueDate {
+  background-color: var(--color-surface-muted);
+  color: var(--color-text-muted);
+}
+
+.TodoItem-project {
+  background-color: #eef2ff;
+  color: #3730a3;
+}
+
+.TodoItem-tag {
   background-color: var(--color-surface-muted);
   color: var(--color-text-muted);
 }

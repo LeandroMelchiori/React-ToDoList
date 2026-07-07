@@ -22,6 +22,33 @@ function normalizeDueDate(dueDate) {
     return typeof dueDate === 'string' && dueDate ? dueDate : null;
 }
 
+function normalizeProject(project) {
+    return typeof project === 'string' && project.trim() ? project.trim() : null;
+}
+
+function normalizeTags(tags) {
+    const rawTags = Array.isArray(tags)
+        ? tags
+        : typeof tags === 'string'
+            ? tags.split(',')
+            : [];
+    const seenTags = new Set();
+
+    return rawTags
+        .map(tag => (typeof tag === 'string' ? tag.trim() : ''))
+        .filter(tag => {
+            const normalizedTag = tag.toLowerCase();
+
+            if (!normalizedTag || seenTags.has(normalizedTag)) {
+                return false;
+            }
+
+            seenTags.add(normalizedTag);
+            return true;
+        })
+        .slice(0, 8);
+}
+
 function createTodoId() {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
         return crypto.randomUUID();
@@ -46,6 +73,8 @@ function createTodo(text, details = {}) {
         completed: false,
         priority: normalizePriority(details.priority),
         dueDate: normalizeDueDate(details.dueDate),
+        project: normalizeProject(details.project),
+        tags: normalizeTags(details.tags),
         createdAt: new Date().toISOString(),
     };
 }
@@ -63,6 +92,8 @@ function normalizeTodos(todos) {
             completed: Boolean(todo.completed),
             priority: normalizePriority(todo.priority),
             dueDate: normalizeDueDate(todo.dueDate),
+            project: normalizeProject(todo.project),
+            tags: normalizeTags(todo.tags),
             createdAt: todo.createdAt || null,
         }));
 }
@@ -71,7 +102,15 @@ function getVisibleTodos(todos, searchValue, filter) {
     const normalizedSearch = searchValue.trim().toLowerCase();
 
     return todos.filter(todo => {
-        const matchesSearch = todo.text.toLowerCase().includes(normalizedSearch);
+        const searchableText = [
+            todo.text,
+            todo.project,
+            ...(Array.isArray(todo.tags) ? todo.tags : []),
+        ]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase();
+        const matchesSearch = searchableText.includes(normalizedSearch);
         const matchesFilter =
             filter === TODO_FILTERS.completed ? todo.completed :
             filter === TODO_FILTERS.active ? !todo.completed :
@@ -113,6 +152,8 @@ export {
     getVisibleTodos,
     normalizeDueDate,
     normalizePriority,
+    normalizeProject,
+    normalizeTags,
     normalizeTodos,
     readTodosBackup,
 };

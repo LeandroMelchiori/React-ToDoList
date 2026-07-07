@@ -26,6 +26,7 @@ function formatDueDate(dueDate) {
 function TodoItem(props) {
   const dueDateLabel = formatDueDate(props.dueDate);
   const priorityLabel = TODO_PRIORITY_LABELS[props.priority] || TODO_PRIORITY_LABELS.medium;
+  const tags = Array.isArray(props.tags) ? props.tags : [];
 
   return (
     <li className="TodoItem">
@@ -40,6 +41,16 @@ function TodoItem(props) {
         <span className={`TodoItem-priority TodoItem-priority--${props.priority || 'medium'}`}>
           {priorityLabel}
         </span>
+        {props.project && (
+          <span className="TodoItem-project">
+            {props.project}
+          </span>
+        )}
+        {tags.map(tag => (
+          <span className="TodoItem-tag" key={tag}>
+            #{tag}
+          </span>
+        ))}
         {dueDateLabel && (
           <span className="TodoItem-dueDate">
             {dueDateLabel}

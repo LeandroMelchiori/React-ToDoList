@@ -7,6 +7,8 @@ import {
     getVisibleTodos,
     normalizeDueDate,
     normalizePriority,
+    normalizeProject,
+    normalizeTags,
     normalizeTodos,
     readTodosBackup,
 } from './todoModel';
@@ -110,6 +112,8 @@ function useTodos() {
                     text: trimmedText,
                     priority: normalizePriority(details.priority),
                     dueDate: normalizeDueDate(details.dueDate),
+                    project: normalizeProject(details.project),
+                    tags: normalizeTags(details.tags),
                 }
                 : todo
         );
