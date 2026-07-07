@@ -24,7 +24,7 @@ test('manages a todo through the production flow', async ({ page }) => {
   await createDialog.getByLabel('Subtareas').fill('Revisar copy\nValidar responsive');
   await createDialog.getByRole('button', { name: 'Agregar' }).click();
   await expect(page.getByText('Preparar demo del proyecto')).toBeVisible();
-  await expect(page.getByText('Alta')).toBeVisible();
+  await expect(page.getByText('Alta', { exact: true })).toBeVisible();
   await expect(page.getByText('20/07/2026')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Filtrar por proyecto TaskFlow' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Filtrar por etiqueta frontend' })).toBeVisible();
@@ -54,7 +54,7 @@ test('manages a todo through the production flow', async ({ page }) => {
   await editDialog.getByLabel('Etiquetas').fill('frontend, qa');
   await editDialog.getByRole('button', { name: 'Guardar' }).click();
   await expect(page.getByText('Preparar demo publica')).toBeVisible();
-  await expect(page.getByText('Alta')).toBeVisible();
+  await expect(page.getByText('Alta', { exact: true })).toBeVisible();
   await expect(page.getByText('20/07/2026')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Filtrar por proyecto TaskFlow' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Filtrar por etiqueta frontend' })).toBeVisible();

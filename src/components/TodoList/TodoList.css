@@ -4,6 +4,15 @@
   padding-bottom: 96px;
 }
 
+.TodoList-container:focus {
+  outline: none;
+}
+
+.TodoList-container:focus-visible {
+  border-radius: 16px;
+  box-shadow: var(--shadow-focus);
+}
+
 .TodoList {
   margin: 0;
   padding: 0;

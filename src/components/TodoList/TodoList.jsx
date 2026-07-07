@@ -13,7 +13,12 @@ function TodoList(props) {
   const showGroupHeaders = todoGroups.length > 1;
 
   return (
-    <section className="TodoList-container">
+    <section
+      className="TodoList-container"
+      id="todo-list"
+      tabIndex="-1"
+      aria-label="Tareas"
+    >
       {props.error && props.onError()}
       {props.loading && props.onLoading()}
       

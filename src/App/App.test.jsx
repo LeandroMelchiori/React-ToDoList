@@ -403,6 +403,19 @@ describe('App', () => {
     expect(screen.getByLabelText('Nueva tarea')).toHaveFocus();
   });
 
+  test('exposes keyboard skip link and named task region', async () => {
+    renderApp();
+
+    expect(await screen.findByRole('main', { name: 'Organiza tu dia con una primera tarea' })).toBeInTheDocument();
+
+    const skipLink = screen.getByRole('link', { name: 'Saltar a la lista de tareas' });
+    const taskRegion = screen.getByRole('region', { name: 'Tareas' });
+
+    expect(skipLink).toHaveAttribute('href', '#todo-list');
+    expect(taskRegion).toHaveAttribute('id', 'todo-list');
+    expect(taskRegion).toHaveAttribute('tabindex', '-1');
+  });
+
   test('shows PWA offline and update status messages', async () => {
     const worker = { postMessage: vi.fn() };
     Object.defineProperty(window.navigator, 'onLine', {

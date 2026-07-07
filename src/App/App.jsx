@@ -125,7 +125,8 @@ function App() {
 
     return (
         <>
-            <main className="App">
+            <a className="SkipLink" href="#todo-list">Saltar a la lista de tareas</a>
+            <main className="App" aria-labelledby="app-title">
                 <ThemeToggle
                     isDarkTheme={isDarkTheme}
                     onToggleTheme={toggleTheme}
