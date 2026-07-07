@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 
 test('manages a todo through the production flow', async ({ page }) => {
@@ -75,4 +76,68 @@ test('manages a todo through the production flow', async ({ page }) => {
   await page.getByRole('dialog', { name: 'Eliminar tarea' }).getByRole('button', { name: 'Eliminar' }).click();
 
   await expect(page.getByText('Organiza tu dia con una primera tarea')).toBeVisible();
+});
+
+test('exports current todos as a JSON backup', async ({ page }) => {
+  await page.goto('/');
+
+  await page.getByRole('button', { name: 'Usar plantilla Plan semanal' }).click();
+  await expect(page.getByText('Definir prioridades de la semana')).toBeVisible();
+
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Exportar tareas' }).click();
+  const download = await downloadPromise;
+  const downloadPath = await download.path();
+  const backup = JSON.parse(await readFile(downloadPath, 'utf8'));
+
+  expect(download.suggestedFilename()).toMatch(/^taskflow-backup-\d{4}-\d{2}-\d{2}\.json$/);
+  expect(backup).toEqual(expect.objectContaining({
+    version: 1,
+    exportedAt: expect.any(String),
+    todos: [
+      expect.objectContaining({
+        text: 'Definir prioridades de la semana',
+        project: 'Personal',
+        tags: ['planificacion'],
+      }),
+    ],
+  }));
+  await expect(page.getByText('Backup exportado.')).toBeVisible();
+});
+
+test('previews and merges imported todos without duplicates', async ({ page }) => {
+  await page.goto('/');
+
+  await page.getByRole('button', { name: 'Usar plantilla Preparar entrevista' }).click();
+  await expect(page.getByText('Preparar entrevista tecnica', { exact: true })).toBeVisible();
+
+  await page.getByLabel('Importar tareas desde JSON').setInputFiles({
+    name: 'taskflow-e2e.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify({
+      version: 1,
+      todos: [
+        { id: 'todo-duplicate', text: 'Preparar entrevista tecnica', completed: false },
+        {
+          id: 'todo-imported-e2e',
+          text: 'Importar backup desde E2E',
+          completed: false,
+          project: 'QA',
+          tags: ['backup'],
+        },
+      ],
+    })),
+  });
+
+  await expect(page.getByRole('region', { name: 'Previsualizacion de importacion' })).toBeVisible();
+  await expect(page.getByText('taskflow-e2e.json: 2 tareas encontradas.')).toBeVisible();
+  await expect(page.getByText('Al fusionar: 1 tarea agregada y 1 duplicada omitida.')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Fusionar sin duplicados' }).click();
+
+  await expect(page.getByText('Importar backup desde E2E')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Filtrar por proyecto QA' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Filtrar por etiqueta backup' })).toBeVisible();
+  await expect(page.getByText('Preparar entrevista tecnica', { exact: true })).toHaveCount(1);
+  await expect(page.getByText('1 tarea agregada. 1 duplicada omitida.')).toBeVisible();
 });
