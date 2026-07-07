@@ -10,6 +10,39 @@
   list-style: none;
 }
 
+.TodoList-groupHeader {
+  align-items: center;
+  color: var(--color-text-muted);
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin: 24px 0 -2px;
+  padding: 0 4px;
+}
+
+.TodoList-groupHeader:first-child {
+  margin-top: 0;
+}
+
+.TodoList-groupHeader h2 {
+  color: var(--color-text-strong);
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0;
+  margin: 0;
+}
+
+.TodoList-groupHeader span {
+  background: var(--color-surface-muted);
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 7px 9px;
+}
+
 .TodoList-emptySearch {
   background: var(--color-surface);
   border: 1px dashed var(--color-border-strong);
@@ -20,4 +53,12 @@
   margin: 0 0 18px;
   padding: 22px;
   text-align: center;
+}
+
+@media (max-width: 520px) {
+  .TodoList-groupHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
 }

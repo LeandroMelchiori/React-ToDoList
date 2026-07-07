@@ -5,6 +5,7 @@ import {
     createTodosBackup,
     createTodo,
     getTodoFacets,
+    getTodoGroups,
     getTodosDateCounts,
     getVisibleTodos,
     mergeSubtasks,
@@ -64,6 +65,7 @@ function useTodos() {
         project: activeProject,
         tag: activeTag,
     });
+    const visibleTodoGroups = getTodoGroups(visibleTodos);
 
     const completeTodo = (id) => {
         const newTodos = normalizedTodos.map(todo =>
@@ -261,6 +263,7 @@ function useTodos() {
         activeProject,
         activeTag,
         visibleTodos,
+        visibleTodoGroups,
         openModal,
         editingTodo,
         deletingTodo,

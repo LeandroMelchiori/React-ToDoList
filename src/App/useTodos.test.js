@@ -1,10 +1,12 @@
 import {
   TODO_FILTERS,
+  TODO_GROUPS,
   TODO_PRIORITIES,
   createTodosBackup,
   createTodo,
   getTodoFacets,
   getTodoDateStatus,
+  getTodoGroups,
   getTodosDateCounts,
   getVisibleTodos,
   normalizeDueDate,
@@ -205,6 +207,44 @@ describe('todo helpers', () => {
     ]);
     expect(getVisibleTodos(todos, '', TODO_FILTERS.upcoming, '2026-07-06')).toEqual([
       todos[2],
+    ]);
+  });
+
+  test('groups visible todos by due date and completion', () => {
+    const todos = [
+      { id: '1', text: 'Sin fecha', completed: false, dueDate: null },
+      { id: '2', text: 'Completada', completed: true, dueDate: '2026-07-05' },
+      { id: '3', text: 'Vencida', completed: false, dueDate: '2026-07-05' },
+      { id: '4', text: 'Hoy', completed: false, dueDate: '2026-07-06' },
+      { id: '5', text: 'Proxima', completed: false, dueDate: '2026-07-07' },
+    ];
+
+    expect(getTodoGroups(todos, '2026-07-06')).toEqual([
+      {
+        id: TODO_GROUPS.overdue,
+        title: 'Vencidas',
+        todos: [todos[2]],
+      },
+      {
+        id: TODO_GROUPS.today,
+        title: 'Hoy',
+        todos: [todos[3]],
+      },
+      {
+        id: TODO_GROUPS.upcoming,
+        title: 'Proximas',
+        todos: [todos[4]],
+      },
+      {
+        id: TODO_GROUPS.unscheduled,
+        title: 'Sin fecha',
+        todos: [todos[0]],
+      },
+      {
+        id: TODO_GROUPS.completed,
+        title: 'Completadas',
+        todos: [todos[1]],
+      },
     ]);
   });
 

@@ -149,6 +149,36 @@ describe('App', () => {
     expect(screen.queryByText('Enviar avance de hoy')).not.toBeInTheDocument();
   });
 
+  test('groups visible todos by due date and completion', async () => {
+    const yesterday = getRelativeDateInputValue(-1);
+    const today = getRelativeDateInputValue(0);
+    const tomorrow = getRelativeDateInputValue(1);
+
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      { id: 'todo-1', text: 'Sin fecha asignada', completed: false, dueDate: null, order: 0 },
+      { id: 'todo-2', text: 'Ya completada', completed: true, dueDate: yesterday, order: 1 },
+      { id: 'todo-3', text: 'Vencida pendiente', completed: false, dueDate: yesterday, order: 2 },
+      { id: 'todo-4', text: 'Para hoy', completed: false, dueDate: today, order: 3 },
+      { id: 'todo-5', text: 'Para manana', completed: false, dueDate: tomorrow, order: 4 },
+    ]));
+    renderApp();
+
+    expect(await screen.findByRole('heading', { name: 'Vencidas' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Hoy' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Proximas' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Sin fecha' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Completadas' })).toBeInTheDocument();
+
+    const items = within(screen.getByRole('list', { name: 'Lista de tareas' })).getAllByRole('listitem');
+    expect(items.map(item => item.textContent)).toEqual([
+      expect.stringContaining('Vencida pendiente'),
+      expect.stringContaining('Para hoy'),
+      expect.stringContaining('Para manana'),
+      expect.stringContaining('Sin fecha asignada'),
+      expect.stringContaining('Ya completada'),
+    ]);
+  });
+
   test('filters todos by project and tag facets', async () => {
     const user = userEvent.setup();
     localStorage.setItem('TODOS_V1', JSON.stringify([

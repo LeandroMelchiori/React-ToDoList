@@ -59,6 +59,7 @@ function App() {
         activeProject,
         activeTag,
         visibleTodos,
+        visibleTodoGroups,
         openModal,
         editingTodo,
         deletingTodo,
@@ -172,6 +173,7 @@ function App() {
                 error={error}
                 loading={loading}
                 visibleTodos={visibleTodos}
+                visibleTodoGroups={visibleTodoGroups}
                 totalTodos={totalTodos}
                 searchValue={searchValue}
                 onError={() => <TodosError />}

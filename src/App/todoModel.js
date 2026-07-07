@@ -13,6 +13,30 @@ const TODO_PRIORITIES = {
     high: 'high',
 };
 
+const TODO_GROUPS = {
+    overdue: 'overdue',
+    today: 'today',
+    upcoming: 'upcoming',
+    unscheduled: 'unscheduled',
+    completed: 'completed',
+};
+
+const TODO_GROUP_LABELS = {
+    [TODO_GROUPS.overdue]: 'Vencidas',
+    [TODO_GROUPS.today]: 'Hoy',
+    [TODO_GROUPS.upcoming]: 'Proximas',
+    [TODO_GROUPS.unscheduled]: 'Sin fecha',
+    [TODO_GROUPS.completed]: 'Completadas',
+};
+
+const TODO_GROUP_ORDER = [
+    TODO_GROUPS.overdue,
+    TODO_GROUPS.today,
+    TODO_GROUPS.upcoming,
+    TODO_GROUPS.unscheduled,
+    TODO_GROUPS.completed,
+];
+
 const TODO_BACKUP_VERSION = 1;
 
 function normalizePriority(priority) {
@@ -275,6 +299,33 @@ function getTodosDateCounts(todos, todayDate = getTodayDateValue()) {
     });
 }
 
+function getTodoGroupId(todo, todayDate) {
+    if (todo.completed) {
+        return TODO_GROUPS.completed;
+    }
+
+    return getTodoDateStatus(todo, todayDate) || TODO_GROUPS.unscheduled;
+}
+
+function getTodoGroups(todos, todayDate = getTodayDateValue()) {
+    const groupsById = new Map(TODO_GROUP_ORDER.map(groupId => [
+        groupId,
+        {
+            id: groupId,
+            title: TODO_GROUP_LABELS[groupId],
+            todos: [],
+        },
+    ]));
+
+    todos.forEach(todo => {
+        groupsById.get(getTodoGroupId(todo, todayDate)).todos.push(todo);
+    });
+
+    return TODO_GROUP_ORDER
+        .map(groupId => groupsById.get(groupId))
+        .filter(group => group.todos.length > 0);
+}
+
 function createTodosBackup(todos) {
     return {
         version: TODO_BACKUP_VERSION,
@@ -301,12 +352,14 @@ function readTodosBackup(backup) {
 
 export {
     TODO_FILTERS,
+    TODO_GROUPS,
     TODO_PRIORITIES,
     createTodosBackup,
     createTodo,
     getTodayDateValue,
     getTodoFacets,
     getTodoDateStatus,
+    getTodoGroups,
     getTodosDateCounts,
     getVisibleTodos,
     mergeSubtasks,
