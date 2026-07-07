@@ -1,6 +1,41 @@
+import React from 'react';
 import './UndoToast.css';
 
-function UndoToast({ message, onDismiss, onUndo, undoLabel = 'Deshacer' }) {
+const DEFAULT_DISMISS_MS = 8000;
+
+function UndoToast({
+  dismissAfterMs = DEFAULT_DISMISS_MS,
+  message,
+  onDismiss,
+  onUndo,
+  undoLabel = 'Deshacer',
+}) {
+  React.useEffect(() => {
+    if (!message) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(onDismiss, dismissAfterMs);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [dismissAfterMs, message, onDismiss]);
+
+  React.useEffect(() => {
+    if (!message) {
+      return undefined;
+    }
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        onDismiss();
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [message, onDismiss]);
+
   if (!message) {
     return null;
   }
