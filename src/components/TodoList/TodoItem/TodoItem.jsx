@@ -63,14 +63,25 @@ function TodoItem(props) {
           {priorityLabel}
         </span>
         {props.project && (
-          <span className="TodoItem-project">
+          <button
+            type="button"
+            className="TodoItem-project"
+            aria-label={`Filtrar por proyecto ${props.project}`}
+            onClick={props.onFilterProject}
+          >
             {props.project}
-          </span>
+          </button>
         )}
         {tags.map(tag => (
-          <span className="TodoItem-tag" key={tag}>
+          <button
+            type="button"
+            className="TodoItem-tag"
+            key={tag}
+            aria-label={`Filtrar por etiqueta ${tag}`}
+            onClick={() => props.onFilterTag(tag)}
+          >
             #{tag}
-          </span>
+          </button>
         ))}
         {dueDateLabel && (
           <span className="TodoItem-dueDate">

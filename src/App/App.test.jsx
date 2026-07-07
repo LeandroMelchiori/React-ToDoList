@@ -57,9 +57,9 @@ describe('App', () => {
     expect(screen.getByText('Preparar entrevista tecnica')).toBeInTheDocument();
     expect(screen.getByText('Alta')).toBeInTheDocument();
     expect(screen.getByText('20/07/2026')).toBeInTheDocument();
-    expect(screen.getByText('TaskFlow')).toBeInTheDocument();
-    expect(screen.getByText('#React')).toBeInTheDocument();
-    expect(screen.getByText('#testing')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Filtrar por proyecto TaskFlow' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Filtrar por etiqueta React' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Filtrar por etiqueta testing' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Completaste 0 de 1 tareas/ })).toBeInTheDocument();
 
     const storedTodos = JSON.parse(localStorage.getItem('TODOS_V1'));
@@ -143,6 +143,44 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: /Proximas/ }));
     expect(screen.getByText('Preparar proxima mejora')).toBeInTheDocument();
     expect(screen.queryByText('Enviar avance de hoy')).not.toBeInTheDocument();
+  });
+
+  test('filters todos by project and tag facets', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      {
+        id: 'todo-1',
+        text: 'Preparar demo',
+        completed: false,
+        project: 'TaskFlow',
+        tags: ['frontend'],
+      },
+      {
+        id: 'todo-2',
+        text: 'Ordenar apuntes',
+        completed: false,
+        project: 'Docs',
+        tags: ['contenido'],
+      },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Preparar demo')).toBeInTheDocument();
+    expect(screen.getByText('Ordenar apuntes')).toBeInTheDocument();
+
+    const projectsGroup = screen.getByRole('group', { name: 'Proyectos' });
+    await user.click(within(projectsGroup).getByRole('button', { name: /TaskFlow/ }));
+
+    expect(screen.getByText('Preparar demo')).toBeInTheDocument();
+    expect(screen.queryByText('Ordenar apuntes')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Limpiar filtros' }));
+    expect(screen.getByText('Ordenar apuntes')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Filtrar por etiqueta contenido' }));
+
+    expect(screen.queryByText('Preparar demo')).not.toBeInTheDocument();
+    expect(screen.getByText('Ordenar apuntes')).toBeInTheDocument();
   });
 
   test('creates and toggles todo subtasks', async () => {
@@ -286,8 +324,8 @@ describe('App', () => {
     expect(await screen.findByText('Importar tareas')).toBeInTheDocument();
     expect(screen.getByText('Baja')).toBeInTheDocument();
     expect(screen.getByText('01/08/2026')).toBeInTheDocument();
-    expect(screen.getByText('Administracion')).toBeInTheDocument();
-    expect(screen.getByText('#json')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Filtrar por proyecto Administracion' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Filtrar por etiqueta json' })).toBeInTheDocument();
     expect(screen.getByLabelText('Validar archivo')).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('1 tarea importada.');
     expect(JSON.parse(localStorage.getItem('TODOS_V1'))).toEqual([

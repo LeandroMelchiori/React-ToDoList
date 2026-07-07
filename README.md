@@ -43,6 +43,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - Marcar tareas como completadas o pendientes.
 - Eliminar tareas con confirmacion previa.
 - Buscar tareas por texto, proyecto o etiqueta.
+- Filtrar rapidamente por proyecto o etiqueta.
 - Filtrar por todas, pendientes, completadas, vencidas, de hoy o proximas.
 - Persistir datos en IndexedDB, manteniendo compatibilidad con datos antiguos en `localStorage`.
 - Normalizar tareas antiguas guardadas sin `id`.

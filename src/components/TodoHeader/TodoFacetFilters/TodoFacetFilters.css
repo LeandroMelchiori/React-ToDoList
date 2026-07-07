@@ -1,0 +1,78 @@
+.TodoFacetFilters {
+  align-items: center;
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  margin: 16px auto 0;
+  max-width: 860px;
+}
+
+.TodoFacetFilters-group {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.TodoFacetFilters-group > span {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.TodoFacetFilters-button,
+.TodoFacetFilters-clear {
+  align-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 12px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+}
+
+.TodoFacetFilters-button span {
+  align-items: center;
+  background: var(--color-surface-muted);
+  border-radius: 999px;
+  color: var(--color-text-strong);
+  display: inline-flex;
+  font-size: 11px;
+  height: 20px;
+  justify-content: center;
+  min-width: 20px;
+  padding: 0 6px;
+}
+
+.TodoFacetFilters-button:hover,
+.TodoFacetFilters-button:focus-visible,
+.TodoFacetFilters-clear:hover,
+.TodoFacetFilters-clear:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-focus);
+  color: var(--color-text);
+  outline: none;
+}
+
+.TodoFacetFilters-button--active {
+  background: var(--color-active);
+  border-color: var(--color-active);
+  color: var(--color-active-text);
+}
+
+.TodoFacetFilters-button--active span {
+  background: var(--color-accent);
+  color: #082f49;
+}
+
+.TodoFacetFilters-clear {
+  color: var(--color-danger-hover);
+}

@@ -170,14 +170,17 @@ function normalizeTodos(todos) {
         }));
 }
 
-function getVisibleTodos(todos, searchValue, filter, todayDate = getTodayDateValue()) {
+function getVisibleTodos(todos, searchValue, filter, todayDate = getTodayDateValue(), facetFilters = {}) {
     const normalizedSearch = searchValue.trim().toLowerCase();
+    const projectFilter = normalizeProject(facetFilters.project);
+    const tagFilter = normalizeProject(facetFilters.tag);
 
     return todos.filter(todo => {
+        const todoTags = Array.isArray(todo.tags) ? todo.tags : [];
         const searchableText = [
             todo.text,
             todo.project,
-            ...(Array.isArray(todo.tags) ? todo.tags : []),
+            ...todoTags,
         ]
             .filter(Boolean)
             .join(' ')
@@ -191,9 +194,36 @@ function getVisibleTodos(todos, searchValue, filter, todayDate = getTodayDateVal
             filter === TODO_FILTERS.today ? dateStatus === TODO_FILTERS.today :
             filter === TODO_FILTERS.upcoming ? dateStatus === TODO_FILTERS.upcoming :
             true;
+        const matchesProject = !projectFilter ||
+            todo.project?.toLowerCase() === projectFilter.toLowerCase();
+        const matchesTag = !tagFilter ||
+            todoTags.some(tag => tag.toLowerCase() === tagFilter.toLowerCase());
 
-        return matchesSearch && matchesFilter;
+        return matchesSearch && matchesFilter && matchesProject && matchesTag;
     });
+}
+
+function mapFacetCounts(values) {
+    const facets = new Map();
+
+    values.filter(Boolean).forEach(value => {
+        const key = value.toLowerCase();
+        const currentFacet = facets.get(key);
+
+        facets.set(key, {
+            name: currentFacet?.name || value,
+            count: (currentFacet?.count || 0) + 1,
+        });
+    });
+
+    return [...facets.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function getTodoFacets(todos) {
+    return {
+        projects: mapFacetCounts(todos.map(todo => todo.project)),
+        tags: mapFacetCounts(todos.flatMap(todo => todo.tags)),
+    };
 }
 
 function getTodoDateStatus(todo, todayDate = getTodayDateValue()) {
@@ -258,6 +288,7 @@ export {
     createTodosBackup,
     createTodo,
     getTodayDateValue,
+    getTodoFacets,
     getTodoDateStatus,
     getTodosDateCounts,
     getVisibleTodos,

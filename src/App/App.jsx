@@ -3,6 +3,7 @@ import { useTodos } from './useTodos';
 import { TodoCounter } from '../components/TodoHeader/TodoCounter/TodoCounter';
 import { TodoSearch } from '../components/TodoHeader/TodoSearch/TodoSearch';
 import { TodoFilters } from '../components/TodoHeader/TodoFilters/TodoFilters';
+import { TodoFacetFilters } from '../components/TodoHeader/TodoFacetFilters/TodoFacetFilters';
 import { TodoBackupActions } from '../components/TodoHeader/TodoBackupActions/TodoBackupActions';
 import { TodoList } from '../components/TodoList/TodoList';
 import { TodoItem } from '../components/TodoList/TodoItem/TodoItem';
@@ -34,6 +35,10 @@ function App() {
         overdueTodos,
         todayTodos,
         upcomingTodos,
+        projectOptions,
+        tagOptions,
+        activeProject,
+        activeTag,
         visibleTodos,
         openModal,
         editingTodo,
@@ -43,6 +48,9 @@ function App() {
     const {
         setSearchValue,
         setFilter,
+        selectProjectFilter,
+        selectTagFilter,
+        clearFacetFilters,
         completeTodo,
         toggleSubtask,
         openCreateModal,
@@ -88,6 +96,15 @@ function App() {
                     todayTodos={todayTodos}
                     upcomingTodos={upcomingTodos}
                 />
+                <TodoFacetFilters
+                    projectOptions={projectOptions}
+                    tagOptions={tagOptions}
+                    activeProject={activeProject}
+                    activeTag={activeTag}
+                    onSelectProject={selectProjectFilter}
+                    onSelectTag={selectTagFilter}
+                    onClearFacetFilters={clearFacetFilters}
+                />
                 <TodoBackupActions
                     onExportTodos={exportTodos}
                     onImportTodos={importTodos}
@@ -122,6 +139,8 @@ function App() {
                             subtasks={todo.subtasks}
                             onComplete={() => completeTodo(todo.id)}
                             onToggleSubtask={(subtaskId) => toggleSubtask(todo.id, subtaskId)}
+                            onFilterProject={() => selectProjectFilter(todo.project)}
+                            onFilterTag={selectTagFilter}
                             onEdit={() => startEditingTodo(todo.id)}
                             onDelete={() => startDeletingTodo(todo.id)}
                     />

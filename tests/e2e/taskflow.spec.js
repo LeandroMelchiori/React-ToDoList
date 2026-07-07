@@ -26,11 +26,16 @@ test('manages a todo through the production flow', async ({ page }) => {
   await expect(page.getByText('Preparar demo del proyecto')).toBeVisible();
   await expect(page.getByText('Alta')).toBeVisible();
   await expect(page.getByText('20/07/2026')).toBeVisible();
-  await expect(page.getByText('TaskFlow')).toBeVisible();
-  await expect(page.getByText('#frontend')).toBeVisible();
-  await expect(page.getByText('#testing')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Filtrar por proyecto TaskFlow' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Filtrar por etiqueta frontend' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Filtrar por etiqueta testing' })).toBeVisible();
   await expect(page.getByLabel('Revisar copy')).toBeVisible();
   await expect(page.getByLabel('Validar responsive')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Filtrar por etiqueta frontend' }).click();
+  await expect(page.getByRole('button', { name: 'Limpiar filtros' })).toBeVisible();
+  await expect(page.getByText('Preparar demo del proyecto')).toBeVisible();
+  await page.getByRole('button', { name: 'Limpiar filtros' }).click();
 
   await page.getByLabel('Revisar copy').check();
   await expect(page.getByLabel('Revisar copy')).toBeChecked();
@@ -51,9 +56,9 @@ test('manages a todo through the production flow', async ({ page }) => {
   await expect(page.getByText('Preparar demo publica')).toBeVisible();
   await expect(page.getByText('Alta')).toBeVisible();
   await expect(page.getByText('20/07/2026')).toBeVisible();
-  await expect(page.getByText('TaskFlow')).toBeVisible();
-  await expect(page.getByText('#frontend')).toBeVisible();
-  await expect(page.getByText('#qa')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Filtrar por proyecto TaskFlow' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Filtrar por etiqueta frontend' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Filtrar por etiqueta qa' })).toBeVisible();
   await expect(page.getByLabel('Buscar tareas')).toHaveValue('');
 
   await page.getByRole('button', { name: 'Marcar tarea como completada' }).click();

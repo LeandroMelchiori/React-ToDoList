@@ -3,6 +3,7 @@ import {
   TODO_PRIORITIES,
   createTodosBackup,
   createTodo,
+  getTodoFacets,
   getTodoDateStatus,
   getTodosDateCounts,
   getVisibleTodos,
@@ -132,6 +133,35 @@ describe('todo helpers', () => {
     expect(getVisibleTodos(todos, 'preparar', TODO_FILTERS.completed)).toEqual([
       todos[0],
     ]);
+    expect(getVisibleTodos(todos, '', TODO_FILTERS.all, '2026-07-06', {
+      project: 'TaskFlow',
+    })).toEqual([
+      todos[1],
+    ]);
+    expect(getVisibleTodos(todos, '', TODO_FILTERS.all, '2026-07-06', {
+      tag: 'calidad',
+    })).toEqual([
+      todos[2],
+    ]);
+  });
+
+  test('builds project and tag facet counts', () => {
+    const todos = [
+      { id: '1', text: 'Uno', project: 'TaskFlow', tags: ['frontend', 'testing'] },
+      { id: '2', text: 'Dos', project: 'TaskFlow', tags: ['testing'] },
+      { id: '3', text: 'Tres', project: 'Docs', tags: [] },
+    ];
+
+    expect(getTodoFacets(todos)).toEqual({
+      projects: [
+        { name: 'Docs', count: 1 },
+        { name: 'TaskFlow', count: 2 },
+      ],
+      tags: [
+        { name: 'frontend', count: 1 },
+        { name: 'testing', count: 2 },
+      ],
+    });
   });
 
   test('filters todos by due date status', () => {

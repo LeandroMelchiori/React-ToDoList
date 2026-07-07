@@ -79,6 +79,21 @@
   white-space: nowrap;
 }
 
+.TodoItem-project,
+.TodoItem-tag {
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.TodoItem-project:hover,
+.TodoItem-project:focus-visible,
+.TodoItem-tag:hover,
+.TodoItem-tag:focus-visible {
+  box-shadow: var(--shadow-focus);
+  outline: none;
+}
+
 .TodoItem-priority--low {
   background-color: #dcfce7;
   color: #166534;

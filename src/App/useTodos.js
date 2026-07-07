@@ -4,6 +4,7 @@ import {
     TODO_FILTERS,
     createTodosBackup,
     createTodo,
+    getTodoFacets,
     getTodosDateCounts,
     getVisibleTodos,
     mergeSubtasks,
@@ -33,6 +34,12 @@ function useTodos() {
     const [filter, setFilter] =
      React.useState(TODO_FILTERS.all);
 
+    const [activeProject, setActiveProject] =
+     React.useState(null);
+
+    const [activeTag, setActiveTag] =
+     React.useState(null);
+
     const [openModal, setOpenModal] =
      React.useState(false);
 
@@ -50,8 +57,12 @@ function useTodos() {
     const totalTodos = normalizedTodos.length;
     const pendingTodos = totalTodos - completedTodos;
     const dateCounts = getTodosDateCounts(normalizedTodos);
+    const facets = getTodoFacets(normalizedTodos);
 
-    const visibleTodos = getVisibleTodos(normalizedTodos, searchValue, filter);
+    const visibleTodos = getVisibleTodos(normalizedTodos, searchValue, filter, undefined, {
+        project: activeProject,
+        tag: activeTag,
+    });
 
     const completeTodo = (id) => {
         const newTodos = normalizedTodos.map(todo =>
@@ -84,6 +95,7 @@ function useTodos() {
         saveTodos(newTodos);
         setSearchValue('');
         setFilter(TODO_FILTERS.all);
+        clearFacetFilters();
         return { ok: true };
     }
 
@@ -124,8 +136,22 @@ function useTodos() {
         saveTodos(newTodos);
         setSearchValue('');
         setFilter(TODO_FILTERS.all);
+        clearFacetFilters();
         setEditingTodoId(null);
         return { ok: true };
+    }
+
+    const selectProjectFilter = (project) => {
+        setActiveProject(currentProject => currentProject === project ? null : project);
+    }
+
+    const selectTagFilter = (tag) => {
+        setActiveTag(currentTag => currentTag === tag ? null : tag);
+    }
+
+    const clearFacetFilters = () => {
+        setActiveProject(null);
+        setActiveTag(null);
     }
 
     const toggleSubtask = (todoId, subtaskId) => {
@@ -191,6 +217,7 @@ function useTodos() {
         saveTodos(result.todos);
         setSearchValue('');
         setFilter(TODO_FILTERS.all);
+        clearFacetFilters();
 
         return {
             ok: true,
@@ -209,6 +236,10 @@ function useTodos() {
         overdueTodos: dateCounts[TODO_FILTERS.overdue],
         todayTodos: dateCounts[TODO_FILTERS.today],
         upcomingTodos: dateCounts[TODO_FILTERS.upcoming],
+        projectOptions: facets.projects,
+        tagOptions: facets.tags,
+        activeProject,
+        activeTag,
         visibleTodos,
         openModal,
         editingTodo,
@@ -218,6 +249,9 @@ function useTodos() {
     const stateUpdaters = {
         setSearchValue,
         setFilter,
+        selectProjectFilter,
+        selectTagFilter,
+        clearFacetFilters,
         completeTodo,
         deleteTodo,
         toggleSubtask,
