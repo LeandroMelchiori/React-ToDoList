@@ -182,7 +182,11 @@ function App() {
                 searchValue={searchValue}
                 onError={() => <TodosError />}
                 onLoading={() => <TodosLoading />}
-                onEmptyTodos={() => <EmptyTodos />}
+                onEmptyTodos={() => (
+                    <EmptyTodos
+                        onCreateTemplate={(template) => addTodo(template.todo.text, template.todo)}
+                    />
+                )}
                 onEmptySearchResults={() => (
                     <p className="TodoList-emptySearch">
                         {searchValue

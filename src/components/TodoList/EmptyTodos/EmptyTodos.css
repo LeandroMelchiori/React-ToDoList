@@ -1,5 +1,5 @@
 .EmptyTodo-container {
-  align-items: center;
+  align-items: flex-start;
   background: var(--color-surface);
   border: 1px dashed var(--color-border-strong);
   border-radius: 16px;
@@ -9,6 +9,13 @@
   margin: 0;
   padding: 34px 24px;
   text-align: left;
+}
+
+.EmptyTodo-content {
+  display: grid;
+  gap: 18px;
+  max-width: 680px;
+  width: 100%;
 }
 
 .EmptyTodo-completeIcon {
@@ -44,10 +51,64 @@
   margin: 0;
 }
 
+.EmptyTodo-templates {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.EmptyTodo-template {
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  color: var(--color-text);
+  cursor: pointer;
+  display: grid;
+  gap: 5px;
+  min-height: 96px;
+  padding: 14px;
+  text-align: left;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.EmptyTodo-template:hover {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-card);
+  transform: translateY(-1px);
+}
+
+.EmptyTodo-template:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-focus);
+  outline: none;
+}
+
+.EmptyTodo-template span {
+  font-weight: 800;
+}
+
+.EmptyTodo-template small {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
 @media (max-width: 560px) {
   .EmptyTodo-container {
     align-items: center;
     flex-direction: column;
+    text-align: center;
+  }
+
+  .EmptyTodo-templates {
+    grid-template-columns: 1fr;
+  }
+
+  .EmptyTodo-template {
+    min-height: auto;
     text-align: center;
   }
 }

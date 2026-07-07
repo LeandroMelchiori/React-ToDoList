@@ -101,6 +101,31 @@ describe('App', () => {
     expect(screen.getByText('Organiza tu dia con una primera tarea')).toBeInTheDocument();
   });
 
+  test('creates a starter todo from the empty onboarding templates', async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    expect(await screen.findByText('Todavia no hay tareas')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Usar plantilla Preparar entrevista' }));
+
+    expect(screen.getByText('Preparar entrevista tecnica')).toBeInTheDocument();
+    expect(screen.getByText('Alta')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Filtrar por proyecto Carrera' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Filtrar por etiqueta portfolio' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Revisar proyectos')).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('TODOS_V1'))[0]).toEqual(expect.objectContaining({
+      text: 'Preparar entrevista tecnica',
+      priority: 'high',
+      project: 'Carrera',
+      tags: ['portfolio', 'react'],
+      subtasks: [
+        expect.objectContaining({ text: 'Revisar proyectos', completed: false }),
+        expect.objectContaining({ text: 'Practicar explicacion tecnica', completed: false }),
+      ],
+    }));
+  });
+
   test('shows duplicate validation in the create todo form', async () => {
     const user = userEvent.setup();
     localStorage.setItem('TODOS_V1', JSON.stringify([
