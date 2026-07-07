@@ -30,6 +30,7 @@ function TodoFacetFilters({
                 key={project.name}
                 type="button"
                 className={`TodoFacetFilters-button ${isActive ? 'TodoFacetFilters-button--active' : ''}`}
+                aria-label={`Filtrar proyecto ${project.name}, ${project.count} tareas`}
                 aria-pressed={isActive}
                 onClick={() => onSelectProject(project.name)}
               >
@@ -52,6 +53,7 @@ function TodoFacetFilters({
                 key={tag.name}
                 type="button"
                 className={`TodoFacetFilters-button ${isActive ? 'TodoFacetFilters-button--active' : ''}`}
+                aria-label={`Filtrar etiqueta ${tag.name}, ${tag.count} tareas`}
                 aria-pressed={isActive}
                 onClick={() => onSelectTag(tag.name)}
               >

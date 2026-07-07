@@ -76,3 +76,21 @@
 .TodoFacetFilters-clear {
   color: var(--color-danger-hover);
 }
+
+@media (max-width: 640px) {
+  .TodoFacetFilters {
+    justify-items: stretch;
+  }
+
+  .TodoFacetFilters-group {
+    justify-content: flex-start;
+  }
+
+  .TodoFacetFilters-group > span {
+    flex-basis: 100%;
+  }
+
+  .TodoFacetFilters-button {
+    justify-content: space-between;
+  }
+}
