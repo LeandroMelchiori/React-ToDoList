@@ -9,6 +9,7 @@ import { TodoFacetFilters } from '../components/TodoHeader/TodoFacetFilters/Todo
 import { TodoBoards } from '../components/TodoHeader/TodoBoards/TodoBoards';
 import { TodoSavedViews } from '../components/TodoHeader/TodoSavedViews/TodoSavedViews';
 import { TodoBackupActions } from '../components/TodoHeader/TodoBackupActions/TodoBackupActions';
+import { TodoHeaderTools } from '../components/TodoHeader/TodoHeaderTools/TodoHeaderTools';
 import { TodoList } from '../components/TodoList/TodoList';
 import { TodoItem } from '../components/TodoList/TodoItem/TodoItem';
 import { CreateTodoButton } from '../components/CreateTodoButton/CreateTodoButton';
@@ -247,6 +248,7 @@ function App() {
                     boards={todoBoards}
                     onCreateBoard={createBoard}
                     onSelectBoard={selectTodoBoard}
+                    showCreateForm={false}
                 />
                 <TodoSearch
                     ref={searchInputRef}
@@ -273,17 +275,26 @@ function App() {
                     onSelectTag={selectTagFilter}
                     onClearFacetFilters={clearFacetFilters}
                 />
-                <TodoSavedViews
-                    savedViews={savedViews}
-                    onSaveView={saveCurrentView}
-                    onApplyView={applySavedView}
-                    onDeleteView={deleteSavedView}
-                />
-                <TodoBackupActions
-                    onExportTodos={exportTodos}
-                    onPreviewImport={previewTodosImport}
-                    onImportTodos={importTodos}
-                />
+                <TodoHeaderTools>
+                    <TodoBoards
+                        activeBoardId={activeBoardId}
+                        boards={todoBoards}
+                        onCreateBoard={createBoard}
+                        onSelectBoard={selectTodoBoard}
+                        showBoardList={false}
+                    />
+                    <TodoSavedViews
+                        savedViews={savedViews}
+                        onSaveView={saveCurrentView}
+                        onApplyView={applySavedView}
+                        onDeleteView={deleteSavedView}
+                    />
+                    <TodoBackupActions
+                        onExportTodos={exportTodos}
+                        onPreviewImport={previewTodosImport}
+                        onImportTodos={importTodos}
+                    />
+                </TodoHeaderTools>
             </TodoHeader>
 
             <CreateTodoButton

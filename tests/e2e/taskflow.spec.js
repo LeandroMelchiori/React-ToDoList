@@ -1,6 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 
+async function openTools(page) {
+  await page.getByRole('button', { name: /Herramientas/ }).click();
+}
+
 test('manages a todo through the production flow', async ({ page }) => {
   await page.goto('/');
 
@@ -84,6 +88,7 @@ test('exports current todos as a JSON backup', async ({ page }) => {
   await page.getByRole('button', { name: 'Usar plantilla Plan semanal' }).click();
   await expect(page.getByText('Definir prioridades de la semana')).toBeVisible();
 
+  await openTools(page);
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Exportar tareas' }).click();
   const download = await downloadPromise;
@@ -111,6 +116,7 @@ test('previews and merges imported todos without duplicates', async ({ page }) =
   await page.getByRole('button', { name: 'Usar plantilla Preparar entrevista' }).click();
   await expect(page.getByText('Preparar entrevista tecnica', { exact: true })).toBeVisible();
 
+  await openTools(page);
   await page.getByLabel('Importar tareas desde JSON').setInputFiles({
     name: 'taskflow-e2e.json',
     mimeType: 'application/json',
@@ -151,6 +157,7 @@ test('keeps local boards and saved views in the production flow', async ({ page 
   await dialog.getByRole('button', { name: 'Agregar' }).click();
   await expect(page.getByText('Plan personal')).toBeVisible();
 
+  await openTools(page);
   await page.getByLabel('Nombre del tablero').fill('Talleres');
   await page.getByRole('form', { name: 'Crear tablero' }).getByRole('button', { name: 'Crear' }).click();
   await expect(page.getByText('Todavia no hay tareas')).toBeVisible();

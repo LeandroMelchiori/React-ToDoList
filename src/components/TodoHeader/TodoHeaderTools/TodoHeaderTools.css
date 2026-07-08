@@ -1,0 +1,63 @@
+.TodoHeaderTools {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  margin: 18px auto 0;
+  max-width: 960px;
+}
+
+.TodoHeaderTools-summary {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--color-text);
+  cursor: pointer;
+  display: flex;
+  font-size: 14px;
+  font-weight: 900;
+  gap: 10px;
+  justify-content: space-between;
+  list-style: none;
+  min-height: 46px;
+  padding: 0 14px;
+  text-align: left;
+  width: 100%;
+}
+
+.TodoHeaderTools-summary::after {
+  color: var(--color-accent);
+  content: "+";
+  font-size: 20px;
+  line-height: 1;
+}
+
+.TodoHeaderTools--open .TodoHeaderTools-summary::after {
+  content: "-";
+}
+
+.TodoHeaderTools-summary span {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  margin-left: auto;
+}
+
+.TodoHeaderTools-panel {
+  border-top: 1px solid var(--color-border);
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+@media (max-width: 640px) {
+  .TodoHeaderTools-summary {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+    justify-content: center;
+    padding: 10px 14px;
+  }
+
+  .TodoHeaderTools-summary span {
+    margin-left: 0;
+  }
+}

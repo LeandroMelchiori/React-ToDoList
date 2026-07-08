@@ -1,13 +1,17 @@
 .TodoBoards {
   align-items: center;
-  border-bottom: 1px solid var(--color-border);
-  border-top: 1px solid var(--color-border);
   display: grid;
   gap: 12px;
   grid-template-columns: minmax(0, 1fr) auto;
   justify-items: stretch;
-  margin: 18px auto 0;
+  margin: 0;
   max-width: 960px;
+}
+
+.TodoBoards--compact {
+  border-bottom: 1px solid var(--color-border);
+  border-top: 1px solid var(--color-border);
+  margin: 18px auto 0;
   padding: 12px 0;
 }
 
@@ -68,6 +72,15 @@
   min-height: 34px;
   padding: 0 12px;
   width: min(220px, 100%);
+}
+
+.TodoHeaderTools-panel .TodoBoards {
+  grid-template-columns: 1fr;
+  max-width: none;
+}
+
+.TodoHeaderTools-panel .TodoBoards-form {
+  justify-content: flex-start;
 }
 
 .TodoBoards-button:hover:not(:disabled),

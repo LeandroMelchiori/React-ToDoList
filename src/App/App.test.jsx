@@ -10,6 +10,10 @@ function renderApp() {
   return render(<App />);
 }
 
+async function openTools(user) {
+  await user.click(screen.getByRole('button', { name: /Herramientas/ }));
+}
+
 function toDateInputValue(date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -170,6 +174,7 @@ describe('App', () => {
 
     expect(screen.getByText('Plan personal')).toBeInTheDocument();
 
+    await openTools(user);
     await user.type(screen.getByLabelText('Nombre del tablero'), 'Talleres');
     await user.click(screen.getByRole('button', { name: 'Crear' }));
 
@@ -400,6 +405,7 @@ describe('App', () => {
 
     await user.type(screen.getByLabelText('Buscar tareas'), 'demo');
     await user.click(screen.getByRole('button', { name: 'Filtrar por etiqueta frontend' }));
+    await openTools(user);
     await user.type(screen.getByLabelText('Nombre de la vista'), 'Demo frontend');
     await user.click(screen.getByRole('button', { name: 'Guardar vista' }));
 
@@ -701,6 +707,7 @@ describe('App', () => {
 
     expect(await screen.findByText('Exportar tareas')).toBeInTheDocument();
 
+    await openTools(user);
     await user.click(screen.getByRole('button', { name: 'Exportar tareas' }));
 
     const [backupBlob] = createObjectURL.mock.calls[0];
@@ -749,6 +756,7 @@ describe('App', () => {
 
     expect(await screen.findByText('Organiza tu dia con una primera tarea')).toBeInTheDocument();
 
+    await openTools(user);
     await user.upload(screen.getByLabelText('Importar tareas desde JSON'), backupFile);
 
     expect(screen.getByRole('region', { name: 'Previsualizacion de importacion' })).toBeInTheDocument();
@@ -794,6 +802,7 @@ describe('App', () => {
 
     expect(await screen.findByText('Preparar demo')).toBeInTheDocument();
 
+    await openTools(user);
     await user.upload(screen.getByLabelText('Importar tareas desde JSON'), backupFile);
 
     expect(screen.getByText('taskflow-merge.json: 2 tareas encontradas.')).toBeInTheDocument();
