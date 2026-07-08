@@ -54,6 +54,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - Normalizar tareas antiguas guardadas sin `id`.
 - Detectar cambios hechos en otra pestana y permitir sincronizar.
 - Exportar e importar tareas con un archivo JSON local.
+- Mostrar metricas locales de progreso, completadas recientes, vencidas y alta prioridad.
 - Mostrar estado offline/PWA y avisar cuando hay una version nueva disponible.
 - Mostrar estados de carga, error, lista vacia y busqueda sin resultados.
 
@@ -107,7 +108,7 @@ flowchart TD
   App --> PWA["PwaStatus"]
   App --> Undo["UndoToast"]
   App --> Todos["useTodos"]
-  Todos --> Model["todoModel.js"]
+  Todos --> Model["todoModel.ts"]
   Todos --> Storage["useLocalStorage"]
   Storage --> Adapter["todoStorage.js"]
   Adapter --> IndexedDB["IndexedDB taskflow-db"]
@@ -120,7 +121,7 @@ flowchart TD
   Modal --> DeleteDialog["DeleteTodoDialog"]
 ```
 
-El estado de negocio vive en `useTodos`; las reglas puras de tareas viven en `todoModel.js`; la persistencia y sincronizacion con el navegador quedan aisladas en `useLocalStorage` y `todoStorage.js`. Los componentes visuales reciben datos y callbacks, lo que mantiene la UI facil de probar y cambiar.
+El estado de negocio vive en `useTodos`; las reglas puras de tareas viven en `todoModel.ts`; la persistencia y sincronizacion con el navegador quedan aisladas en `useLocalStorage` y `todoStorage.js`. Los componentes visuales reciben datos y callbacks, lo que mantiene la UI facil de probar y cambiar.
 
 ## Estructura
 
@@ -128,7 +129,7 @@ El estado de negocio vive en `useTodos`; las reglas puras de tareas viven en `to
 src/
   App/
     App.jsx
-    todoModel.js
+    todoModel.ts
     todoStorage.js
     useTodos.js
     useLocalStorage.js
@@ -233,13 +234,12 @@ La suite actual cubre:
 - Deshacer una eliminacion reciente y autocierre del aviso.
 - Navegacion por teclado, skip link, foco en modal y cierre con `Escape`.
 - Exportacion e importacion de backups JSON.
+- Metricas locales de progreso, completadas recientes, vencidas y alta prioridad.
 - Estado PWA/offline y aplicacion de actualizaciones del service worker.
 - Flujo E2E de produccion con Playwright: crear, buscar, editar, completar, cancelar borrado y eliminar.
 
 ## Mejoras futuras
 
-- Vista previa de importacion con opcion de fusionar, reemplazar u omitir duplicados.
-- Metricas locales sin backend: tareas completadas por semana, vencidas y distribucion por prioridad.
 - Mas plantillas locales para flujos recurrentes de estudio, talleres o proyectos.
 - Migrar componentes y hooks restantes a TypeScript.
 - Soporte opcional de multiples tableros locales sin salir del modelo local-first.
