@@ -229,12 +229,17 @@ test('keeps local boards and saved views in the production flow', async ({ page 
   await expect(page.getByText('Plan personal')).toBeVisible();
   await expect(page.getByText('Preparar taller')).not.toBeVisible();
 
-  const boardsAfterDelete = await page.evaluate(() => JSON.parse(localStorage.getItem('TODO_BOARDS_V1')));
+  await expect.poll(async () => page.evaluate(() => {
+    const boards = JSON.parse(localStorage.getItem('TODO_BOARDS_V1') || '[]');
 
-  expect(boardsAfterDelete).toEqual([
-    expect.objectContaining({
+    return boards.map(board => ({
+      name: board.name,
+      todos: board.todos.map(todo => todo.text),
+    }));
+  })).toEqual([
+    {
       name: 'Personal',
-      todos: [expect.objectContaining({ text: 'Plan personal' })],
-    }),
+      todos: ['Plan personal'],
+    },
   ]);
 });
