@@ -16,7 +16,9 @@
 }
 
 .TodoBoards-list,
-.TodoBoards-form {
+.TodoBoards-form,
+.TodoBoards-managementForm,
+.TodoBoards-deleteActions {
   align-items: center;
   display: flex;
   flex-wrap: wrap;
@@ -31,7 +33,9 @@
 }
 
 .TodoBoards-button,
-.TodoBoards-form button {
+.TodoBoards-form button,
+.TodoBoards-managementForm button,
+.TodoBoards-dangerButton {
   align-items: center;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -61,7 +65,8 @@
   padding: 0 6px;
 }
 
-.TodoBoards-form input {
+.TodoBoards-form input,
+.TodoBoards-managementForm input {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 999px;
@@ -83,15 +88,61 @@
   justify-content: flex-start;
 }
 
+.TodoBoards-management {
+  border-top: 1px solid var(--color-border);
+  display: grid;
+  gap: 12px;
+  padding-top: 12px;
+}
+
+.TodoBoards-delete {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.TodoBoards-delete p {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.TodoBoards-delete strong {
+  color: var(--color-text);
+}
+
+.TodoBoards-delete small {
+  color: var(--color-text-soft);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.TodoBoards-dangerButton {
+  color: var(--color-danger-hover);
+}
+
 .TodoBoards-button:hover:not(:disabled),
 .TodoBoards-button:focus-visible,
 .TodoBoards-form button:hover:not(:disabled),
 .TodoBoards-form button:focus-visible,
-.TodoBoards-form input:focus-visible {
+.TodoBoards-form input:focus-visible,
+.TodoBoards-managementForm button:hover:not(:disabled),
+.TodoBoards-managementForm button:focus-visible,
+.TodoBoards-managementForm input:focus-visible,
+.TodoBoards-dangerButton:hover:not(:disabled),
+.TodoBoards-dangerButton:focus-visible {
   border-color: var(--color-accent);
   box-shadow: var(--shadow-focus);
   color: var(--color-text);
   outline: none;
+}
+
+.TodoBoards-dangerButton:hover:not(:disabled),
+.TodoBoards-dangerButton:focus-visible {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
 }
 
 .TodoBoards-button--active {
@@ -107,16 +158,24 @@
 
 .TodoBoards-button:disabled,
 .TodoBoards-form button:disabled,
-.TodoBoards-form input:disabled {
+.TodoBoards-form input:disabled,
+.TodoBoards-managementForm button:disabled,
+.TodoBoards-managementForm input:disabled,
+.TodoBoards-dangerButton:disabled {
   cursor: wait;
   opacity: 0.55;
 }
 
-.TodoBoards-error {
+.TodoBoards-error,
+.TodoBoards-status {
   color: var(--color-danger-hover);
   font-size: 13px;
   font-weight: 700;
   margin: 0;
+}
+
+.TodoBoards-status {
+  color: var(--color-text-muted);
 }
 
 @media (max-width: 640px) {
@@ -126,7 +185,9 @@
   }
 
   .TodoBoards-list,
-  .TodoBoards-form {
+  .TodoBoards-form,
+  .TodoBoards-managementForm,
+  .TodoBoards-delete {
     justify-content: flex-start;
   }
 
@@ -134,7 +195,8 @@
     flex-basis: 100%;
   }
 
-  .TodoBoards-form input {
+  .TodoBoards-form input,
+  .TodoBoards-managementForm input {
     flex: 1 1 160px;
   }
 }

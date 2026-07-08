@@ -5,6 +5,10 @@ async function openTools(page) {
   await page.getByRole('button', { name: /Herramientas/ }).click();
 }
 
+function getBoardSwitcher(page) {
+  return page.getByRole('group', { name: 'Cambiar tablero' });
+}
+
 test('manages a todo through the production flow', async ({ page }) => {
   await page.goto('/');
 
@@ -158,8 +162,9 @@ test('keeps local boards and saved views in the production flow', async ({ page 
   await expect(page.getByText('Plan personal')).toBeVisible();
 
   await openTools(page);
-  await page.getByLabel('Nombre del tablero').fill('Talleres');
-  await page.getByRole('form', { name: 'Crear tablero' }).getByRole('button', { name: 'Crear' }).click();
+  const createBoardForm = page.getByRole('form', { name: 'Crear tablero' });
+  await createBoardForm.getByLabel('Nombre del tablero', { exact: true }).fill('Talleres');
+  await createBoardForm.getByRole('button', { name: 'Crear' }).click();
   await expect(page.getByText('Todavia no hay tareas')).toBeVisible();
   await expect(page.getByText('Plan personal')).not.toBeVisible();
 
@@ -171,6 +176,11 @@ test('keeps local boards and saved views in the production flow', async ({ page 
   await dialog.getByRole('button', { name: 'Agregar' }).click();
   await expect(page.getByText('Preparar taller')).toBeVisible();
 
+  await page.getByLabel('Nombre del tablero actual').fill('Capacitaciones');
+  await page.getByRole('button', { name: 'Renombrar' }).click();
+  await expect(page.getByText('Tablero actualizado.')).toBeVisible();
+  await expect(getBoardSwitcher(page).getByRole('button', { name: /Capacitaciones/ })).toBeVisible();
+
   await page.getByLabel('Buscar tareas').fill('taller');
   await page.getByRole('button', { name: 'Filtrar por etiqueta formacion' }).click();
   await page.getByLabel('Nombre de la vista').fill('Taller activo');
@@ -179,11 +189,11 @@ test('keeps local boards and saved views in the production flow', async ({ page 
 
   await page.getByRole('button', { name: 'Limpiar filtros' }).click();
   await page.getByLabel('Buscar tareas').fill('');
-  await page.getByRole('button', { name: /Personal/ }).click();
+  await getBoardSwitcher(page).getByRole('button', { name: /Personal/ }).click();
   await expect(page.getByText('Plan personal')).toBeVisible();
   await expect(page.getByText('Preparar taller')).not.toBeVisible();
 
-  await page.getByRole('button', { name: /Talleres/ }).click();
+  await getBoardSwitcher(page).getByRole('button', { name: /Capacitaciones/ }).click();
   await page.getByLabel('Buscar tareas').fill('sin coincidencias');
   await expect(page.getByText('No hay tareas que coincidan con tu busqueda.')).toBeVisible();
 
@@ -202,7 +212,7 @@ test('keeps local boards and saved views in the production flow', async ({ page 
       todos: [expect.objectContaining({ text: 'Plan personal' })],
     }),
     expect.objectContaining({
-      name: 'Talleres',
+      name: 'Capacitaciones',
       todos: [expect.objectContaining({ text: 'Preparar taller' })],
     }),
   ]);
@@ -211,6 +221,20 @@ test('keeps local boards and saved views in the production flow', async ({ page 
       name: 'Taller activo',
       searchValue: 'taller',
       tag: 'formacion',
+    }),
+  ]);
+
+  await page.getByRole('button', { name: 'Eliminar tablero Capacitaciones' }).click();
+  await page.getByRole('button', { name: 'Confirmar eliminacion' }).click();
+  await expect(page.getByText('Plan personal')).toBeVisible();
+  await expect(page.getByText('Preparar taller')).not.toBeVisible();
+
+  const boardsAfterDelete = await page.evaluate(() => JSON.parse(localStorage.getItem('TODO_BOARDS_V1')));
+
+  expect(boardsAfterDelete).toEqual([
+    expect.objectContaining({
+      name: 'Personal',
+      todos: [expect.objectContaining({ text: 'Plan personal' })],
     }),
   ]);
 });

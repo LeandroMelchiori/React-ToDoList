@@ -91,6 +91,8 @@ function App() {
         setFilter,
         selectTodoBoard,
         createBoard,
+        renameBoard,
+        deleteBoard,
         saveCurrentView,
         applySavedView,
         deleteSavedView,
@@ -279,9 +281,12 @@ function App() {
                     <TodoBoards
                         activeBoardId={activeBoardId}
                         boards={todoBoards}
+                        onDeleteBoard={deleteBoard}
                         onCreateBoard={createBoard}
+                        onRenameBoard={renameBoard}
                         onSelectBoard={selectTodoBoard}
                         showBoardList={false}
+                        showManagement
                     />
                     <TodoSavedViews
                         savedViews={savedViews}

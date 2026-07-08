@@ -175,8 +175,9 @@ describe('App', () => {
     expect(screen.getByText('Plan personal')).toBeInTheDocument();
 
     await openTools(user);
-    await user.type(screen.getByLabelText('Nombre del tablero'), 'Talleres');
-    await user.click(screen.getByRole('button', { name: 'Crear' }));
+    const createBoardForm = screen.getByRole('form', { name: 'Crear tablero' });
+    await user.type(within(createBoardForm).getByLabelText('Nombre del tablero'), 'Talleres');
+    await user.click(within(createBoardForm).getByRole('button', { name: 'Crear' }));
 
     expect(screen.getByText('Todavia no hay tareas')).toBeInTheDocument();
     expect(screen.queryByText('Plan personal')).not.toBeInTheDocument();
@@ -208,6 +209,58 @@ describe('App', () => {
         expect.objectContaining({
           name: 'Talleres',
           todos: [expect.objectContaining({ text: 'Preparar taller' })],
+        }),
+      ]);
+    });
+  });
+
+  test('renames and deletes local todo boards', async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    expect(await screen.findByText('Todavia no hay tareas')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Crear nueva tarea' }));
+    await user.type(screen.getByLabelText('Nueva tarea'), 'Plan personal');
+    await user.click(screen.getByRole('button', { name: 'Agregar' }));
+
+    await openTools(user);
+    const createBoardForm = screen.getByRole('form', { name: 'Crear tablero' });
+    await user.type(within(createBoardForm).getByLabelText('Nombre del tablero'), 'Talleres');
+    await user.click(within(createBoardForm).getByRole('button', { name: 'Crear' }));
+
+    await user.click(screen.getByRole('button', { name: 'Crear nueva tarea' }));
+    await user.type(screen.getByLabelText('Nueva tarea'), 'Preparar taller');
+    await user.click(screen.getByRole('button', { name: 'Agregar' }));
+
+    const boardNameInput = screen.getByLabelText('Nombre del tablero actual');
+    await user.clear(boardNameInput);
+    await user.type(boardNameInput, 'Capacitaciones');
+    await user.click(screen.getByRole('button', { name: 'Renombrar' }));
+
+    expect(screen.getByRole('status')).toHaveTextContent('Tablero actualizado.');
+    const boardSwitcher = screen.getByRole('group', { name: 'Cambiar tablero' });
+    expect(within(boardSwitcher).getByRole('button', { name: /Capacitaciones/ })).toBeInTheDocument();
+    expect(within(boardSwitcher).queryByRole('button', { name: /Talleres/ })).not.toBeInTheDocument();
+
+    await user.clear(boardNameInput);
+    await user.type(boardNameInput, 'Personal');
+    await user.click(screen.getByRole('button', { name: 'Renombrar' }));
+
+    expect(screen.getByText('Ya existe un tablero con ese nombre.')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Eliminar tablero Capacitaciones' }));
+    await user.click(screen.getByRole('button', { name: 'Confirmar eliminacion' }));
+
+    expect(screen.getByText('Plan personal')).toBeInTheDocument();
+    expect(screen.queryByText('Preparar taller')).not.toBeInTheDocument();
+    expect(within(screen.getByRole('group', { name: 'Cambiar tablero' })).queryByRole('button', { name: /Capacitaciones/ })).not.toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(JSON.parse(localStorage.getItem('TODO_BOARDS_V1'))).toEqual([
+        expect.objectContaining({
+          name: 'Personal',
+          todos: [expect.objectContaining({ text: 'Plan personal' })],
         }),
       ]);
     });

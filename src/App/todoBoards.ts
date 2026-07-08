@@ -13,6 +13,10 @@ type TodoBoardActionResult =
     | { ok: true; board: TodoBoard; boards: TodoBoard[] }
     | { ok: false; error: string };
 
+type TodoBoardDeleteResult =
+    | { ok: true; deletedBoard: TodoBoard; nextBoard: TodoBoard; boards: TodoBoard[] }
+    | { ok: false; error: string };
+
 const DEFAULT_TODO_BOARD_ID = 'personal';
 const DEFAULT_TODO_BOARD_NAME = 'Personal';
 
@@ -161,6 +165,72 @@ function addTodoBoard(boards: TodoBoard[], name: string): TodoBoardActionResult 
     };
 }
 
+function renameTodoBoard(boards: TodoBoard[], boardId: string, name: string): TodoBoardActionResult {
+    const boardName = normalizeBoardName(name);
+
+    if (!boardName) {
+        return { ok: false, error: 'Escribe un nombre para el tablero.' };
+    }
+
+    const normalizedBoards = ensureDefaultTodoBoard(boards);
+    const currentBoard = normalizedBoards.find(board => board.id === boardId);
+
+    if (!currentBoard) {
+        return { ok: false, error: 'No encontramos ese tablero.' };
+    }
+
+    const alreadyExists = normalizedBoards.some(board =>
+        board.id !== boardId && board.name.toLowerCase() === boardName.toLowerCase()
+    );
+
+    if (alreadyExists) {
+        return { ok: false, error: 'Ya existe un tablero con ese nombre.' };
+    }
+
+    const now = new Date().toISOString();
+    const renamedBoards = normalizedBoards.map(board =>
+        board.id === boardId
+            ? {
+                ...board,
+                name: boardName,
+                updatedAt: now,
+            }
+            : board
+    );
+    const board = renamedBoards.find(item => item.id === boardId) as TodoBoard;
+
+    return {
+        ok: true,
+        board,
+        boards: renamedBoards,
+    };
+}
+
+function removeTodoBoard(boards: TodoBoard[], boardId: string): TodoBoardDeleteResult {
+    const normalizedBoards = ensureDefaultTodoBoard(boards);
+
+    if (normalizedBoards.length <= 1) {
+        return { ok: false, error: 'Necesitas al menos un tablero.' };
+    }
+
+    const boardIndex = normalizedBoards.findIndex(board => board.id === boardId);
+
+    if (boardIndex < 0) {
+        return { ok: false, error: 'No encontramos ese tablero.' };
+    }
+
+    const deletedBoard = normalizedBoards[boardIndex];
+    const boardsWithoutDeleted = normalizedBoards.filter(board => board.id !== boardId);
+    const nextBoard = boardsWithoutDeleted[Math.min(boardIndex, boardsWithoutDeleted.length - 1)];
+
+    return {
+        ok: true,
+        deletedBoard,
+        nextBoard,
+        boards: boardsWithoutDeleted,
+    };
+}
+
 export {
     DEFAULT_TODO_BOARD_ID,
     DEFAULT_TODO_BOARD_NAME,
@@ -170,10 +240,13 @@ export {
     getActiveTodoBoard,
     getActiveTodoBoardId,
     normalizeTodoBoards,
+    removeTodoBoard,
+    renameTodoBoard,
     upsertTodoBoardTodos,
 };
 
 export type {
     TodoBoard,
     TodoBoardActionResult,
+    TodoBoardDeleteResult,
 };

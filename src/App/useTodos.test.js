@@ -23,10 +23,13 @@ import {
   readTodosBackup,
 } from './todoModel';
 import {
+  DEFAULT_TODO_BOARD_ID,
   addTodoBoard,
   ensureDefaultTodoBoard,
   getActiveTodoBoardId,
   normalizeTodoBoards,
+  removeTodoBoard,
+  renameTodoBoard,
   upsertTodoBoardTodos,
 } from './todoBoards';
 import {
@@ -451,6 +454,30 @@ describe('todo helpers', () => {
     expect(addTodoBoard(updatedBoards, 'talleres')).toEqual({
       ok: false,
       error: 'Ya existe un tablero con ese nombre.',
+    });
+
+    const renameResult = renameTodoBoard(updatedBoards, addResult.board.id, 'Capacitaciones');
+
+    expect(renameResult).toEqual(expect.objectContaining({
+      ok: true,
+      board: expect.objectContaining({ name: 'Capacitaciones' }),
+    }));
+    expect(renameTodoBoard(renameResult.boards, addResult.board.id, 'personal')).toEqual({
+      ok: false,
+      error: 'Ya existe un tablero con ese nombre.',
+    });
+
+    const deleteResult = removeTodoBoard(renameResult.boards, addResult.board.id);
+
+    expect(deleteResult).toEqual(expect.objectContaining({
+      ok: true,
+      deletedBoard: expect.objectContaining({ name: 'Capacitaciones' }),
+      nextBoard: expect.objectContaining({ name: 'Personal' }),
+      boards: [expect.objectContaining({ name: 'Personal' })],
+    }));
+    expect(removeTodoBoard(deleteResult.boards, DEFAULT_TODO_BOARD_ID)).toEqual({
+      ok: false,
+      error: 'Necesitas al menos un tablero.',
     });
   });
 

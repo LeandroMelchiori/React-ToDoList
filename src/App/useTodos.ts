@@ -27,6 +27,8 @@ import {
     getActiveTodoBoard,
     getActiveTodoBoardId,
     normalizeTodoBoards,
+    removeTodoBoard,
+    renameTodoBoard,
     upsertTodoBoardTodos,
 } from './todoBoards';
 import {
@@ -254,6 +256,43 @@ function useTodos() {
         saveBoards(result.boards);
         saveActiveBoardId(result.board.id);
         saveTodos(result.board.todos);
+        resetTodoView();
+
+        return { ok: true };
+    }
+
+    const renameBoard = (boardId: string, name: string): TodoActionResult => {
+        const boardsWithCurrentTodos = upsertTodoBoardTodos(todoBoards, activeBoardId, normalizedTodos);
+        const result = renameTodoBoard(boardsWithCurrentTodos, boardId, name);
+
+        if (!result.ok) {
+            return result;
+        }
+
+        saveBoards(result.boards);
+
+        return { ok: true };
+    }
+
+    const deleteBoard = (boardId: string): TodoActionResult => {
+        const boardsWithCurrentTodos = upsertTodoBoardTodos(todoBoards, activeBoardId, normalizedTodos);
+        const result = removeTodoBoard(boardsWithCurrentTodos, boardId);
+
+        if (!result.ok) {
+            return result;
+        }
+
+        const nextActiveBoard = boardId === activeBoardId
+            ? result.nextBoard
+            : getActiveTodoBoard(result.boards, activeBoardId);
+
+        saveBoards(result.boards);
+
+        if (nextActiveBoard) {
+            saveActiveBoardId(nextActiveBoard.id);
+            saveTodos(nextActiveBoard.todos);
+        }
+
         resetTodoView();
 
         return { ok: true };
@@ -560,6 +599,8 @@ function useTodos() {
         clearFacetFilters,
         selectTodoBoard,
         createBoard,
+        renameBoard,
+        deleteBoard,
         saveCurrentView,
         applySavedView,
         deleteSavedView,
