@@ -60,6 +60,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 ## Stack
 
 - React 18
+- TypeScript incremental
 - Vite
 - CSS por componente
 - React Testing Library
@@ -77,6 +78,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 | --- | --- |
 | Auditoria de dependencias | `npm audit --audit-level=moderate` sin vulnerabilidades. |
 | Tests unitarios/integracion | `npm test` cubre hooks y flujos principales de UI. |
+| Typecheck | `npm run typecheck` valida las capas migradas a TypeScript. |
 | Tests E2E | `npm run test:e2e` valida el flujo completo sobre el build de produccion local. |
 | Lighthouse | `npm run audit:lighthouse` genera reporte del sitio publicado. Ultima medicion: 100/100/100/100. |
 | CI | GitHub Actions ejecuta audit, tests, Playwright y build en cada push/PR a `main`. |
@@ -86,7 +88,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - Cada tarea usa un `id` unico para evitar depender del texto como key o identificador.
 - Los datos antiguos se normalizan para mantener compatibilidad con tareas sin `id`, prioridad, proyecto o etiquetas.
 - Las operaciones sobre tareas son inmutables: completar, borrar, agregar, editar y reordenar generan nuevas referencias.
-- El modelo puro de tareas vive en `todoModel.js`; ahi se normalizan datos, filtros, grupos, backups y reordenamiento.
+- El modelo puro de tareas vive en `todoModel.ts`; ahi se normalizan datos, filtros, grupos, backups y reordenamiento.
 - La logica principal vive en hooks (`useTodos`, `useLocalStorage`) para separar estado y presentacion.
 - IndexedDB es la persistencia principal y `localStorage` queda como compatibilidad, migracion y puente para eventos `storage`.
 - El formulario se reutiliza para creacion y edicion, manteniendo validaciones consistentes.
@@ -170,6 +172,12 @@ Ejecutar tests:
 npm test
 ```
 
+Ejecutar TypeScript:
+
+```bash
+npm run typecheck
+```
+
 Ejecutar E2E sobre el build de produccion:
 
 ```bash
@@ -204,7 +212,7 @@ npm run preview
 
 El proyecto usa GitHub Actions para validar cada cambio. Vercel toma los cambios de `main` y publica automaticamente la version principal.
 
-- En cada pull request o push a `main`: instala dependencias con `npm ci`, ejecuta `npm audit --audit-level=moderate`, corre tests, ejecuta E2E con Playwright y genera build.
+- En cada pull request o push a `main`: instala dependencias con `npm ci`, ejecuta `npm audit --audit-level=moderate`, corre tests, ejecuta typecheck, ejecuta E2E con Playwright y genera build.
 - Vercel publica la app en `taskflow.sachadev.me`.
 
 ## Tests
@@ -233,7 +241,7 @@ La suite actual cubre:
 - Vista previa de importacion con opcion de fusionar, reemplazar u omitir duplicados.
 - Metricas locales sin backend: tareas completadas por semana, vencidas y distribucion por prioridad.
 - Mas plantillas locales para flujos recurrentes de estudio, talleres o proyectos.
-- Migracion a TypeScript.
+- Migrar componentes y hooks restantes a TypeScript.
 - Soporte opcional de multiples tableros locales sin salir del modelo local-first.
 
 ## Autor

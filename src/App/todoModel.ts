@@ -1,36 +1,83 @@
-// @ts-check
+type TodoFilter = 'all' | 'active' | 'completed' | 'overdue' | 'today' | 'upcoming';
+type TodoDateStatus = 'overdue' | 'today' | 'upcoming';
+type TodoPriority = 'low' | 'medium' | 'high';
+type TodoGroup = 'overdue' | 'today' | 'upcoming' | 'unscheduled' | 'completed';
+type ImportMode = 'merge' | 'replace';
 
-/**
- * @typedef {'all' | 'active' | 'completed' | 'overdue' | 'today' | 'upcoming'} TodoFilter
- * @typedef {'low' | 'medium' | 'high'} TodoPriority
- * @typedef {'overdue' | 'today' | 'upcoming' | 'unscheduled' | 'completed'} TodoGroup
- * @typedef {{ id: string, text: string, completed: boolean }} TodoSubtask
- * @typedef {{
- *   id: string,
- *   text: string,
- *   completed: boolean,
- *   order: number,
- *   priority: TodoPriority,
- *   dueDate: string | null,
- *   project: string | null,
- *   tags: string[],
- *   subtasks: TodoSubtask[],
- *   createdAt: string | null,
- *   completedAt: string | null,
- * }} Todo
- * @typedef {{ id: TodoGroup, title: string, todos: Todo[] }} TodoGroupView
- * @typedef {{
- *   totalTodos: number,
- *   completedTodos: number,
- *   pendingTodos: number,
- *   completionRate: number,
- *   completedLast7Days: number,
- *   overdueTodos: number,
- *   highPriorityPendingTodos: number,
- * }} TodoInsights
- */
+type TodoSubtask = {
+    id: string;
+    text: string;
+    completed: boolean;
+};
 
-/** @type {{ all: TodoFilter, active: TodoFilter, completed: TodoFilter, overdue: TodoFilter, today: TodoFilter, upcoming: TodoFilter }} */
+type Todo = {
+    id: string;
+    text: string;
+    completed: boolean;
+    order: number;
+    priority: TodoPriority;
+    dueDate: string | null;
+    project: string | null;
+    tags: string[];
+    subtasks: TodoSubtask[];
+    createdAt: string | null;
+    completedAt: string | null;
+};
+
+type TodoGroupView = {
+    id: TodoGroup;
+    title: string;
+    todos: Todo[];
+};
+
+type TodoInsights = {
+    totalTodos: number;
+    completedTodos: number;
+    pendingTodos: number;
+    completionRate: number;
+    completedLast7Days: number;
+    overdueTodos: number;
+    highPriorityPendingTodos: number;
+};
+
+type TodoBackup = {
+    version: number;
+    exportedAt: string;
+    todos: Todo[];
+};
+
+type BackupReadResult = { ok: true; todos: Todo[] } | { ok: false; error: string };
+type ImportPreviewResult = (
+    { ok: true; todos: Todo[]; totalCount: number; newCount: number; duplicateCount: number } |
+    { ok: false; error: string }
+);
+type ImportApplyResult = (
+    { ok: true; todos: Todo[]; totalCount: number; importedCount: number; skippedDuplicates: number } |
+    { ok: false; error: string }
+);
+type SplitImportResult = {
+    newTodos: Todo[];
+    duplicateTodos: Todo[];
+};
+
+type TodoDetails = {
+    order?: unknown;
+    priority?: unknown;
+    dueDate?: unknown;
+    project?: unknown;
+    tags?: unknown;
+    subtasks?: unknown;
+};
+
+type TodoInput = TodoDetails & {
+    id?: unknown;
+    text?: unknown;
+    completed?: unknown;
+    createdAt?: unknown;
+    completedAt?: unknown;
+};
+type TodoInputWithText = TodoInput & { text: string };
+
 const TODO_FILTERS = {
     all: 'all',
     active: 'active',
@@ -38,26 +85,23 @@ const TODO_FILTERS = {
     overdue: 'overdue',
     today: 'today',
     upcoming: 'upcoming',
-};
+} as const satisfies Record<TodoFilter, TodoFilter>;
 
-/** @type {{ low: TodoPriority, medium: TodoPriority, high: TodoPriority }} */
 const TODO_PRIORITIES = {
     low: 'low',
     medium: 'medium',
     high: 'high',
-};
+} as const satisfies Record<TodoPriority, TodoPriority>;
 
-/** @type {{ overdue: TodoGroup, today: TodoGroup, upcoming: TodoGroup, unscheduled: TodoGroup, completed: TodoGroup }} */
 const TODO_GROUPS = {
     overdue: 'overdue',
     today: 'today',
     upcoming: 'upcoming',
     unscheduled: 'unscheduled',
     completed: 'completed',
-};
+} as const satisfies Record<TodoGroup, TodoGroup>;
 
-/** @type {Record<TodoGroup, string>} */
-const TODO_GROUP_LABELS = {
+const TODO_GROUP_LABELS: Record<TodoGroup, string> = {
     [TODO_GROUPS.overdue]: 'Vencidas',
     [TODO_GROUPS.today]: 'Hoy',
     [TODO_GROUPS.upcoming]: 'Proximas',
@@ -65,8 +109,7 @@ const TODO_GROUP_LABELS = {
     [TODO_GROUPS.completed]: 'Completadas',
 };
 
-/** @type {TodoGroup[]} */
-const TODO_GROUP_ORDER = [
+const TODO_GROUP_ORDER: TodoGroup[] = [
     TODO_GROUPS.overdue,
     TODO_GROUPS.today,
     TODO_GROUPS.upcoming,
@@ -76,38 +119,25 @@ const TODO_GROUP_ORDER = [
 
 const TODO_BACKUP_VERSION = 1;
 
-/**
- * @param {unknown} priority
- * @returns {TodoPriority}
- */
-function normalizePriority(priority) {
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+}
+
+function normalizePriority(priority: unknown): TodoPriority {
     const validPriority = Object.values(TODO_PRIORITIES).find(value => value === priority);
 
     return validPriority || TODO_PRIORITIES.medium;
 }
 
-/**
- * @param {unknown} dueDate
- * @returns {string | null}
- */
-function normalizeDueDate(dueDate) {
+function normalizeDueDate(dueDate: unknown): string | null {
     return typeof dueDate === 'string' && dueDate ? dueDate : null;
 }
 
-/**
- * @param {unknown} order
- * @param {number} [fallback]
- * @returns {number}
- */
-function normalizeOrder(order, fallback = 0) {
+function normalizeOrder(order: unknown, fallback = 0): number {
     return typeof order === 'number' && Number.isFinite(order) && order >= 0 ? order : fallback;
 }
 
-/**
- * @param {Date} [date]
- * @returns {string}
- */
-function getTodayDateValue(date = new Date()) {
+function getTodayDateValue(date = new Date()): string {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
@@ -115,39 +145,22 @@ function getTodayDateValue(date = new Date()) {
     return `${year}-${month}-${day}`;
 }
 
-/**
- * @param {string} dateValue
- * @param {number} offsetDays
- * @returns {string}
- */
-function getDateValueOffset(dateValue, offsetDays) {
+function getDateValueOffset(dateValue: string, offsetDays: number): string {
     const date = new Date(`${dateValue}T00:00:00`);
     date.setDate(date.getDate() + offsetDays);
 
     return getTodayDateValue(date);
 }
 
-/**
- * @param {unknown} dateValue
- * @returns {string | null}
- */
-function normalizeDateTime(dateValue) {
+function normalizeDateTime(dateValue: unknown): string | null {
     return typeof dateValue === 'string' && dateValue ? dateValue : null;
 }
 
-/**
- * @param {unknown} project
- * @returns {string | null}
- */
-function normalizeProject(project) {
+function normalizeProject(project: unknown): string | null {
     return typeof project === 'string' && project.trim() ? project.trim() : null;
 }
 
-/**
- * @param {unknown} tags
- * @returns {string[]}
- */
-function normalizeTags(tags) {
+function normalizeTags(tags: unknown): string[] {
     const rawTags = Array.isArray(tags)
         ? tags
         : typeof tags === 'string'
@@ -156,7 +169,7 @@ function normalizeTags(tags) {
     const seenTags = new Set();
 
     return rawTags
-        .map(tag => (typeof tag === 'string' ? tag.trim() : ''))
+        .map((tag: unknown) => (typeof tag === 'string' ? tag.trim() : ''))
         .filter(tag => {
             const normalizedTag = tag.toLowerCase();
 
@@ -170,10 +183,7 @@ function normalizeTags(tags) {
         .slice(0, 8);
 }
 
-/**
- * @returns {string}
- */
-function createTodoId() {
+function createTodoId(): string {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
         return crypto.randomUUID();
     }
@@ -181,12 +191,7 @@ function createTodoId() {
     return `todo-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-/**
- * @param {{ text?: unknown }} todo
- * @param {number} index
- * @returns {string}
- */
-function createLegacyTodoId(todo, index) {
+function createLegacyTodoId(todo: { text?: unknown }, index: number): string {
     const text = String(todo.text || 'todo')
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
@@ -195,12 +200,7 @@ function createLegacyTodoId(todo, index) {
     return `legacy-${index}-${text || 'item'}`;
 }
 
-/**
- * @param {{ text?: unknown }} subtask
- * @param {number} index
- * @returns {string}
- */
-function createLegacySubtaskId(subtask, index) {
+function createLegacySubtaskId(subtask: { text?: unknown }, index: number): string {
     const text = String(subtask.text || 'subtask')
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
@@ -209,11 +209,7 @@ function createLegacySubtaskId(subtask, index) {
     return `subtask-${index}-${text || 'item'}`;
 }
 
-/**
- * @param {unknown} subtasks
- * @returns {TodoSubtask[]}
- */
-function normalizeSubtasks(subtasks) {
+function normalizeSubtasks(subtasks: unknown): TodoSubtask[] {
     const rawSubtasks = Array.isArray(subtasks)
         ? subtasks
         : typeof subtasks === 'string'
@@ -221,10 +217,10 @@ function normalizeSubtasks(subtasks) {
             : [];
 
     return rawSubtasks
-        .map((subtask, index) => {
+        .map((subtask: unknown, index: number) => {
             const text = typeof subtask === 'string'
                 ? subtask.trim()
-                : typeof subtask?.text === 'string'
+                : isRecord(subtask) && typeof subtask.text === 'string'
                     ? subtask.text.trim()
                     : '';
 
@@ -233,22 +229,17 @@ function normalizeSubtasks(subtasks) {
             }
 
             return {
-                id: typeof subtask === 'object' && subtask?.id
+                id: isRecord(subtask) && typeof subtask.id === 'string' && subtask.id
                     ? subtask.id
                     : createLegacySubtaskId({ text }, index),
                 text,
-                completed: typeof subtask === 'object' ? Boolean(subtask.completed) : false,
+                completed: isRecord(subtask) ? Boolean(subtask.completed) : false,
             };
         })
-        .filter(Boolean);
+        .filter((subtask): subtask is TodoSubtask => Boolean(subtask));
 }
 
-/**
- * @param {unknown} existingSubtasks
- * @param {unknown} nextSubtasks
- * @returns {TodoSubtask[]}
- */
-function mergeSubtasks(existingSubtasks, nextSubtasks) {
+function mergeSubtasks(existingSubtasks: unknown, nextSubtasks: unknown): TodoSubtask[] {
     const normalizedExistingSubtasks = normalizeSubtasks(existingSubtasks);
 
     return normalizeSubtasks(nextSubtasks).map(subtask => {
@@ -268,12 +259,7 @@ function mergeSubtasks(existingSubtasks, nextSubtasks) {
     });
 }
 
-/**
- * @param {string} text
- * @param {object} [details]
- * @returns {Todo}
- */
-function createTodo(text, details = {}) {
+function createTodo(text: string, details: TodoDetails = {}): Todo {
     return {
         id: createTodoId(),
         text: text.trim(),
@@ -289,19 +275,15 @@ function createTodo(text, details = {}) {
     };
 }
 
-/**
- * @param {unknown} todos
- * @returns {Todo[]}
- */
-function normalizeTodos(todos) {
+function normalizeTodos(todos: unknown): Todo[] {
     if (!Array.isArray(todos)) {
         return [];
     }
 
     const normalizedTodos = todos
-        .filter(todo => typeof todo.text === 'string' && todo.text.trim())
+        .filter((todo): todo is TodoInputWithText => isRecord(todo) && typeof todo.text === 'string' && Boolean(todo.text.trim()))
         .map((todo, index) => ({
-            id: todo.id || createLegacyTodoId(todo, index),
+            id: typeof todo.id === 'string' && todo.id ? todo.id : createLegacyTodoId(todo, index),
             text: todo.text.trim(),
             completed: Boolean(todo.completed),
             order: normalizeOrder(todo.order, index),
@@ -310,7 +292,7 @@ function normalizeTodos(todos) {
             project: normalizeProject(todo.project),
             tags: normalizeTags(todo.tags),
             subtasks: normalizeSubtasks(todo.subtasks),
-            createdAt: todo.createdAt || null,
+            createdAt: normalizeDateTime(todo.createdAt),
             completedAt: normalizeDateTime(todo.completedAt),
         }));
 
@@ -319,25 +301,19 @@ function normalizeTodos(todos) {
         ));
 }
 
-/**
- * @param {Todo[]} todos
- * @returns {Todo[]}
- */
-function reindexTodos(todos) {
+function reindexTodos(todos: Todo[]): Todo[] {
     return todos.map((todo, index) => ({
         ...todo,
         order: index,
     }));
 }
 
-/**
- * @param {Todo[]} todos
- * @param {string} sourceId
- * @param {string} targetId
- * @param {'before' | 'after'} [placement]
- * @returns {Todo[]}
- */
-function moveTodoToPosition(todos, sourceId, targetId, placement = 'before') {
+function moveTodoToPosition(
+    todos: Todo[],
+    sourceId: string,
+    targetId: string,
+    placement: 'before' | 'after' = 'before'
+): Todo[] {
     const normalizedTodos = normalizeTodos(todos);
 
     if (!sourceId || !targetId || sourceId === targetId) {
@@ -361,15 +337,13 @@ function moveTodoToPosition(todos, sourceId, targetId, placement = 'before') {
     return reindexTodos(reorderedTodos);
 }
 
-/**
- * @param {Todo[]} todos
- * @param {string} searchValue
- * @param {TodoFilter} filter
- * @param {string} [todayDate]
- * @param {{ project?: unknown, tag?: unknown }} [facetFilters]
- * @returns {Todo[]}
- */
-function getVisibleTodos(todos, searchValue, filter, todayDate = getTodayDateValue(), facetFilters = {}) {
+function getVisibleTodos(
+    todos: Todo[],
+    searchValue: string,
+    filter: TodoFilter,
+    todayDate = getTodayDateValue(),
+    facetFilters: { project?: unknown; tag?: unknown } = {}
+): Todo[] {
     const normalizedSearch = searchValue.trim().toLowerCase();
     const projectFilter = normalizeProject(facetFilters.project);
     const tagFilter = normalizeProject(facetFilters.tag);
@@ -402,14 +376,14 @@ function getVisibleTodos(todos, searchValue, filter, todayDate = getTodayDateVal
     });
 }
 
-/**
- * @param {(string | null)[]} values
- * @returns {{ name: string, count: number }[]}
- */
-function mapFacetCounts(values) {
-    const facets = new Map();
+function mapFacetCounts(values: Array<string | null>): Array<{ name: string; count: number }> {
+    const facets = new Map<string, { name: string; count: number }>();
 
-    values.filter(Boolean).forEach(value => {
+    values.forEach(value => {
+        if (!value) {
+            return;
+        }
+
         const key = value.toLowerCase();
         const currentFacet = facets.get(key);
 
@@ -422,23 +396,17 @@ function mapFacetCounts(values) {
     return [...facets.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
-/**
- * @param {Todo[]} todos
- * @returns {{ projects: { name: string, count: number }[], tags: { name: string, count: number }[] }}
- */
-function getTodoFacets(todos) {
+function getTodoFacets(todos: Todo[]): {
+    projects: Array<{ name: string; count: number }>;
+    tags: Array<{ name: string; count: number }>;
+} {
     return {
         projects: mapFacetCounts(todos.map(todo => todo.project)),
         tags: mapFacetCounts(todos.flatMap(todo => todo.tags)),
     };
 }
 
-/**
- * @param {Todo} todo
- * @param {string} [todayDate]
- * @returns {TodoFilter | null}
- */
-function getTodoDateStatus(todo, todayDate = getTodayDateValue()) {
+function getTodoDateStatus(todo: Todo, todayDate = getTodayDateValue()): TodoDateStatus | null {
     if (todo.completed || !todo.dueDate) {
         return null;
     }
@@ -454,13 +422,11 @@ function getTodoDateStatus(todo, todayDate = getTodayDateValue()) {
     return TODO_FILTERS.upcoming;
 }
 
-/**
- * @param {Todo[]} todos
- * @param {string} [todayDate]
- * @returns {Record<'overdue' | 'today' | 'upcoming', number>}
- */
-function getTodosDateCounts(todos, todayDate = getTodayDateValue()) {
-    return todos.reduce((counts, todo) => {
+function getTodosDateCounts(
+    todos: Todo[],
+    todayDate = getTodayDateValue()
+): Record<'overdue' | 'today' | 'upcoming', number> {
+    return todos.reduce<Record<TodoDateStatus, number>>((counts, todo) => {
         const dateStatus = getTodoDateStatus(todo, todayDate);
 
         if (dateStatus) {
@@ -475,12 +441,7 @@ function getTodosDateCounts(todos, todayDate = getTodayDateValue()) {
     });
 }
 
-/**
- * @param {Todo[]} todos
- * @param {string} [todayDate]
- * @returns {TodoInsights}
- */
-function getTodoInsights(todos, todayDate = getTodayDateValue()) {
+function getTodoInsights(todos: Todo[], todayDate = getTodayDateValue()): TodoInsights {
     const normalizedTodos = normalizeTodos(todos);
     const totalTodos = normalizedTodos.length;
     const completedTodos = normalizedTodos.filter(todo => todo.completed).length;
@@ -506,12 +467,7 @@ function getTodoInsights(todos, todayDate = getTodayDateValue()) {
     };
 }
 
-/**
- * @param {Todo} todo
- * @param {string} todayDate
- * @returns {TodoGroup}
- */
-function getTodoGroupId(todo, todayDate) {
+function getTodoGroupId(todo: Todo, todayDate: string): TodoGroup {
     if (todo.completed) {
         return TODO_GROUPS.completed;
     }
@@ -519,13 +475,8 @@ function getTodoGroupId(todo, todayDate) {
     return getTodoDateStatus(todo, todayDate) || TODO_GROUPS.unscheduled;
 }
 
-/**
- * @param {Todo[]} todos
- * @param {string} [todayDate]
- * @returns {TodoGroupView[]}
- */
-function getTodoGroups(todos, todayDate = getTodayDateValue()) {
-    const groupsById = new Map(TODO_GROUP_ORDER.map(groupId => [
+function getTodoGroups(todos: Todo[], todayDate = getTodayDateValue()): TodoGroupView[] {
+    const groupsById = new Map<TodoGroup, TodoGroupView>(TODO_GROUP_ORDER.map(groupId => [
         groupId,
         {
             id: groupId,
@@ -535,19 +486,15 @@ function getTodoGroups(todos, todayDate = getTodayDateValue()) {
     ]));
 
     todos.forEach(todo => {
-        groupsById.get(getTodoGroupId(todo, todayDate)).todos.push(todo);
+        groupsById.get(getTodoGroupId(todo, todayDate))?.todos.push(todo);
     });
 
     return TODO_GROUP_ORDER
         .map(groupId => groupsById.get(groupId))
-        .filter(group => group.todos.length > 0);
+        .filter((group): group is TodoGroupView => Boolean(group && group.todos.length > 0));
 }
 
-/**
- * @param {Todo[]} todos
- * @returns {{ version: number, exportedAt: string, todos: Todo[] }}
- */
-function createTodosBackup(todos) {
+function createTodosBackup(todos: Todo[]): TodoBackup {
     return {
         version: TODO_BACKUP_VERSION,
         exportedAt: new Date().toISOString(),
@@ -555,12 +502,12 @@ function createTodosBackup(todos) {
     };
 }
 
-/**
- * @param {unknown} backup
- * @returns {{ ok: true, todos: Todo[] } | { ok: false, error: string }}
- */
-function readTodosBackup(backup) {
-    const backupTodos = Array.isArray(backup) ? backup : backup?.todos;
+function readTodosBackup(backup: unknown): BackupReadResult {
+    const backupTodos = Array.isArray(backup)
+        ? backup
+        : isRecord(backup)
+            ? backup.todos
+            : null;
 
     if (!Array.isArray(backupTodos)) {
         return {
@@ -575,26 +522,17 @@ function readTodosBackup(backup) {
     };
 }
 
-/**
- * @param {Todo} todo
- * @returns {string[]}
- */
-function getTodoDuplicateKeys(todo) {
+function getTodoDuplicateKeys(todo: Todo): string[] {
     return [
         todo.id ? `id:${todo.id}` : null,
         `text:${todo.text.toLowerCase()}`,
-    ].filter(Boolean);
+    ].filter((key): key is string => Boolean(key));
 }
 
-/**
- * @param {Todo[]} existingTodos
- * @param {Todo[]} importedTodos
- * @returns {{ newTodos: Todo[], duplicateTodos: Todo[] }}
- */
-function splitImportedTodos(existingTodos, importedTodos) {
+function splitImportedTodos(existingTodos: Todo[], importedTodos: Todo[]): SplitImportResult {
     const seenKeys = new Set(normalizeTodos(existingTodos).flatMap(getTodoDuplicateKeys));
 
-    return normalizeTodos(importedTodos).reduce((result, todo) => {
+    return normalizeTodos(importedTodos).reduce<SplitImportResult>((result, todo) => {
         const todoKeys = getTodoDuplicateKeys(todo);
         const isDuplicate = todoKeys.some(key => seenKeys.has(key));
 
@@ -613,12 +551,7 @@ function splitImportedTodos(existingTodos, importedTodos) {
     });
 }
 
-/**
- * @param {Todo[]} existingTodos
- * @param {unknown} backup
- * @returns {{ ok: true, todos: Todo[], totalCount: number, newCount: number, duplicateCount: number } | { ok: false, error: string }}
- */
-function analyzeTodosImport(existingTodos, backup) {
+function analyzeTodosImport(existingTodos: Todo[], backup: unknown): ImportPreviewResult {
     const result = readTodosBackup(backup);
 
     if (!result.ok) {
@@ -636,13 +569,7 @@ function analyzeTodosImport(existingTodos, backup) {
     };
 }
 
-/**
- * @param {Todo[]} existingTodos
- * @param {unknown} backup
- * @param {'merge' | 'replace'} [mode]
- * @returns {{ ok: true, todos: Todo[], totalCount: number, importedCount: number, skippedDuplicates: number } | { ok: false, error: string }}
- */
-function applyTodosImport(existingTodos, backup, mode = 'replace') {
+function applyTodosImport(existingTodos: Todo[], backup: unknown, mode: ImportMode = 'replace'): ImportApplyResult {
     const result = readTodosBackup(backup);
 
     if (!result.ok) {
