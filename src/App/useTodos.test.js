@@ -37,6 +37,11 @@ import {
   normalizeTodoSavedViews,
   removeTodoSavedView,
 } from './todoSavedViews';
+import {
+  TODO_WORKSPACE_BACKUP_KIND,
+  createTodoWorkspaceBackup,
+  readTodoWorkspaceBackup,
+} from './todoWorkspaceBackup';
 
 describe('todo helpers', () => {
   test('normalizes legacy todos with stable ids and clean text', () => {
@@ -374,6 +379,71 @@ describe('todo helpers', () => {
     expect(readTodosBackup({ version: TODO_BACKUP_VERSION + 1, todos: [] })).toEqual({
       ok: false,
       error: 'El backup usa una version de datos mas nueva que esta app.',
+    });
+  });
+
+  test('creates and reads workspace backup files', () => {
+    const backup = createTodoWorkspaceBackup({
+      activeBoardId: 'work',
+      todos: [
+        { id: 'todo-current', text: 'Preparar tablero activo', completed: false },
+      ],
+      boards: [
+        {
+          id: 'personal',
+          name: 'Personal',
+          todos: [{ id: 'todo-personal', text: 'Plan personal', completed: false }],
+          createdAt: null,
+          updatedAt: null,
+        },
+        {
+          id: 'work',
+          name: 'Trabajo',
+          todos: [],
+          createdAt: null,
+          updatedAt: null,
+        },
+      ],
+      savedViews: [
+        {
+          id: 'view-work',
+          name: 'Trabajo activo',
+          searchValue: 'tablero',
+          filter: TODO_FILTERS.all,
+          project: 'Trabajo',
+          tag: null,
+          createdAt: null,
+        },
+      ],
+    });
+
+    expect(backup).toEqual(expect.objectContaining({
+      version: TODO_BACKUP_VERSION,
+      kind: TODO_WORKSPACE_BACKUP_KIND,
+      exportedAt: expect.any(String),
+      activeBoardId: 'work',
+      todos: [expect.objectContaining({ text: 'Preparar tablero activo' })],
+      boards: [
+        expect.objectContaining({ name: 'Personal' }),
+        expect.objectContaining({
+          name: 'Trabajo',
+          todos: [expect.objectContaining({ text: 'Preparar tablero activo' })],
+        }),
+      ],
+      savedViews: [expect.objectContaining({ name: 'Trabajo activo' })],
+    }));
+    expect(readTodoWorkspaceBackup(backup)).toEqual(expect.objectContaining({
+      ok: true,
+      totalTodos: 2,
+      backup: expect.objectContaining({
+        activeBoardId: 'work',
+        savedViews: [expect.objectContaining({ name: 'Trabajo activo' })],
+      }),
+    }));
+    expect(readTodoWorkspaceBackup({ todos: [] })).toEqual({
+      ok: false,
+      error: 'El archivo no contiene un backup completo valido.',
+      isWorkspaceBackup: false,
     });
   });
 

@@ -761,13 +761,14 @@ describe('App', () => {
     expect(await screen.findByText('Exportar tareas')).toBeInTheDocument();
 
     await openTools(user);
-    await user.click(screen.getByRole('button', { name: 'Exportar tareas' }));
+    await user.click(screen.getByRole('button', { name: 'Exportar backup completo' }));
 
     const [backupBlob] = createObjectURL.mock.calls[0];
     const backup = JSON.parse(await backupBlob.text());
 
     expect(backup).toEqual(expect.objectContaining({
       version: 1,
+      kind: 'taskflow-workspace',
       exportedAt: expect.any(String),
       todos: [
         expect.objectContaining({
@@ -780,6 +781,13 @@ describe('App', () => {
           subtasks: [{ id: 'subtask-1', text: 'Revisar JSON', completed: true }],
         }),
       ],
+      boards: [
+        expect.objectContaining({
+          name: 'Personal',
+          todos: [expect.objectContaining({ text: 'Exportar tareas' })],
+        }),
+      ],
+      savedViews: [],
     }));
     expect(clickSpy).toHaveBeenCalled();
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:taskflow-backup');
@@ -810,7 +818,7 @@ describe('App', () => {
     expect(await screen.findByText('Organiza tu dia con una primera tarea')).toBeInTheDocument();
 
     await openTools(user);
-    await user.upload(screen.getByLabelText('Importar tareas desde JSON'), backupFile);
+    await user.upload(screen.getByLabelText('Importar backup JSON'), backupFile);
 
     expect(screen.getByRole('region', { name: 'Previsualizacion de importacion' })).toBeInTheDocument();
     expect(screen.getByText('taskflow-backup.json: 1 tarea encontrada.')).toBeInTheDocument();
@@ -856,7 +864,7 @@ describe('App', () => {
     expect(await screen.findByText('Preparar demo')).toBeInTheDocument();
 
     await openTools(user);
-    await user.upload(screen.getByLabelText('Importar tareas desde JSON'), backupFile);
+    await user.upload(screen.getByLabelText('Importar backup JSON'), backupFile);
 
     expect(screen.getByText('taskflow-merge.json: 2 tareas encontradas.')).toBeInTheDocument();
     expect(screen.getByText('Al fusionar: 1 tarea agregada y 1 duplicada omitida.')).toBeInTheDocument();
@@ -869,6 +877,84 @@ describe('App', () => {
       'Preparar demo',
       'Nueva tarea importada',
     ]);
+  });
+
+  test('restores boards and saved views from a workspace backup', async () => {
+    const user = userEvent.setup();
+    const backupFile = new File([
+      JSON.stringify({
+        version: 1,
+        kind: 'taskflow-workspace',
+        exportedAt: '2026-07-08T10:00:00.000Z',
+        activeBoardId: 'work',
+        todos: [
+          { id: 'todo-work', text: 'Preparar workspace', completed: false, project: 'Trabajo' },
+        ],
+        boards: [
+          {
+            id: 'personal',
+            name: 'Personal',
+            todos: [{ id: 'todo-personal', text: 'Plan restaurado', completed: false }],
+            createdAt: null,
+            updatedAt: null,
+          },
+          {
+            id: 'work',
+            name: 'Trabajo',
+            todos: [{ id: 'todo-work', text: 'Preparar workspace', completed: false, project: 'Trabajo' }],
+            createdAt: null,
+            updatedAt: null,
+          },
+        ],
+        savedViews: [
+          {
+            id: 'view-work',
+            name: 'Trabajo activo',
+            searchValue: '',
+            filter: 'all',
+            project: 'Trabajo',
+            tag: null,
+            createdAt: null,
+          },
+        ],
+      }),
+    ], 'taskflow-workspace.json', { type: 'application/json' });
+
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      { id: 'todo-old', text: 'Tarea anterior', completed: false },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Tarea anterior')).toBeInTheDocument();
+
+    await openTools(user);
+    await user.upload(screen.getByLabelText('Importar backup JSON'), backupFile);
+
+    expect(screen.getByText('taskflow-workspace.json: 2 tableros, 2 tareas y 1 vista guardada.')).toBeInTheDocument();
+    expect(screen.getByText('Al restaurar, se reemplazan tus tableros, tareas y vistas locales.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Restaurar backup' }));
+
+    expect(screen.getByText('Preparar workspace')).toBeInTheDocument();
+    expect(screen.queryByText('Tarea anterior')).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Backup restaurado: 2 tableros, 2 tareas y 1 vista guardada.');
+
+    const boardSwitcher = screen.getByRole('group', { name: 'Cambiar tablero' });
+    expect(within(boardSwitcher).getByRole('button', { name: /Trabajo/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Trabajo activo' })).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(JSON.parse(localStorage.getItem('ACTIVE_TODO_BOARD_V1'))).toBe('work');
+      expect(JSON.parse(localStorage.getItem('TODO_BOARDS_V1'))).toEqual([
+        expect.objectContaining({ name: 'Personal' }),
+        expect.objectContaining({
+          name: 'Trabajo',
+          todos: [expect.objectContaining({ text: 'Preparar workspace' })],
+        }),
+      ]);
+      expect(JSON.parse(localStorage.getItem('TODO_SAVED_VIEWS_V1'))).toEqual([
+        expect.objectContaining({ name: 'Trabajo activo' }),
+      ]);
+    });
   });
 
   test('recovers from invalid stored todos', async () => {

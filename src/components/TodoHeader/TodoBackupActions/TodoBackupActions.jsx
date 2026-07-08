@@ -9,6 +9,18 @@ function getFoundTaskLabel(count) {
   return count === 1 ? '1 tarea encontrada' : `${count} tareas encontradas`;
 }
 
+function getTaskLabel(count) {
+  return count === 1 ? '1 tarea' : `${count} tareas`;
+}
+
+function getBoardLabel(count) {
+  return count === 1 ? '1 tablero' : `${count} tableros`;
+}
+
+function getSavedViewLabel(count) {
+  return count === 1 ? '1 vista guardada' : `${count} vistas guardadas`;
+}
+
 function getImportedTaskLabel(count) {
   return count === 1 ? '1 tarea importada' : `${count} tareas importadas`;
 }
@@ -22,6 +34,10 @@ function getOmittedDuplicateLabel(count) {
 }
 
 function getImportStatusMessage(result) {
+  if (result.mode === 'workspace') {
+    return `Backup restaurado: ${getBoardLabel(result.boardCount)}, ${getTaskLabel(result.count)} y ${getSavedViewLabel(result.savedViewCount)}.`;
+  }
+
   if (result.mode === 'merge') {
     const importedMessage = result.count
       ? `${getAddedTaskLabel(result.count)}.`
@@ -113,17 +129,17 @@ function TodoBackupActions({ loading, onExportTodos, onPreviewImport, onImportTo
         type="button"
         className="TodoBackupActions-button"
         disabled={loading}
-        aria-label="Exportar tareas"
+        aria-label="Exportar backup completo"
         onClick={handleExport}
       >
-        Exportar
+        Exportar backup
       </button>
       <label className="TodoBackupActions-button">
-        Importar
+        Importar backup
         <input
           type="file"
           accept="application/json,.json"
-          aria-label="Importar tareas desde JSON"
+          aria-label="Importar backup JSON"
           disabled={loading}
           onChange={handleImport}
         />
@@ -132,27 +148,42 @@ function TodoBackupActions({ loading, onExportTodos, onPreviewImport, onImportTo
         <div className="TodoBackupActions-preview" role="region" aria-label="Previsualizacion de importacion">
           <div>
             <p className="TodoBackupActions-previewTitle">Revisar importacion</p>
-            <p className="TodoBackupActions-previewText">
-              {importPreview.fileName}: {getFoundTaskLabel(importPreview.totalCount)}.
-            </p>
-            <p className="TodoBackupActions-previewText">
-              Al fusionar: {getAddedTaskLabel(importPreview.newCount)} y {getOmittedDuplicateLabel(importPreview.duplicateCount)}.
-            </p>
+            {importPreview.kind === 'workspace' ? (
+              <>
+                <p className="TodoBackupActions-previewText">
+                  {importPreview.fileName}: {getBoardLabel(importPreview.boardCount)}, {getTaskLabel(importPreview.totalCount)} y {getSavedViewLabel(importPreview.savedViewCount)}.
+                </p>
+                <p className="TodoBackupActions-previewText">
+                  Al restaurar, se reemplazan tus tableros, tareas y vistas locales.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="TodoBackupActions-previewText">
+                  {importPreview.fileName}: {getFoundTaskLabel(importPreview.totalCount)}.
+                </p>
+                <p className="TodoBackupActions-previewText">
+                  Al fusionar: {getAddedTaskLabel(importPreview.newCount)} y {getOmittedDuplicateLabel(importPreview.duplicateCount)}.
+                </p>
+              </>
+            )}
           </div>
           <div className="TodoBackupActions-previewActions">
-            <button
-              type="button"
-              className="TodoBackupActions-button"
-              onClick={() => confirmImport('merge')}
-            >
-              Fusionar sin duplicados
-            </button>
+            {importPreview.kind !== 'workspace' && (
+              <button
+                type="button"
+                className="TodoBackupActions-button"
+                onClick={() => confirmImport('merge')}
+              >
+                Fusionar sin duplicados
+              </button>
+            )}
             <button
               type="button"
               className="TodoBackupActions-button TodoBackupActions-button--danger"
               onClick={() => confirmImport('replace')}
             >
-              Reemplazar tareas
+              {importPreview.kind === 'workspace' ? 'Restaurar backup' : 'Reemplazar tareas'}
             </button>
             <button
               type="button"

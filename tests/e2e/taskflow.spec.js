@@ -94,7 +94,7 @@ test('exports current todos as a JSON backup', async ({ page }) => {
 
   await openTools(page);
   const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Exportar tareas' }).click();
+  await page.getByRole('button', { name: 'Exportar backup completo' }).click();
   const download = await downloadPromise;
   const downloadPath = await download.path();
   const backup = JSON.parse(await readFile(downloadPath, 'utf8'));
@@ -102,12 +102,19 @@ test('exports current todos as a JSON backup', async ({ page }) => {
   expect(download.suggestedFilename()).toMatch(/^taskflow-backup-\d{4}-\d{2}-\d{2}\.json$/);
   expect(backup).toEqual(expect.objectContaining({
     version: 1,
+    kind: 'taskflow-workspace',
     exportedAt: expect.any(String),
     todos: [
       expect.objectContaining({
         text: 'Definir prioridades de la semana',
         project: 'Personal',
         tags: ['planificacion'],
+      }),
+    ],
+    boards: [
+      expect.objectContaining({
+        name: 'Personal',
+        todos: [expect.objectContaining({ text: 'Definir prioridades de la semana' })],
       }),
     ],
   }));
@@ -121,7 +128,7 @@ test('previews and merges imported todos without duplicates', async ({ page }) =
   await expect(page.getByText('Preparar entrevista tecnica', { exact: true })).toBeVisible();
 
   await openTools(page);
-  await page.getByLabel('Importar tareas desde JSON').setInputFiles({
+  await page.getByLabel('Importar backup JSON').setInputFiles({
     name: 'taskflow-e2e.json',
     mimeType: 'application/json',
     buffer: Buffer.from(JSON.stringify({
@@ -150,6 +157,70 @@ test('previews and merges imported todos without duplicates', async ({ page }) =
   await expect(page.getByRole('button', { name: 'Filtrar por etiqueta backup' })).toBeVisible();
   await expect(page.getByText('Preparar entrevista tecnica', { exact: true })).toHaveCount(1);
   await expect(page.getByText('1 tarea agregada. 1 duplicada omitida.')).toBeVisible();
+});
+
+test('restores a full workspace backup', async ({ page }) => {
+  await page.goto('/');
+
+  await openTools(page);
+  await page.getByLabel('Importar backup JSON').setInputFiles({
+    name: 'taskflow-workspace.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify({
+      version: 1,
+      kind: 'taskflow-workspace',
+      exportedAt: '2026-07-08T10:00:00.000Z',
+      activeBoardId: 'work',
+      todos: [
+        { id: 'todo-work', text: 'Preparar workspace', completed: false, project: 'Trabajo' },
+      ],
+      boards: [
+        {
+          id: 'personal',
+          name: 'Personal',
+          todos: [{ id: 'todo-personal', text: 'Plan restaurado', completed: false }],
+          createdAt: null,
+          updatedAt: null,
+        },
+        {
+          id: 'work',
+          name: 'Trabajo',
+          todos: [{ id: 'todo-work', text: 'Preparar workspace', completed: false, project: 'Trabajo' }],
+          createdAt: null,
+          updatedAt: null,
+        },
+      ],
+      savedViews: [
+        {
+          id: 'view-work',
+          name: 'Trabajo activo',
+          searchValue: '',
+          filter: 'all',
+          project: 'Trabajo',
+          tag: null,
+          createdAt: null,
+        },
+      ],
+    })),
+  });
+
+  await expect(page.getByText('taskflow-workspace.json: 2 tableros, 2 tareas y 1 vista guardada.')).toBeVisible();
+  await page.getByRole('button', { name: 'Restaurar backup' }).click();
+
+  await expect(page.getByText('Preparar workspace')).toBeVisible();
+  await expect(getBoardSwitcher(page).getByRole('button', { name: /Trabajo/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Trabajo activo', exact: true })).toBeVisible();
+  await expect(page.getByText('Backup restaurado: 2 tableros, 2 tareas y 1 vista guardada.')).toBeVisible();
+
+  await expect.poll(async () => page.evaluate(() => ({
+    activeBoardId: JSON.parse(localStorage.getItem('ACTIVE_TODO_BOARD_V1') || 'null'),
+    boardNames: JSON.parse(localStorage.getItem('TODO_BOARDS_V1') || '[]').map(board => board.name),
+    savedViewNames: JSON.parse(localStorage.getItem('TODO_SAVED_VIEWS_V1') || '[]').map(view => view.name),
+  }))).toEqual({
+    activeBoardId: 'work',
+    boardNames: ['Personal', 'Trabajo'],
+    savedViewNames: ['Trabajo activo'],
+  });
 });
 
 test('keeps local boards and saved views in the production flow', async ({ page }) => {

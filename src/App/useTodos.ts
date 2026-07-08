@@ -4,7 +4,6 @@ import {
     TODO_FILTERS,
     analyzeTodosImport,
     applyTodosImport,
-    createTodosBackup,
     createTodo,
     getTodoFacets,
     getTodoGroups,
@@ -36,6 +35,10 @@ import {
     normalizeTodoSavedViews,
     removeTodoSavedView,
 } from './todoSavedViews';
+import {
+    createTodoWorkspaceBackup,
+    readTodoWorkspaceBackup,
+} from './todoWorkspaceBackup';
 import type {
     ImportMode,
     Todo,
@@ -535,12 +538,83 @@ function useTodos() {
         setDeletingTodoId(null);
     }
 
-    const exportTodos = () => createTodosBackup(normalizedTodos);
+    const exportTodos = () => createTodoWorkspaceBackup({
+        activeBoardId,
+        boards: todoBoards,
+        savedViews,
+        todos: normalizedTodos,
+    });
 
-    const previewTodosImport = (backup: unknown) => analyzeTodosImport(normalizedTodos, backup);
+    const previewTodosImport = (backup: unknown) => {
+        const workspaceResult = readTodoWorkspaceBackup(backup);
+
+        if (workspaceResult.ok) {
+            const activeImportedBoard = getActiveTodoBoard(
+                workspaceResult.backup.boards,
+                workspaceResult.backup.activeBoardId
+            );
+            const activeImportedTodos = activeImportedBoard?.todos || workspaceResult.backup.todos;
+            const activeTodoPreview = analyzeTodosImport(normalizedTodos, { todos: activeImportedTodos });
+
+            return {
+                ok: true,
+                kind: 'workspace',
+                todos: workspaceResult.backup.todos,
+                totalCount: workspaceResult.totalTodos,
+                newCount: activeTodoPreview.ok ? activeTodoPreview.newCount : activeImportedTodos.length,
+                duplicateCount: activeTodoPreview.ok ? activeTodoPreview.duplicateCount : 0,
+                boardCount: workspaceResult.backup.boards.length,
+                savedViewCount: workspaceResult.backup.savedViews.length,
+            };
+        }
+
+        if (workspaceResult.isWorkspaceBackup) {
+            return workspaceResult;
+        }
+
+        const result = analyzeTodosImport(normalizedTodos, backup);
+
+        return result.ok
+            ? { ...result, kind: 'todos' }
+            : result;
+    };
 
     const importTodos = (backup: unknown, options: TodoImportOptions = {}) => {
         const mode = options.mode === 'merge' ? 'merge' : 'replace';
+        const workspaceResult = readTodoWorkspaceBackup(backup);
+
+        if (workspaceResult.ok) {
+            if (mode === 'merge') {
+                return {
+                    ok: false,
+                    error: 'El backup completo debe restaurarse para conservar tableros y vistas.',
+                };
+            }
+
+            const activeImportedBoard = getActiveTodoBoard(
+                workspaceResult.backup.boards,
+                workspaceResult.backup.activeBoardId
+            );
+
+            saveBoards(workspaceResult.backup.boards);
+            saveActiveBoardId(workspaceResult.backup.activeBoardId);
+            saveTodos(activeImportedBoard?.todos || workspaceResult.backup.todos);
+            saveSavedViews(workspaceResult.backup.savedViews);
+            resetTodoView();
+
+            return {
+                ok: true,
+                mode: 'workspace',
+                count: workspaceResult.totalTodos,
+                boardCount: workspaceResult.backup.boards.length,
+                savedViewCount: workspaceResult.backup.savedViews.length,
+            };
+        }
+
+        if (workspaceResult.isWorkspaceBackup) {
+            return workspaceResult;
+        }
+
         const result = applyTodosImport(normalizedTodos, backup, mode);
 
         if (!result.ok) {
