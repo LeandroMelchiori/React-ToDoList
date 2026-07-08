@@ -130,6 +130,34 @@ describe('App', () => {
     }));
   });
 
+  test('creates a workshop todo from a local starter template', async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    expect(await screen.findByText('Todavia no hay tareas')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Usar plantilla Organizar taller' }));
+
+    expect(screen.getByText('Preparar material del taller')).toBeInTheDocument();
+    expect(screen.getByText('Alta')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Filtrar por proyecto Talleres' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Filtrar por etiqueta talleres' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Filtrar por etiqueta material' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Definir objetivos')).toBeInTheDocument();
+    expect(screen.getByLabelText('Revisar presentacion')).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('TODOS_V1'))[0]).toEqual(expect.objectContaining({
+      text: 'Preparar material del taller',
+      priority: 'high',
+      project: 'Talleres',
+      tags: ['talleres', 'material'],
+      subtasks: [
+        expect.objectContaining({ text: 'Definir objetivos', completed: false }),
+        expect.objectContaining({ text: 'Revisar presentacion', completed: false }),
+        expect.objectContaining({ text: 'Preparar recursos descargables', completed: false }),
+      ],
+    }));
+  });
+
   test('creates and switches local todo boards', async () => {
     const user = userEvent.setup();
     renderApp();

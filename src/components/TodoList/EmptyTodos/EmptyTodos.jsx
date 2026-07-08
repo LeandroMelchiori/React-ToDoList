@@ -37,6 +37,42 @@ const STARTER_TEMPLATES = [
       subtasks: ['Definir alcance', 'Probar flujo principal'],
     },
   },
+  {
+    id: 'workshop-material',
+    title: 'Organizar taller',
+    description: 'Prepara materiales, agenda y recursos para asistentes.',
+    todo: {
+      text: 'Preparar material del taller',
+      priority: 'high',
+      project: 'Talleres',
+      tags: ['talleres', 'material'],
+      subtasks: ['Definir objetivos', 'Revisar presentacion', 'Preparar recursos descargables'],
+    },
+  },
+  {
+    id: 'social-economy',
+    title: 'Validar emprendimiento',
+    description: 'Ordena hipotesis, costos y proximos experimentos.',
+    todo: {
+      text: 'Validar idea de emprendimiento',
+      priority: 'medium',
+      project: 'Economia social',
+      tags: ['emprendedores', 'validacion'],
+      subtasks: ['Definir cliente', 'Listar costos clave', 'Preparar encuesta corta'],
+    },
+  },
+  {
+    id: 'educational-game',
+    title: 'Disenar juego educativo',
+    description: 'Convierte un contenido en una actividad jugable.',
+    todo: {
+      text: 'Probar dinamica de juego educativo',
+      priority: 'medium',
+      project: 'Juegos educativos',
+      tags: ['educacion', 'juegos'],
+      subtasks: ['Definir objetivo pedagogico', 'Crear consigna', 'Probar con un usuario'],
+    },
+  },
 ];
 
 function EmptyTodos({ onCreateTemplate }) {
