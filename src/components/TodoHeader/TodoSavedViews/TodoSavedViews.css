@@ -1,0 +1,127 @@
+.TodoSavedViews {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  margin: 16px auto 0;
+  max-width: 860px;
+}
+
+.TodoSavedViews-list,
+.TodoSavedViews-form {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.TodoSavedViews-list > span {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.TodoSavedViews-item {
+  align-items: center;
+  display: inline-flex;
+}
+
+.TodoSavedViews-button,
+.TodoSavedViews-delete,
+.TodoSavedViews-form button {
+  align-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  min-height: 34px;
+  padding: 0 12px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+}
+
+.TodoSavedViews-button {
+  border-radius: 999px 0 0 999px;
+  border-right: 0;
+}
+
+.TodoSavedViews-delete {
+  border-radius: 0 999px 999px 0;
+  color: var(--color-danger-hover);
+  min-width: 34px;
+  padding: 0;
+  justify-content: center;
+}
+
+.TodoSavedViews-form button {
+  border-radius: 999px;
+}
+
+.TodoSavedViews-form input {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  min-height: 34px;
+  padding: 0 12px;
+  width: min(220px, 100%);
+}
+
+.TodoSavedViews-button:hover:not(:disabled),
+.TodoSavedViews-button:focus-visible,
+.TodoSavedViews-delete:hover:not(:disabled),
+.TodoSavedViews-delete:focus-visible,
+.TodoSavedViews-form button:hover:not(:disabled),
+.TodoSavedViews-form button:focus-visible,
+.TodoSavedViews-form input:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-focus);
+  color: var(--color-text);
+  outline: none;
+}
+
+.TodoSavedViews-delete:hover:not(:disabled),
+.TodoSavedViews-delete:focus-visible {
+  color: var(--color-danger);
+}
+
+.TodoSavedViews-button:disabled,
+.TodoSavedViews-delete:disabled,
+.TodoSavedViews-form button:disabled,
+.TodoSavedViews-form input:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.TodoSavedViews-status {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .TodoSavedViews {
+    justify-items: stretch;
+  }
+
+  .TodoSavedViews-list,
+  .TodoSavedViews-form {
+    justify-content: flex-start;
+  }
+
+  .TodoSavedViews-list > span {
+    flex-basis: 100%;
+  }
+
+  .TodoSavedViews-form input {
+    flex: 1 1 160px;
+  }
+}

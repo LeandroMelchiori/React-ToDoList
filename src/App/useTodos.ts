@@ -29,6 +29,11 @@ import {
     normalizeTodoBoards,
     upsertTodoBoardTodos,
 } from './todoBoards';
+import {
+    addTodoSavedView,
+    normalizeTodoSavedViews,
+    removeTodoSavedView,
+} from './todoSavedViews';
 import type {
     ImportMode,
     Todo,
@@ -36,12 +41,15 @@ import type {
     TodoFilter,
 } from './todoModel';
 import type { TodoBoard } from './todoBoards';
+import type { TodoSavedView } from './todoSavedViews';
 
 const STORAGE_KEY = 'TODOS_V1';
 const BOARD_STORAGE_KEY = 'TODO_BOARDS_V1';
 const ACTIVE_BOARD_STORAGE_KEY = 'ACTIVE_TODO_BOARD_V1';
+const SAVED_VIEWS_STORAGE_KEY = 'TODO_SAVED_VIEWS_V1';
 const DEFAULT_TODOS: Todo[] = [];
 const DEFAULT_TODO_BOARDS: TodoBoard[] = [];
+const DEFAULT_TODO_SAVED_VIEWS: TodoSavedView[] = [];
 
 type TodoActionResult = { ok: true } | { ok: false; error: string };
 type TodoImportOptions = { mode?: ImportMode };
@@ -56,6 +64,10 @@ function isTodoBoardList(item: unknown): boolean {
 
 function isActiveBoardId(item: unknown): boolean {
     return typeof item === 'string';
+}
+
+function isSavedViewList(item: unknown): boolean {
+    return Array.isArray(item);
 }
 
 function useTodos() {
@@ -80,6 +92,13 @@ function useTodos() {
         loading: activeBoardLoading,
         error: activeBoardError,
     } = useLocalStorage<string>(ACTIVE_BOARD_STORAGE_KEY, DEFAULT_TODO_BOARD_ID, isActiveBoardId);
+
+    const {
+        item: storedSavedViews,
+        saveItem: saveSavedViews,
+        loading: savedViewsLoading,
+        error: savedViewsError,
+    } = useLocalStorage<TodoSavedView[]>(SAVED_VIEWS_STORAGE_KEY, DEFAULT_TODO_SAVED_VIEWS, isSavedViewList);
 
     const initializedBoardsRef = React.useRef(false);
     const hydratedActiveBoardRef = React.useRef(false);
@@ -110,6 +129,7 @@ function useTodos() {
 
     const normalizedTodos = normalizeTodos(todos);
     const normalizedStoredBoards = normalizeTodoBoards(storedBoards);
+    const savedViews = normalizeTodoSavedViews(storedSavedViews);
     const todoBoards = ensureDefaultTodoBoard(normalizedStoredBoards, normalizedTodos);
     const activeBoardId = getActiveTodoBoardId(todoBoards, storedActiveBoardId);
     const activeBoard = getActiveTodoBoard(todoBoards, activeBoardId);
@@ -237,6 +257,42 @@ function useTodos() {
         resetTodoView();
 
         return { ok: true };
+    }
+
+    const saveCurrentView = (name: string): TodoActionResult => {
+        const result = addTodoSavedView(savedViews, name, {
+            searchValue,
+            filter,
+            project: activeProject,
+            tag: activeTag,
+        });
+
+        if (!result.ok) {
+            return result;
+        }
+
+        saveSavedViews(result.views);
+
+        return { ok: true };
+    }
+
+    const applySavedView = (viewId: string): TodoActionResult => {
+        const savedView = savedViews.find(view => view.id === viewId);
+
+        if (!savedView) {
+            return { ok: false, error: 'No encontramos esa vista.' };
+        }
+
+        setSearchValue(savedView.searchValue);
+        setFilter(savedView.filter);
+        setActiveProject(savedView.project);
+        setActiveTag(savedView.tag);
+
+        return { ok: true };
+    }
+
+    const deleteSavedView = (viewId: string) => {
+        saveSavedViews(removeTodoSavedView(savedViews, viewId));
     }
 
     const completeTodo = (id: string) => {
@@ -465,8 +521,8 @@ function useTodos() {
     }
 
     const states = {
-        loading: loading || boardsLoading || activeBoardLoading,
-        error: error || boardsError || activeBoardError,
+        loading: loading || boardsLoading || activeBoardLoading || savedViewsLoading,
+        error: error || boardsError || activeBoardError || savedViewsError,
         searchValue,
         filter,
         todoBoards: todoBoards.map(board => ({
@@ -476,6 +532,7 @@ function useTodos() {
         })),
         activeBoardId,
         activeBoardName: activeBoard?.name || '',
+        savedViews,
         totalTodos,
         completedTodos,
         pendingTodos,
@@ -503,6 +560,9 @@ function useTodos() {
         clearFacetFilters,
         selectTodoBoard,
         createBoard,
+        saveCurrentView,
+        applySavedView,
+        deleteSavedView,
         completeTodo,
         deleteTodo,
         toggleSubtask,

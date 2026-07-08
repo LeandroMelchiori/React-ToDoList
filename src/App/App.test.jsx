@@ -348,6 +348,52 @@ describe('App', () => {
     expect(screen.getByText('Ordenar apuntes')).toBeInTheDocument();
   });
 
+  test('saves, applies and deletes a local view', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      {
+        id: 'todo-1',
+        text: 'Preparar demo',
+        completed: false,
+        project: 'TaskFlow',
+        tags: ['frontend'],
+      },
+      {
+        id: 'todo-2',
+        text: 'Ordenar apuntes',
+        completed: false,
+        project: 'Docs',
+        tags: ['contenido'],
+      },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Preparar demo')).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Buscar tareas'), 'demo');
+    await user.click(screen.getByRole('button', { name: 'Filtrar por etiqueta frontend' }));
+    await user.type(screen.getByLabelText('Nombre de la vista'), 'Demo frontend');
+    await user.click(screen.getByRole('button', { name: 'Guardar vista' }));
+
+    expect(screen.getByRole('status')).toHaveTextContent('Vista guardada.');
+
+    await user.click(screen.getByRole('button', { name: 'Limpiar filtros' }));
+    await user.clear(screen.getByLabelText('Buscar tareas'));
+
+    expect(screen.getByText('Preparar demo')).toBeInTheDocument();
+    expect(screen.getByText('Ordenar apuntes')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Demo frontend' }));
+
+    expect(screen.getByText('Preparar demo')).toBeInTheDocument();
+    expect(screen.queryByText('Ordenar apuntes')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Eliminar vista Demo frontend' }));
+
+    expect(screen.queryByRole('button', { name: 'Demo frontend' })).not.toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('TODO_SAVED_VIEWS_V1'))).toEqual([]);
+  });
+
   test('moves todos manually and persists the new order', async () => {
     const user = userEvent.setup();
     localStorage.setItem('TODOS_V1', JSON.stringify([

@@ -28,6 +28,11 @@ import {
   normalizeTodoBoards,
   upsertTodoBoardTodos,
 } from './todoBoards';
+import {
+  addTodoSavedView,
+  normalizeTodoSavedViews,
+  removeTodoSavedView,
+} from './todoSavedViews';
 
 describe('todo helpers', () => {
   test('normalizes legacy todos with stable ids and clean text', () => {
@@ -442,5 +447,38 @@ describe('todo helpers', () => {
       ok: false,
       error: 'Ya existe un tablero con ese nombre.',
     });
+  });
+
+  test('normalizes and manages saved todo views', () => {
+    const addResult = addTodoSavedView([], ' Demo frontend ', {
+      searchValue: ' demo ',
+      filter: TODO_FILTERS.active,
+      project: ' TaskFlow ',
+      tag: 'frontend',
+    });
+
+    expect(addResult).toEqual(expect.objectContaining({
+      ok: true,
+      view: expect.objectContaining({
+        name: 'Demo frontend',
+        searchValue: 'demo',
+        filter: TODO_FILTERS.active,
+        project: 'TaskFlow',
+        tag: 'frontend',
+      }),
+    }));
+
+    expect(addTodoSavedView(addResult.views, 'demo frontend', {})).toEqual({
+      ok: false,
+      error: 'Ya existe una vista con ese nombre.',
+    });
+    expect(normalizeTodoSavedViews([
+      { id: 'view-1', name: 'Vencidas', filter: TODO_FILTERS.overdue },
+      { id: 'view-2', name: 'Invalida', filter: 'broken', project: '  ' },
+    ])).toEqual([
+      expect.objectContaining({ name: 'Vencidas', filter: TODO_FILTERS.overdue }),
+      expect.objectContaining({ name: 'Invalida', filter: TODO_FILTERS.all, project: null }),
+    ]);
+    expect(removeTodoSavedView(addResult.views, addResult.view.id)).toEqual([]);
   });
 });

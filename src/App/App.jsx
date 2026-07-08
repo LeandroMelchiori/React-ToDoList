@@ -7,6 +7,7 @@ import { TodoFilters } from '../components/TodoHeader/TodoFilters/TodoFilters';
 import { TodoInsights } from '../components/TodoHeader/TodoInsights/TodoInsights';
 import { TodoFacetFilters } from '../components/TodoHeader/TodoFacetFilters/TodoFacetFilters';
 import { TodoBoards } from '../components/TodoHeader/TodoBoards/TodoBoards';
+import { TodoSavedViews } from '../components/TodoHeader/TodoSavedViews/TodoSavedViews';
 import { TodoBackupActions } from '../components/TodoHeader/TodoBackupActions/TodoBackupActions';
 import { TodoList } from '../components/TodoList/TodoList';
 import { TodoItem } from '../components/TodoList/TodoItem/TodoItem';
@@ -64,6 +65,7 @@ function App() {
         filter,
         todoBoards,
         activeBoardId,
+        savedViews,
         totalTodos,
         completedTodos,
         pendingTodos,
@@ -88,6 +90,9 @@ function App() {
         setFilter,
         selectTodoBoard,
         createBoard,
+        saveCurrentView,
+        applySavedView,
+        deleteSavedView,
         selectProjectFilter,
         selectTagFilter,
         clearFacetFilters,
@@ -267,6 +272,12 @@ function App() {
                     onSelectProject={selectProjectFilter}
                     onSelectTag={selectTagFilter}
                     onClearFacetFilters={clearFacetFilters}
+                />
+                <TodoSavedViews
+                    savedViews={savedViews}
+                    onSaveView={saveCurrentView}
+                    onApplyView={applySavedView}
+                    onDeleteView={deleteSavedView}
                 />
                 <TodoBackupActions
                     onExportTodos={exportTodos}
