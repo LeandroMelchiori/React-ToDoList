@@ -5,7 +5,7 @@ function MoveIcon({ direction, disabled, onMove }) {
 
     return <TodoIcon
      type={isMovingUp ? 'moveUp' : 'moveDown'}
-     color="#94a3b8"
+     color="var(--color-icon-muted)"
      disabled={disabled}
      label={isMovingUp ? 'Subir tarea' : 'Bajar tarea'}
      onClick={onMove}

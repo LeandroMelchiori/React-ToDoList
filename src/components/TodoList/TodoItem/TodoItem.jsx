@@ -32,6 +32,7 @@ function TodoItem(props) {
   const subtasks = Array.isArray(props.subtasks) ? props.subtasks : [];
   const itemClassName = [
     'TodoItem',
+    props.completed ? 'TodoItem--complete' : '',
     props.isDragging ? 'TodoItem--dragging' : '',
     props.dropPosition === 'before' ? 'TodoItem--dropBefore' : '',
     props.dropPosition === 'after' ? 'TodoItem--dropAfter' : '',

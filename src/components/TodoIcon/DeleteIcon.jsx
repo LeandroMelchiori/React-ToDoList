@@ -3,7 +3,7 @@ import { TodoIcon } from './TodoIcon';
 function DeleteIcon({ onDelete }) {
     return <TodoIcon
      type="delete"
-     color="#94a3b8"
+     color="var(--color-icon-muted)"
      label="Eliminar tarea"
      onClick={onDelete}
     />;

@@ -3,7 +3,7 @@ import { TodoIcon } from './TodoIcon';
 function EditIcon({ onEdit }) {
     return <TodoIcon
      type="edit"
-     color="#94a3b8"
+     color="var(--color-icon-muted)"
      label="Editar tarea"
      onClick={onEdit}
     />;
