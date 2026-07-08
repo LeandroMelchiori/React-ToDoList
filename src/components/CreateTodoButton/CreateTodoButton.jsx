@@ -10,7 +10,8 @@ function CreateTodoButton({ onCreateTodo, loading }) {
       disabled={loading}
       onClick={onCreateTodo}
     >
-      +
+      <span className="CreateTodoButton-symbol" aria-hidden="true">+</span>
+      <span className="CreateTodoButton-label">Nueva tarea</span>
     </button>
   );
 }

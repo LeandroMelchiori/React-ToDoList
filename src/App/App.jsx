@@ -286,6 +286,11 @@ function App() {
                 />
             </TodoHeader>
 
+            <CreateTodoButton
+                onCreateTodo={openCreateModal}
+                loading={loading}
+             />
+
             <TodoList
                 error={error}
                 loading={loading}
@@ -337,11 +342,6 @@ function App() {
                     />
                 )}
             />
-
-            <CreateTodoButton
-                onCreateTodo={openCreateModal}
-                loading={loading}
-             />
             </main>
 
             {openModal && (

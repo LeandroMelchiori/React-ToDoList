@@ -1,7 +1,7 @@
 .TodoSearch-label {
   display: block;
-  margin: 0 auto;
-  max-width: 720px;
+  margin: 20px auto 0;
+  max-width: 960px;
 }
 
 .TodoSearch-label span {
@@ -14,7 +14,7 @@
 
 .TodoSearch {
   background: var(--color-surface);
-  border-radius: 14px;
+  border-radius: 10px;
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-soft);
   box-sizing: border-box;
@@ -22,7 +22,7 @@
   font-family: inherit;
   font-size: 18px;
   font-weight: 500;
-  height: 58px;
+  height: 54px;
   padding: 0 18px;
   width: 100%;
 }

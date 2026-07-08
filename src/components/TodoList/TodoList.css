@@ -1,6 +1,6 @@
 .TodoList-container {
-  margin: 28px auto 0;
-  max-width: 720px;
+  margin: 30px auto 0;
+  max-width: 860px;
   padding-bottom: 96px;
 }
 
@@ -9,7 +9,7 @@
 }
 
 .TodoList-container:focus-visible {
-  border-radius: 16px;
+  border-radius: 8px;
   box-shadow: var(--shadow-focus);
 }
 
@@ -55,7 +55,7 @@
 .TodoList-emptySearch {
   background: var(--color-surface);
   border: 1px dashed var(--color-border-strong);
-  border-radius: 14px;
+  border-radius: 8px;
   color: var(--color-text-muted);
   font-size: 16px;
   font-weight: 700;

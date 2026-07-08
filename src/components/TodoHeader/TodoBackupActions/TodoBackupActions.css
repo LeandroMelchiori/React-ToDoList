@@ -3,16 +3,16 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  justify-content: center;
+  justify-content: flex-start;
   margin: 16px auto 0;
-  max-width: 720px;
+  max-width: 960px;
 }
 
 .TodoBackupActions-button {
   align-items: center;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 999px;
+  border-radius: 8px;
   color: var(--color-text-muted);
   cursor: pointer;
   display: inline-flex;
@@ -20,7 +20,7 @@
   font-size: 14px;
   font-weight: 800;
   justify-content: center;
-  min-height: 40px;
+  min-height: 38px;
   padding: 0 16px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
 }
@@ -61,7 +61,7 @@
 .TodoBackupActions-preview {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border-radius: 8px;
   display: grid;
   flex-basis: 100%;
   gap: 12px;
@@ -97,7 +97,7 @@
   font-size: 13px;
   font-weight: 700;
   margin: 0;
-  text-align: center;
+  text-align: left;
 }
 
 @media (max-width: 560px) {

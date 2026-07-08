@@ -1,13 +1,29 @@
+.TodoCounterBlock {
+  box-sizing: border-box;
+  margin: 0 auto;
+  max-width: 960px;
+  padding: 52px 0 8px;
+}
+
+.TodoCounter-eyebrow {
+  color: var(--color-accent-hover);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
 .TodoCounter {
   box-sizing: border-box;
   color: var(--color-text);
-  font-size: clamp(28px, 4vw, 44px);
+  font-size: clamp(30px, 3vw, 42px);
   line-height: 1.15;
-  max-width: 720px;
-  margin: 0 auto;
-  min-height: 148px;
-  text-align: center;
-  padding: 56px 16px 24px;
+  margin: 0;
+  max-width: 760px;
+  min-height: 0;
+  padding: 0;
+  text-align: left;
   font-weight: 800;
 }
 
@@ -17,4 +33,10 @@
 
 .TodoCounter--loading {
   color: var(--color-text-soft);
+}
+
+@media (max-width: 640px) {
+  .TodoCounterBlock {
+    padding-top: 36px;
+  }
 }

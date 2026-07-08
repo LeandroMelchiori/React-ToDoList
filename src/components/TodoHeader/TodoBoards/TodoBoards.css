@@ -1,10 +1,14 @@
 .TodoBoards {
   align-items: center;
+  border-bottom: 1px solid var(--color-border);
+  border-top: 1px solid var(--color-border);
   display: grid;
-  gap: 10px;
-  justify-items: center;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  justify-items: stretch;
   margin: 18px auto 0;
-  max-width: 860px;
+  max-width: 960px;
+  padding: 12px 0;
 }
 
 .TodoBoards-list,
@@ -13,7 +17,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .TodoBoards-list > span {
@@ -104,6 +108,7 @@
 
 @media (max-width: 640px) {
   .TodoBoards {
+    grid-template-columns: 1fr;
     justify-items: stretch;
   }
 
