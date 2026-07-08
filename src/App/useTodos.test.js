@@ -21,6 +21,13 @@ import {
   normalizeTodos,
   readTodosBackup,
 } from './todoModel';
+import {
+  addTodoBoard,
+  ensureDefaultTodoBoard,
+  getActiveTodoBoardId,
+  normalizeTodoBoards,
+  upsertTodoBoardTodos,
+} from './todoBoards';
 
 describe('todo helpers', () => {
   test('normalizes legacy todos with stable ids and clean text', () => {
@@ -398,5 +405,42 @@ describe('todo helpers', () => {
       expect.objectContaining({ id: 'todo-1', text: 'Preparar demo', order: 0 }),
       expect.objectContaining({ id: 'todo-3', text: 'Nueva tarea', order: 1 }),
     ]);
+  });
+
+  test('normalizes and updates local todo boards', () => {
+    const defaultBoards = ensureDefaultTodoBoard([], [
+      { id: 'todo-1', text: 'Plan personal', completed: false },
+    ]);
+
+    expect(defaultBoards).toEqual([
+      expect.objectContaining({
+        id: 'personal',
+        name: 'Personal',
+        todos: [
+          expect.objectContaining({ id: 'todo-1', text: 'Plan personal' }),
+        ],
+      }),
+    ]);
+
+    const addResult = addTodoBoard(defaultBoards, ' Talleres ');
+
+    expect(addResult).toEqual(expect.objectContaining({
+      ok: true,
+      board: expect.objectContaining({ name: 'Talleres', todos: [] }),
+    }));
+
+    const updatedBoards = upsertTodoBoardTodos(addResult.boards, addResult.board.id, [
+      { id: 'todo-2', text: 'Preparar taller', completed: false },
+    ]);
+
+    expect(getActiveTodoBoardId(updatedBoards, addResult.board.id)).toBe(addResult.board.id);
+    expect(normalizeTodoBoards(updatedBoards)).toEqual([
+      expect.objectContaining({ name: 'Personal', todos: [expect.objectContaining({ text: 'Plan personal' })] }),
+      expect.objectContaining({ name: 'Talleres', todos: [expect.objectContaining({ text: 'Preparar taller' })] }),
+    ]);
+    expect(addTodoBoard(updatedBoards, 'talleres')).toEqual({
+      ok: false,
+      error: 'Ya existe un tablero con ese nombre.',
+    });
   });
 });

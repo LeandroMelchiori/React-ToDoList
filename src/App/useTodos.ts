@@ -20,21 +20,42 @@ import {
     normalizeTodos,
     reindexTodos,
 } from './todoModel';
+import {
+    DEFAULT_TODO_BOARD_ID,
+    addTodoBoard,
+    ensureDefaultTodoBoard,
+    getActiveTodoBoard,
+    getActiveTodoBoardId,
+    normalizeTodoBoards,
+    upsertTodoBoardTodos,
+} from './todoBoards';
 import type {
     ImportMode,
     Todo,
     TodoDetails,
     TodoFilter,
 } from './todoModel';
+import type { TodoBoard } from './todoBoards';
 
 const STORAGE_KEY = 'TODOS_V1';
+const BOARD_STORAGE_KEY = 'TODO_BOARDS_V1';
+const ACTIVE_BOARD_STORAGE_KEY = 'ACTIVE_TODO_BOARD_V1';
 const DEFAULT_TODOS: Todo[] = [];
+const DEFAULT_TODO_BOARDS: TodoBoard[] = [];
 
 type TodoActionResult = { ok: true } | { ok: false; error: string };
 type TodoImportOptions = { mode?: ImportMode };
 
 function isTodoList(item: unknown): boolean {
     return Array.isArray(item);
+}
+
+function isTodoBoardList(item: unknown): boolean {
+    return Array.isArray(item);
+}
+
+function isActiveBoardId(item: unknown): boolean {
+    return typeof item === 'string';
 }
 
 function useTodos() {
@@ -45,6 +66,23 @@ function useTodos() {
         loading,
         error
         } = useLocalStorage<Todo[]>(STORAGE_KEY, DEFAULT_TODOS, isTodoList);
+
+    const {
+        item: storedBoards,
+        saveItem: saveBoards,
+        loading: boardsLoading,
+        error: boardsError,
+    } = useLocalStorage<TodoBoard[]>(BOARD_STORAGE_KEY, DEFAULT_TODO_BOARDS, isTodoBoardList);
+
+    const {
+        item: storedActiveBoardId,
+        saveItem: saveActiveBoardId,
+        loading: activeBoardLoading,
+        error: activeBoardError,
+    } = useLocalStorage<string>(ACTIVE_BOARD_STORAGE_KEY, DEFAULT_TODO_BOARD_ID, isActiveBoardId);
+
+    const initializedBoardsRef = React.useRef(false);
+    const hydratedActiveBoardRef = React.useRef(false);
   
     const [searchValue, setSearchValue] =
      React.useState('');
@@ -71,6 +109,10 @@ function useTodos() {
      React.useState<Todo | null>(null);
 
     const normalizedTodos = normalizeTodos(todos);
+    const normalizedStoredBoards = normalizeTodoBoards(storedBoards);
+    const todoBoards = ensureDefaultTodoBoard(normalizedStoredBoards, normalizedTodos);
+    const activeBoardId = getActiveTodoBoardId(todoBoards, storedActiveBoardId);
+    const activeBoard = getActiveTodoBoard(todoBoards, activeBoardId);
     const editingTodo = normalizedTodos.find(todo => todo.id === editingTodoId) || null;
     const deletingTodo = normalizedTodos.find(todo => todo.id === deletingTodoId) || null;
 
@@ -87,6 +129,116 @@ function useTodos() {
     });
     const visibleTodoGroups = getTodoGroups(visibleTodos);
 
+    React.useEffect(() => {
+        if (
+            initializedBoardsRef.current ||
+            loading ||
+            boardsLoading ||
+            activeBoardLoading ||
+            normalizedStoredBoards.length > 0
+        ) {
+            return;
+        }
+
+        initializedBoardsRef.current = true;
+        saveBoards(todoBoards);
+        saveActiveBoardId(activeBoardId);
+    }, [
+        activeBoardId,
+        activeBoardLoading,
+        boardsLoading,
+        loading,
+        normalizedStoredBoards.length,
+        saveActiveBoardId,
+        saveBoards,
+        todoBoards,
+    ]);
+
+    React.useEffect(() => {
+        if (
+            hydratedActiveBoardRef.current ||
+            loading ||
+            boardsLoading ||
+            activeBoardLoading ||
+            normalizedStoredBoards.length === 0 ||
+            !activeBoard
+        ) {
+            return;
+        }
+
+        hydratedActiveBoardRef.current = true;
+
+        if (JSON.stringify(activeBoard.todos) !== JSON.stringify(normalizedTodos)) {
+            saveTodos(activeBoard.todos);
+        }
+
+        if (activeBoard.id !== storedActiveBoardId) {
+            saveActiveBoardId(activeBoard.id);
+        }
+    }, [
+        activeBoard,
+        activeBoardLoading,
+        boardsLoading,
+        loading,
+        normalizedStoredBoards.length,
+        normalizedTodos,
+        saveActiveBoardId,
+        saveTodos,
+        storedActiveBoardId,
+    ]);
+
+    const saveActiveTodos = React.useCallback((newTodos: Todo[]) => {
+        const nextTodos = normalizeTodos(newTodos);
+
+        saveTodos(nextTodos);
+        saveBoards(upsertTodoBoardTodos(todoBoards, activeBoardId, nextTodos));
+    }, [activeBoardId, saveBoards, saveTodos, todoBoards]);
+
+    const resetTodoView = () => {
+        setSearchValue('');
+        setFilter(TODO_FILTERS.all);
+        clearFacetFilters();
+        setEditingTodoId(null);
+        setDeletingTodoId(null);
+        setRecentlyDeletedTodo(null);
+    }
+
+    const selectTodoBoard = (boardId: string): TodoActionResult => {
+        if (boardId === activeBoardId) {
+            return { ok: true };
+        }
+
+        const boardsWithCurrentTodos = upsertTodoBoardTodos(todoBoards, activeBoardId, normalizedTodos);
+        const nextBoard = getActiveTodoBoard(boardsWithCurrentTodos, boardId);
+
+        if (!nextBoard) {
+            return { ok: false, error: 'No encontramos ese tablero.' };
+        }
+
+        saveBoards(boardsWithCurrentTodos);
+        saveActiveBoardId(nextBoard.id);
+        saveTodos(nextBoard.todos);
+        resetTodoView();
+
+        return { ok: true };
+    }
+
+    const createBoard = (name: string): TodoActionResult => {
+        const boardsWithCurrentTodos = upsertTodoBoardTodos(todoBoards, activeBoardId, normalizedTodos);
+        const result = addTodoBoard(boardsWithCurrentTodos, name);
+
+        if (!result.ok) {
+            return result;
+        }
+
+        saveBoards(result.boards);
+        saveActiveBoardId(result.board.id);
+        saveTodos(result.board.todos);
+        resetTodoView();
+
+        return { ok: true };
+    }
+
     const completeTodo = (id: string) => {
         const newTodos = normalizedTodos.map(todo =>
             todo.id === id
@@ -97,7 +249,7 @@ function useTodos() {
                 }
                 : todo
         );
-        saveTodos(newTodos);
+        saveActiveTodos(newTodos);
     }
 
     const deleteTodo = (id: string) => {
@@ -108,7 +260,7 @@ function useTodos() {
         }
 
         const newTodos = reindexTodos(normalizedTodos.filter(todo => todo.id !== id));
-        saveTodos(newTodos);
+        saveActiveTodos(newTodos);
         setRecentlyDeletedTodo(todoToDelete);
     }
 
@@ -131,10 +283,8 @@ function useTodos() {
             ...normalizedTodos,
             createTodo(trimmedText, { ...details, order: normalizedTodos.length }),
         ];
-        saveTodos(newTodos);
-        setSearchValue('');
-        setFilter(TODO_FILTERS.all);
-        clearFacetFilters();
+        saveActiveTodos(newTodos);
+        resetTodoView();
         return { ok: true };
     }
 
@@ -172,10 +322,8 @@ function useTodos() {
                 }
                 : todo
         );
-        saveTodos(newTodos);
-        setSearchValue('');
-        setFilter(TODO_FILTERS.all);
-        clearFacetFilters();
+        saveActiveTodos(newTodos);
+        resetTodoView();
         setEditingTodoId(null);
         return { ok: true };
     }
@@ -207,7 +355,7 @@ function useTodos() {
                 : todo
         );
 
-        saveTodos(newTodos);
+        saveActiveTodos(newTodos);
     }
 
     const moveTodo = (id: string, direction: 'up' | 'down') => {
@@ -223,7 +371,7 @@ function useTodos() {
         reorderedTodos[currentIndex] = reorderedTodos[targetIndex];
         reorderedTodos[targetIndex] = currentTodo;
 
-        saveTodos(reindexTodos(reorderedTodos));
+        saveActiveTodos(reindexTodos(reorderedTodos));
     }
 
     const moveTodoToPosition = (sourceId: string, targetId: string, placement: 'before' | 'after') => {
@@ -233,7 +381,7 @@ function useTodos() {
         );
 
         if (didChangeOrder) {
-            saveTodos(reorderedTodos);
+            saveActiveTodos(reorderedTodos);
         }
     }
 
@@ -278,7 +426,7 @@ function useTodos() {
         const restoredTodos = [...normalizedTodos];
         const restoredIndex = Math.min(recentlyDeletedTodo.order, restoredTodos.length);
         restoredTodos.splice(restoredIndex, 0, recentlyDeletedTodo);
-        saveTodos(reindexTodos(restoredTodos));
+        saveActiveTodos(reindexTodos(restoredTodos));
         setRecentlyDeletedTodo(null);
     }
 
@@ -304,10 +452,8 @@ function useTodos() {
             return result;
         }
 
-        saveTodos(result.todos);
-        setSearchValue('');
-        setFilter(TODO_FILTERS.all);
-        clearFacetFilters();
+        saveActiveTodos(result.todos);
+        resetTodoView();
 
         return {
             ok: true,
@@ -319,10 +465,17 @@ function useTodos() {
     }
 
     const states = {
-        loading,
-        error,
+        loading: loading || boardsLoading || activeBoardLoading,
+        error: error || boardsError || activeBoardError,
         searchValue,
         filter,
+        todoBoards: todoBoards.map(board => ({
+            id: board.id,
+            name: board.name,
+            totalTodos: normalizeTodos(board.todos).length,
+        })),
+        activeBoardId,
+        activeBoardName: activeBoard?.name || '',
         totalTodos,
         completedTodos,
         pendingTodos,
@@ -348,6 +501,8 @@ function useTodos() {
         selectProjectFilter,
         selectTagFilter,
         clearFacetFilters,
+        selectTodoBoard,
+        createBoard,
         completeTodo,
         deleteTodo,
         toggleSubtask,

@@ -6,6 +6,7 @@ import { TodoSearch } from '../components/TodoHeader/TodoSearch/TodoSearch';
 import { TodoFilters } from '../components/TodoHeader/TodoFilters/TodoFilters';
 import { TodoInsights } from '../components/TodoHeader/TodoInsights/TodoInsights';
 import { TodoFacetFilters } from '../components/TodoHeader/TodoFacetFilters/TodoFacetFilters';
+import { TodoBoards } from '../components/TodoHeader/TodoBoards/TodoBoards';
 import { TodoBackupActions } from '../components/TodoHeader/TodoBackupActions/TodoBackupActions';
 import { TodoList } from '../components/TodoList/TodoList';
 import { TodoItem } from '../components/TodoList/TodoItem/TodoItem';
@@ -61,6 +62,8 @@ function App() {
         error,
         searchValue,
         filter,
+        todoBoards,
+        activeBoardId,
         totalTodos,
         completedTodos,
         pendingTodos,
@@ -83,6 +86,8 @@ function App() {
     const {
         setSearchValue,
         setFilter,
+        selectTodoBoard,
+        createBoard,
         selectProjectFilter,
         selectTagFilter,
         clearFacetFilters,
@@ -231,6 +236,12 @@ function App() {
                 <TodoCounter
                     totalTodos={totalTodos}
                     completedTodos={completedTodos}
+                />
+                <TodoBoards
+                    activeBoardId={activeBoardId}
+                    boards={todoBoards}
+                    onCreateBoard={createBoard}
+                    onSelectBoard={selectTodoBoard}
                 />
                 <TodoSearch
                     ref={searchInputRef}

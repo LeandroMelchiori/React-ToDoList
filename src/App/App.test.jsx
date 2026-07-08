@@ -130,6 +130,56 @@ describe('App', () => {
     }));
   });
 
+  test('creates and switches local todo boards', async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    expect(await screen.findByText('Todavia no hay tareas')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Crear nueva tarea' }));
+    await user.type(screen.getByLabelText('Nueva tarea'), 'Plan personal');
+    await user.click(screen.getByRole('button', { name: 'Agregar' }));
+
+    expect(screen.getByText('Plan personal')).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Nombre del tablero'), 'Talleres');
+    await user.click(screen.getByRole('button', { name: 'Crear' }));
+
+    expect(screen.getByText('Todavia no hay tareas')).toBeInTheDocument();
+    expect(screen.queryByText('Plan personal')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Crear nueva tarea' }));
+    await user.type(screen.getByLabelText('Nueva tarea'), 'Preparar taller');
+    await user.click(screen.getByRole('button', { name: 'Agregar' }));
+
+    expect(screen.getByText('Preparar taller')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /Personal/ }));
+
+    expect(screen.getByText('Plan personal')).toBeInTheDocument();
+    expect(screen.queryByText('Preparar taller')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /Talleres/ }));
+
+    expect(screen.getByText('Preparar taller')).toBeInTheDocument();
+    expect(screen.queryByText('Plan personal')).not.toBeInTheDocument();
+
+    await waitFor(() => {
+      const boards = JSON.parse(localStorage.getItem('TODO_BOARDS_V1'));
+
+      expect(boards).toEqual([
+        expect.objectContaining({
+          name: 'Personal',
+          todos: [expect.objectContaining({ text: 'Plan personal' })],
+        }),
+        expect.objectContaining({
+          name: 'Talleres',
+          todos: [expect.objectContaining({ text: 'Preparar taller' })],
+        }),
+      ]);
+    });
+  });
+
   test('shows duplicate validation in the create todo form', async () => {
     const user = userEvent.setup();
     localStorage.setItem('TODOS_V1', JSON.stringify([
