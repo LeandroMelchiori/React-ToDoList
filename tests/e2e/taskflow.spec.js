@@ -141,3 +141,69 @@ test('previews and merges imported todos without duplicates', async ({ page }) =
   await expect(page.getByText('Preparar entrevista tecnica', { exact: true })).toHaveCount(1);
   await expect(page.getByText('1 tarea agregada. 1 duplicada omitida.')).toBeVisible();
 });
+
+test('keeps local boards and saved views in the production flow', async ({ page }) => {
+  await page.goto('/');
+
+  await page.getByRole('button', { name: 'Crear nueva tarea' }).click();
+  let dialog = page.getByRole('dialog', { name: 'Crear tarea' });
+  await dialog.getByRole('textbox', { name: 'Nueva tarea' }).fill('Plan personal');
+  await dialog.getByRole('button', { name: 'Agregar' }).click();
+  await expect(page.getByText('Plan personal')).toBeVisible();
+
+  await page.getByLabel('Nombre del tablero').fill('Talleres');
+  await page.getByRole('form', { name: 'Crear tablero' }).getByRole('button', { name: 'Crear' }).click();
+  await expect(page.getByText('Todavia no hay tareas')).toBeVisible();
+  await expect(page.getByText('Plan personal')).not.toBeVisible();
+
+  await page.getByRole('button', { name: 'Crear nueva tarea' }).click();
+  dialog = page.getByRole('dialog', { name: 'Crear tarea' });
+  await dialog.getByRole('textbox', { name: 'Nueva tarea' }).fill('Preparar taller');
+  await dialog.getByLabel('Proyecto').fill('Talleres');
+  await dialog.getByLabel('Etiquetas').fill('formacion');
+  await dialog.getByRole('button', { name: 'Agregar' }).click();
+  await expect(page.getByText('Preparar taller')).toBeVisible();
+
+  await page.getByLabel('Buscar tareas').fill('taller');
+  await page.getByRole('button', { name: 'Filtrar por etiqueta formacion' }).click();
+  await page.getByLabel('Nombre de la vista').fill('Taller activo');
+  await page.getByRole('button', { name: 'Guardar vista' }).click();
+  await expect(page.getByText('Vista guardada.')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Limpiar filtros' }).click();
+  await page.getByLabel('Buscar tareas').fill('');
+  await page.getByRole('button', { name: /Personal/ }).click();
+  await expect(page.getByText('Plan personal')).toBeVisible();
+  await expect(page.getByText('Preparar taller')).not.toBeVisible();
+
+  await page.getByRole('button', { name: /Talleres/ }).click();
+  await page.getByLabel('Buscar tareas').fill('sin coincidencias');
+  await expect(page.getByText('No hay tareas que coincidan con tu busqueda.')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Taller activo', exact: true }).click();
+  await expect(page.getByText('Preparar taller')).toBeVisible();
+  await expect(page.getByText('Plan personal')).not.toBeVisible();
+
+  const localData = await page.evaluate(() => ({
+    boards: JSON.parse(localStorage.getItem('TODO_BOARDS_V1')),
+    views: JSON.parse(localStorage.getItem('TODO_SAVED_VIEWS_V1')),
+  }));
+
+  expect(localData.boards).toEqual([
+    expect.objectContaining({
+      name: 'Personal',
+      todos: [expect.objectContaining({ text: 'Plan personal' })],
+    }),
+    expect.objectContaining({
+      name: 'Talleres',
+      todos: [expect.objectContaining({ text: 'Preparar taller' })],
+    }),
+  ]);
+  expect(localData.views).toEqual([
+    expect.objectContaining({
+      name: 'Taller activo',
+      searchValue: 'taller',
+      tag: 'formacion',
+    }),
+  ]);
+});
