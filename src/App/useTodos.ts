@@ -20,9 +20,22 @@ import {
     normalizeTodos,
     reindexTodos,
 } from './todoModel';
+import type {
+    ImportMode,
+    Todo,
+    TodoDetails,
+    TodoFilter,
+} from './todoModel';
 
 const STORAGE_KEY = 'TODOS_V1';
-const DEFAULT_TODOS = [];
+const DEFAULT_TODOS: Todo[] = [];
+
+type TodoActionResult = { ok: true } | { ok: false; error: string };
+type TodoImportOptions = { mode?: ImportMode };
+
+function isTodoList(item: unknown): boolean {
+    return Array.isArray(item);
+}
 
 function useTodos() {
     const { 
@@ -31,31 +44,31 @@ function useTodos() {
         synchronizeItem: syncTodos,
         loading,
         error
-        } = useLocalStorage(STORAGE_KEY, DEFAULT_TODOS, Array.isArray);
+        } = useLocalStorage<Todo[]>(STORAGE_KEY, DEFAULT_TODOS, isTodoList);
   
     const [searchValue, setSearchValue] =
      React.useState('');
 
     const [filter, setFilter] =
-     React.useState(TODO_FILTERS.all);
+     React.useState<TodoFilter>(TODO_FILTERS.all);
 
     const [activeProject, setActiveProject] =
-     React.useState(null);
+     React.useState<string | null>(null);
 
     const [activeTag, setActiveTag] =
-     React.useState(null);
+     React.useState<string | null>(null);
 
     const [openModal, setOpenModal] =
      React.useState(false);
 
     const [editingTodoId, setEditingTodoId] =
-     React.useState(null);
+     React.useState<string | null>(null);
 
     const [deletingTodoId, setDeletingTodoId] =
-     React.useState(null);
+     React.useState<string | null>(null);
 
     const [recentlyDeletedTodo, setRecentlyDeletedTodo] =
-     React.useState(null);
+     React.useState<Todo | null>(null);
 
     const normalizedTodos = normalizeTodos(todos);
     const editingTodo = normalizedTodos.find(todo => todo.id === editingTodoId) || null;
@@ -74,7 +87,7 @@ function useTodos() {
     });
     const visibleTodoGroups = getTodoGroups(visibleTodos);
 
-    const completeTodo = (id) => {
+    const completeTodo = (id: string) => {
         const newTodos = normalizedTodos.map(todo =>
             todo.id === id
                 ? {
@@ -87,7 +100,7 @@ function useTodos() {
         saveTodos(newTodos);
     }
 
-    const deleteTodo = (id) => {
+    const deleteTodo = (id: string) => {
         const todoToDelete = normalizedTodos.find(todo => todo.id === id);
 
         if (!todoToDelete) {
@@ -99,7 +112,7 @@ function useTodos() {
         setRecentlyDeletedTodo(todoToDelete);
     }
 
-    const addTodo = (text, details = {}) => {
+    const addTodo = (text: string, details: TodoDetails = {}): TodoActionResult => {
         const trimmedText = text.trim();
 
         if (!trimmedText) {
@@ -125,7 +138,7 @@ function useTodos() {
         return { ok: true };
     }
 
-    const updateTodo = (id, text, details = {}) => {
+    const updateTodo = (id: string, text: string, details: TodoDetails = {}): TodoActionResult => {
         const trimmedText = text.trim();
 
         if (!trimmedText) {
@@ -167,11 +180,11 @@ function useTodos() {
         return { ok: true };
     }
 
-    const selectProjectFilter = (project) => {
+    const selectProjectFilter = (project: string | null) => {
         setActiveProject(currentProject => currentProject === project ? null : project);
     }
 
-    const selectTagFilter = (tag) => {
+    const selectTagFilter = (tag: string | null) => {
         setActiveTag(currentTag => currentTag === tag ? null : tag);
     }
 
@@ -180,7 +193,7 @@ function useTodos() {
         setActiveTag(null);
     }
 
-    const toggleSubtask = (todoId, subtaskId) => {
+    const toggleSubtask = (todoId: string, subtaskId: string) => {
         const newTodos = normalizedTodos.map(todo =>
             todo.id === todoId
                 ? {
@@ -197,7 +210,7 @@ function useTodos() {
         saveTodos(newTodos);
     }
 
-    const moveTodo = (id, direction) => {
+    const moveTodo = (id: string, direction: 'up' | 'down') => {
         const currentIndex = normalizedTodos.findIndex(todo => todo.id === id);
         const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
 
@@ -213,7 +226,7 @@ function useTodos() {
         saveTodos(reindexTodos(reorderedTodos));
     }
 
-    const moveTodoToPosition = (sourceId, targetId, placement) => {
+    const moveTodoToPosition = (sourceId: string, targetId: string, placement: 'before' | 'after') => {
         const reorderedTodos = reorderTodoToPosition(normalizedTodos, sourceId, targetId, placement);
         const didChangeOrder = reorderedTodos.some((todo, index) =>
             todo.id !== normalizedTodos[index]?.id
@@ -230,13 +243,13 @@ function useTodos() {
         setOpenModal(true);
     }
 
-    const startEditingTodo = (id) => {
+    const startEditingTodo = (id: string) => {
         setEditingTodoId(id);
         setDeletingTodoId(null);
         setOpenModal(true);
     }
 
-    const startDeletingTodo = (id) => {
+    const startDeletingTodo = (id: string) => {
         setDeletingTodoId(id);
         setEditingTodoId(null);
         setOpenModal(true);
@@ -281,9 +294,9 @@ function useTodos() {
 
     const exportTodos = () => createTodosBackup(normalizedTodos);
 
-    const previewTodosImport = (backup) => analyzeTodosImport(normalizedTodos, backup);
+    const previewTodosImport = (backup: unknown) => analyzeTodosImport(normalizedTodos, backup);
 
-    const importTodos = (backup, options = {}) => {
+    const importTodos = (backup: unknown, options: TodoImportOptions = {}) => {
         const mode = options.mode === 'merge' ? 'merge' : 'replace';
         const result = applyTodosImport(normalizedTodos, backup, mode);
 

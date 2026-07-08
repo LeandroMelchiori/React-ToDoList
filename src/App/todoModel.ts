@@ -625,3 +625,15 @@ export {
     readTodosBackup,
     reindexTodos,
 };
+
+export type {
+    ImportMode,
+    Todo,
+    TodoBackup,
+    TodoDetails,
+    TodoFilter,
+    TodoGroupView,
+    TodoInsights,
+    TodoPriority,
+    TodoSubtask,
+};

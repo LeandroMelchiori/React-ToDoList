@@ -2,11 +2,11 @@ const DATABASE_NAME = 'taskflow-db';
 const DATABASE_VERSION = 1;
 const STORE_NAME = 'keyValue';
 
-function canUseIndexedDB() {
+function canUseIndexedDB(): boolean {
   return typeof indexedDB !== 'undefined';
 }
 
-function openDatabase() {
+function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DATABASE_NAME, DATABASE_VERSION);
 
@@ -23,7 +23,7 @@ function openDatabase() {
   });
 }
 
-async function readFromIndexedDB(itemName) {
+async function readFromIndexedDB(itemName: string): Promise<string | null> {
   const database = await openDatabase();
 
   return new Promise((resolve, reject) => {
@@ -38,7 +38,7 @@ async function readFromIndexedDB(itemName) {
   });
 }
 
-async function writeToIndexedDB(itemName, value) {
+async function writeToIndexedDB(itemName: string, value: string): Promise<void> {
   const database = await openDatabase();
 
   return new Promise((resolve, reject) => {
@@ -53,8 +53,8 @@ async function writeToIndexedDB(itemName, value) {
   });
 }
 
-async function getStoredItem(itemName) {
-  let lastError = null;
+async function getStoredItem(itemName: string): Promise<string | null> {
+  let lastError: unknown = null;
 
   if (canUseIndexedDB()) {
     try {
@@ -80,12 +80,12 @@ async function getStoredItem(itemName) {
     lastError = error;
   }
 
-  throw lastError;
+  throw lastError || new Error('No pudimos leer el almacenamiento local.');
 }
 
-async function setStoredItem(itemName, value) {
+async function setStoredItem(itemName: string, value: string): Promise<void> {
   let didPersist = false;
-  let lastError = null;
+  let lastError: unknown = null;
 
   if (canUseIndexedDB()) {
     try {
@@ -104,7 +104,7 @@ async function setStoredItem(itemName, value) {
   }
 
   if (!didPersist) {
-    throw lastError;
+    throw lastError || new Error('No pudimos guardar en el almacenamiento local.');
   }
 }
 
