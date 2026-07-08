@@ -1,6 +1,8 @@
+import React from 'react';
+
 const BUTTON_SELECTOR = 'button:not(:disabled)';
 
-function getNextButtonIndex(eventKey, currentIndex, buttonCount) {
+function getNextButtonIndex(eventKey: string, currentIndex: number, buttonCount: number): number {
   if (eventKey === 'Home') {
     return 0;
   }
@@ -20,9 +22,9 @@ function getNextButtonIndex(eventKey, currentIndex, buttonCount) {
   return currentIndex;
 }
 
-function handleButtonGroupNavigation(event) {
-  const buttons = [...event.currentTarget.querySelectorAll(BUTTON_SELECTOR)];
-  const currentIndex = buttons.indexOf(document.activeElement);
+function handleButtonGroupNavigation(event: React.KeyboardEvent<HTMLElement>) {
+  const buttons = [...event.currentTarget.querySelectorAll<HTMLButtonElement>(BUTTON_SELECTOR)];
+  const currentIndex = buttons.indexOf(document.activeElement as HTMLButtonElement);
 
   if (buttons.length < 2 || currentIndex < 0) {
     return;

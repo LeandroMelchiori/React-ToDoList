@@ -4,19 +4,21 @@ const THEME_STORAGE_KEY = 'THEME_V1';
 const THEMES = {
   light: 'light',
   dark: 'dark',
-};
+} as const;
 
-function getStoredTheme() {
+export type Theme = typeof THEMES[keyof typeof THEMES];
+
+function getStoredTheme(): Theme {
   try {
     const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-    return Object.values(THEMES).includes(storedTheme) ? storedTheme : THEMES.light;
+    return Object.values(THEMES).includes(storedTheme as Theme) ? (storedTheme as Theme) : THEMES.light;
   } catch {
     return THEMES.light;
   }
 }
 
 function useTheme() {
-  const [theme, setTheme] = React.useState(getStoredTheme);
+  const [theme, setTheme] = React.useState<Theme>(getStoredTheme);
 
   React.useEffect(() => {
     document.documentElement.dataset.theme = theme;

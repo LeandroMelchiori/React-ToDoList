@@ -1,3 +1,4 @@
+import React from 'react';
 import './TodoIcon.css';
 
 const iconTypes = {
@@ -23,7 +24,12 @@ const iconTypes = {
     },
 };
 
-function IconSvg({ color, icon }) {
+interface IconSvgProps {
+    color: string;
+    icon: { paths: string[]; viewBox: string };
+}
+
+function IconSvg({ color, icon }: IconSvgProps) {
     return (
         <svg
             aria-hidden="true"
@@ -39,7 +45,15 @@ function IconSvg({ color, icon }) {
     );
 }
 
-function TodoIcon({ disabled = false, type, color, label, onClick }) {
+interface TodoIconProps {
+    disabled?: boolean;
+    type: 'check' | 'delete' | 'edit' | 'moveDown' | 'moveUp';
+    color: string;
+    label?: string;
+    onClick?: React.MouseEventHandler<HTMLButtonElement>;
+}
+
+function TodoIcon({ disabled = false, type, color, label, onClick }: TodoIconProps) {
     const icon = iconTypes[type];
 
     return (

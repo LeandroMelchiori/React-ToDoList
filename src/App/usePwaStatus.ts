@@ -1,19 +1,22 @@
 import React from 'react';
 
-function getInitialOnlineStatus() {
+function getInitialOnlineStatus(): boolean {
     return typeof navigator === 'undefined' ? true : navigator.onLine !== false;
 }
 
 function usePwaStatus() {
     const [isOnline, setIsOnline] = React.useState(getInitialOnlineStatus);
     const [isOfflineReady, setIsOfflineReady] = React.useState(false);
-    const [waitingWorker, setWaitingWorker] = React.useState(null);
+    const [waitingWorker, setWaitingWorker] = React.useState<ServiceWorker | null>(null);
 
     React.useEffect(() => {
         const handleOnline = () => setIsOnline(true);
         const handleOffline = () => setIsOnline(false);
         const handleReady = () => setIsOfflineReady(true);
-        const handleUpdate = (event) => setWaitingWorker(event.detail?.worker || null);
+        const handleUpdate = (event: Event) => {
+            const customEvent = event as CustomEvent<{ worker: ServiceWorker }>;
+            setWaitingWorker(customEvent.detail?.worker || null);
+        };
 
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);

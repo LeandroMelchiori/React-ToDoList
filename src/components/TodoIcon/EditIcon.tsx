@@ -1,6 +1,10 @@
 import { TodoIcon } from './TodoIcon';
 
-function EditIcon({ onEdit }) {
+interface EditIconProps {
+    onEdit: () => void;
+}
+
+function EditIcon({ onEdit }: EditIconProps) {
     return <TodoIcon
      type="edit"
      color="var(--color-icon-muted)"

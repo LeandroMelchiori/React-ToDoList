@@ -1,6 +1,12 @@
 import { TodoIcon } from './TodoIcon';
 
-function MoveIcon({ direction, disabled, onMove }) {
+interface MoveIconProps {
+    direction: 'up' | 'down';
+    disabled?: boolean;
+    onMove: () => void;
+}
+
+function MoveIcon({ direction, disabled, onMove }: MoveIconProps) {
     const isMovingUp = direction === 'up';
 
     return <TodoIcon

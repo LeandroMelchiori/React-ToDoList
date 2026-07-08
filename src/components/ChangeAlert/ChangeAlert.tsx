@@ -1,7 +1,11 @@
 import './ChangeAlert.css';
 import { useStorageListener } from "./useStorageListener";
 
-function ChangeAlert({ syncTodos }) {
+interface ChangeAlertProps {
+    syncTodos: () => void;
+}
+
+function ChangeAlert({ syncTodos }: ChangeAlertProps) {
     const { show, toggleShow } = useStorageListener(syncTodos);
 
     if (show) {

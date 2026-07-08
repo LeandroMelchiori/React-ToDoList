@@ -1,6 +1,11 @@
 import { TodoIcon } from "./TodoIcon";
 
-function CompleteIcon({ completed, onComplete }) {
+interface CompleteIconProps {
+    completed: boolean;
+    onComplete: () => void;
+}
+
+function CompleteIcon({ completed, onComplete }: CompleteIconProps) {
     return <TodoIcon
         type="check"
         color={completed ? 'var(--color-success)' : 'var(--color-icon-muted)'}

@@ -1,10 +1,10 @@
 import React from "react"; 
 
-function useStorageListener(syncTodos) {
+function useStorageListener(syncTodos: () => void) {
         const [storageChange, setStorageChange] = React.useState(false);
 
         React.useEffect(() => {
-            const onChange = (change) => {
+            const onChange = (change: StorageEvent) => {
                 if (change.key === "TODOS_V1") {
                 setStorageChange(true);
                 }

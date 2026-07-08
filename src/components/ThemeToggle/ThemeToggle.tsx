@@ -1,6 +1,11 @@
 import './ThemeToggle.css';
 
-function ThemeToggle({ isDarkTheme, onToggleTheme }) {
+interface ThemeToggleProps {
+  isDarkTheme: boolean;
+  onToggleTheme: () => void;
+}
+
+function ThemeToggle({ isDarkTheme, onToggleTheme }: ThemeToggleProps) {
   const label = isDarkTheme ? 'Activar modo claro' : 'Activar modo oscuro';
 
   return (
