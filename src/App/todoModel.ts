@@ -118,6 +118,7 @@ const TODO_GROUP_ORDER: TodoGroup[] = [
 ];
 
 const TODO_BACKUP_VERSION = 1;
+const UNSUPPORTED_BACKUP_VERSION_ERROR = 'El backup usa una version de datos mas nueva que esta app.';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null;
@@ -502,7 +503,20 @@ function createTodosBackup(todos: Todo[]): TodoBackup {
     };
 }
 
+function isUnsupportedBackupVersion(backup: unknown): boolean {
+    return isRecord(backup) &&
+        typeof backup.version === 'number' &&
+        backup.version > TODO_BACKUP_VERSION;
+}
+
 function readTodosBackup(backup: unknown): BackupReadResult {
+    if (isUnsupportedBackupVersion(backup)) {
+        return {
+            ok: false,
+            error: UNSUPPORTED_BACKUP_VERSION_ERROR,
+        };
+    }
+
     const backupTodos = Array.isArray(backup)
         ? backup
         : isRecord(backup)
@@ -600,6 +614,7 @@ function applyTodosImport(existingTodos: Todo[], backup: unknown, mode: ImportMo
 
 export {
     TODO_FILTERS,
+    TODO_BACKUP_VERSION,
     TODO_GROUPS,
     TODO_PRIORITIES,
     analyzeTodosImport,

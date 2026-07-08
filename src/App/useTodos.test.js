@@ -1,5 +1,6 @@
 import {
   TODO_FILTERS,
+  TODO_BACKUP_VERSION,
   TODO_GROUPS,
   TODO_PRIORITIES,
   analyzeTodosImport,
@@ -366,6 +367,10 @@ describe('todo helpers', () => {
     expect(readTodosBackup({ invalid: true })).toEqual({
       ok: false,
       error: 'El archivo no contiene una lista de tareas valida.',
+    });
+    expect(readTodosBackup({ version: TODO_BACKUP_VERSION + 1, todos: [] })).toEqual({
+      ok: false,
+      error: 'El backup usa una version de datos mas nueva que esta app.',
     });
   });
 
