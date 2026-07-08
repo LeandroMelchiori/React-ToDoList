@@ -1,9 +1,10 @@
 .ModalBackground {
-  background-color: rgba(15, 23, 42, 0.72);
+  background-color: rgba(15, 23, 42, 0.58);
+  backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
   align-items: center;
-  color: white;
+  color: var(--color-text);
   position: fixed;
   top: 0;
   left: 0;
@@ -17,7 +18,7 @@
   display: flex;
   justify-content: center;
   outline: none;
-  width: min(100%, 468px);
+  width: min(100%, 560px);
 }
 
 .ModalContent > * {

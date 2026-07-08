@@ -1,30 +1,31 @@
 .TodoForm {
   align-items: stretch;
   background-color: var(--color-surface);
-  border-radius: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
   box-shadow: var(--shadow-modal);
   display: flex;
   flex-direction: column;
-  max-width: 420px;
-  padding: 32px;
-  width: calc(100% - 48px);
+  max-width: 520px;
+  padding: 28px;
+  width: 100%;
 }
 
 .TodoForm label {
   color: var(--color-text);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 800;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .TodoForm textarea {
   background-color: var(--color-surface-muted);
   border: 1px solid var(--color-border-strong);
-  border-radius: 12px;
+  border-radius: 8px;
   box-sizing: border-box;
   color: var(--color-text);
   font-family: inherit;
-  font-size: 17px;
+  font-size: 16px;
   line-height: 1.4;
   min-height: 120px;
   padding: 14px;
@@ -62,7 +63,7 @@
 .TodoForm-fields input {
   background-color: var(--color-surface-muted);
   border: 1px solid var(--color-border-strong);
-  border-radius: 10px;
+  border-radius: 8px;
   color: var(--color-text);
   font-family: inherit;
   font-size: 15px;
@@ -107,7 +108,7 @@
 }
 
 .TodoForm-button {
-  border-radius: 10px;
+  border-radius: 8px;
   cursor: pointer;
   font-family: inherit;
   font-size: 16px;
@@ -145,7 +146,7 @@
 
 @media (max-width: 480px) {
   .TodoForm {
-    padding: 24px;
+    padding: 22px;
   }
 
   .TodoForm-buttonContainer {
