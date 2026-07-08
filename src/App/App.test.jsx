@@ -212,9 +212,8 @@ describe('App', () => {
   test('shows local productivity metrics from current todos', async () => {
     const yesterday = getRelativeDateInputValue(-1);
     const tomorrow = getRelativeDateInputValue(1);
-    const recentCompletedAt = new Date().toISOString();
-    const oldCompletedAt = new Date();
-    oldCompletedAt.setDate(oldCompletedAt.getDate() - 12);
+    const recentCompletedAt = `${getRelativeDateInputValue(0)}T12:00:00.000Z`;
+    const oldCompletedAt = `${getRelativeDateInputValue(-12)}T12:00:00.000Z`;
 
     localStorage.setItem('TODOS_V1', JSON.stringify([
       {
@@ -228,7 +227,7 @@ describe('App', () => {
         id: 'todo-2',
         text: 'Terminada antigua',
         completed: true,
-        completedAt: oldCompletedAt.toISOString(),
+        completedAt: oldCompletedAt,
         order: 1,
       },
       {
