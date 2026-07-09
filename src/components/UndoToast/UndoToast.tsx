@@ -3,13 +3,21 @@ import './UndoToast.css';
 
 const DEFAULT_DISMISS_MS = 8000;
 
+interface UndoToastProps {
+  dismissAfterMs?: number;
+  message: string | null;
+  onDismiss: () => void;
+  onUndo: () => void;
+  undoLabel?: string;
+}
+
 function UndoToast({
   dismissAfterMs = DEFAULT_DISMISS_MS,
   message,
   onDismiss,
   onUndo,
   undoLabel = 'Deshacer',
-}) {
+}: UndoToastProps) {
   React.useEffect(() => {
     if (!message) {
       return undefined;
@@ -25,7 +33,7 @@ function UndoToast({
       return undefined;
     }
 
-    const handleEscape = (event) => {
+    const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         onDismiss();
       }

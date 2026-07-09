@@ -5,13 +5,16 @@ import { EditIcon } from '../../TodoIcon/EditIcon';
 import { MoveIcon } from '../../TodoIcon/MoveIcon';
 import { handleButtonGroupNavigation } from '../../buttonGroupNavigation';
 
-const TODO_PRIORITY_LABELS = {
+import React from 'react';
+import { TodoPriority, TodoSubtask } from '../../../App/todoModel';
+
+const TODO_PRIORITY_LABELS: Record<TodoPriority, string> = {
     low: 'Baja',
     medium: 'Media',
     high: 'Alta',
 };
 
-function formatDueDate(dueDate) {
+function formatDueDate(dueDate?: string | null) {
     if (!dueDate) {
         return null;
     }
@@ -25,9 +28,36 @@ function formatDueDate(dueDate) {
     return `${day}/${month}/${year}`;
 }
 
-function TodoItem(props) {
+interface TodoItemProps {
+  text: string;
+  completed: boolean;
+  priority?: TodoPriority;
+  dueDate?: string | null;
+  project?: string | null;
+  tags?: string[];
+  subtasks?: TodoSubtask[];
+  isDragging?: boolean;
+  dropPosition?: 'before' | 'after' | null;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
+  onComplete: () => void;
+  onDelete: () => void;
+  onEdit: () => void;
+  onToggleSubtask: (id: string) => void;
+  onFilterProject?: () => void;
+  onFilterTag?: (tag: string) => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  onDragStart?: (e: React.DragEvent) => void;
+  onDragOver?: (e: React.DragEvent) => void;
+  onDragLeave?: (e: React.DragEvent) => void;
+  onDrop?: (e: React.DragEvent) => void;
+  onDragEnd?: (e: React.DragEvent) => void;
+}
+
+function TodoItem(props: TodoItemProps) {
   const dueDateLabel = formatDueDate(props.dueDate);
-  const priorityLabel = TODO_PRIORITY_LABELS[props.priority] || TODO_PRIORITY_LABELS.medium;
+  const priorityLabel = props.priority ? TODO_PRIORITY_LABELS[props.priority] : TODO_PRIORITY_LABELS.medium;
   const tags = Array.isArray(props.tags) ? props.tags : [];
   const subtasks = Array.isArray(props.subtasks) ? props.subtasks : [];
   const itemClassName = [
@@ -57,12 +87,12 @@ function TodoItem(props) {
         <MoveIcon
           direction="up"
           disabled={!props.canMoveUp}
-          onMove={props.onMoveUp}
+          onMove={props.onMoveUp || (() => {})}
         />
         <MoveIcon
           direction="down"
           disabled={!props.canMoveDown}
-          onMove={props.onMoveDown}
+          onMove={props.onMoveDown || (() => {})}
         />
       </div>
       <CompleteIcon 
@@ -102,7 +132,7 @@ function TodoItem(props) {
               type="button"
               className="TodoItem-project"
               aria-label={`Filtrar por proyecto ${props.project}`}
-              onClick={props.onFilterProject}
+              onClick={props.onFilterProject || (() => {})}
             >
               {props.project}
             </button>
@@ -113,7 +143,7 @@ function TodoItem(props) {
               className="TodoItem-tag"
               key={tag}
               aria-label={`Filtrar por etiqueta ${tag}`}
-              onClick={() => props.onFilterTag(tag)}
+              onClick={() => props.onFilterTag?.(tag)}
             >
               #{tag}
             </button>

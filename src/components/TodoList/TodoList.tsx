@@ -1,22 +1,37 @@
-import { Fragment } from 'react';
+import { ReactNode, Fragment } from 'react';
+import { Todo, TodoGroupView } from '../../App/todoModel';
 import './TodoList.css';
 
-function getTodoCountLabel(count) {
+interface TodoListProps {
+  error?: boolean;
+  loading?: boolean;
+  totalTodos?: number;
+  visibleTodos: Todo[];
+  visibleTodoGroups?: TodoGroupView[];
+  onError: () => ReactNode;
+  onLoading: () => ReactNode;
+  onEmptyTodos: () => ReactNode;
+  onEmptySearchResults: () => ReactNode;
+  render?: (todo: Todo) => ReactNode;
+  children?: (todo: Todo) => ReactNode;
+}
+
+function getTodoCountLabel(count: number) {
   return count === 1 ? '1 tarea' : `${count} tareas`;
 }
 
-function TodoList(props) {
+function TodoList(props: TodoListProps) {
   const renderTodo = props.render || props.children;
   const todoGroups = props.visibleTodoGroups?.length
     ? props.visibleTodoGroups
-    : [{ id: 'all', title: null, todos: props.visibleTodos }];
+    : [{ id: 'all' as any, title: '', todos: props.visibleTodos }];
   const showGroupHeaders = todoGroups.length > 1;
 
   return (
     <section
       className="TodoList-container"
       id="todo-list"
-      tabIndex="-1"
+      tabIndex={-1}
       aria-label="Tareas"
     >
       {props.error && props.onError()}
@@ -35,7 +50,7 @@ function TodoList(props) {
                 <span>{getTodoCountLabel(group.todos.length)}</span>
               </li>
             )}
-            {group.todos.map(renderTodo)}
+            {renderTodo && group.todos.map(renderTodo)}
           </Fragment>
         ))}
       </ul>

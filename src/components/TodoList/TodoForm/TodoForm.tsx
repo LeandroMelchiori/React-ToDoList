@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { ChangeEvent, FormEvent } from 'react';
+import { TodoPriority, TodoSubtask, TodoDetails } from '../../../App/todoModel';
 import './TodoForm.css';
 
 const TODO_PRIORITY_OPTIONS = [
@@ -6,6 +7,20 @@ const TODO_PRIORITY_OPTIONS = [
     { value: 'medium', label: 'Media' },
     { value: 'high', label: 'Alta' },
 ];
+
+interface TodoFormProps {
+    initialValue?: string;
+    initialPriority?: TodoPriority;
+    initialDueDate?: string | null;
+    initialProject?: string | null;
+    initialTags?: string[];
+    initialSubtasks?: TodoSubtask[];
+    label?: string;
+    mode?: 'create' | 'edit';
+    onCancel: () => void;
+    onSubmitTodo: (text: string, details: TodoDetails) => { ok: boolean; error?: string };
+    submitLabel?: string;
+}
 
 function TodoForm({
     initialValue = '',
@@ -19,9 +34,9 @@ function TodoForm({
     onCancel,
     onSubmitTodo,
     submitLabel = 'Agregar',
-}) {
+}: TodoFormProps) {
     const [newTodoValue, setNewTodoValue] = React.useState(initialValue);
-    const [priorityValue, setPriorityValue] = React.useState(initialPriority || 'medium');
+    const [priorityValue, setPriorityValue] = React.useState<TodoPriority>(initialPriority || 'medium');
     const [dueDateValue, setDueDateValue] = React.useState(initialDueDate || '');
     const [projectValue, setProjectValue] = React.useState(initialProject || '');
     const [tagsValue, setTagsValue] = React.useState(Array.isArray(initialTags) ? initialTags.join(', ') : '');
@@ -38,12 +53,12 @@ function TodoForm({
     const tagsId = mode === 'edit' ? 'editTodoTags' : 'newTodoTags';
     const subtasksId = mode === 'edit' ? 'editTodoSubtasks' : 'newTodoSubtasks';
 
-    const onChange = (event) => {
+    const onChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
         setNewTodoValue(event.target.value);
         setFormError('');
     }
 
-    const onSubmit = (event) => {
+    const onSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const result = onSubmitTodo(newTodoValue, {
             priority: priorityValue,
@@ -54,7 +69,7 @@ function TodoForm({
         });
 
         if (!result.ok) {
-            setFormError(result.error);
+            setFormError(result.error || 'Error al guardar');
             return;
         }
 
@@ -83,7 +98,7 @@ function TodoForm({
                     <select
                         id={priorityId}
                         value={priorityValue}
-                        onChange={event => setPriorityValue(event.target.value)}
+                        onChange={event => setPriorityValue(event.target.value as TodoPriority)}
                     >
                         {TODO_PRIORITY_OPTIONS.map(option => (
                             <option key={option.value} value={option.value}>

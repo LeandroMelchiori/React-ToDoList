@@ -75,7 +75,18 @@ const STARTER_TEMPLATES = [
   },
 ];
 
-function EmptyTodos({ onCreateTemplate }) {
+interface Template {
+  id: string;
+  title: string;
+  description: string;
+  todo: any;
+}
+
+interface EmptyTodosProps {
+  onCreateTemplate?: (template: Template) => void;
+}
+
+function EmptyTodos({ onCreateTemplate }: EmptyTodosProps) {
   return (
     <div className="EmptyTodo-container">
       <p className="EmptyTodo-completeIcon" aria-hidden="true"></p>

@@ -1,6 +1,11 @@
 import './CreateTodoButton.css';
 
-function CreateTodoButton({ onCreateTodo, loading }) {
+interface CreateTodoButtonProps {
+  onCreateTodo: () => void;
+  loading?: boolean;
+}
+
+function CreateTodoButton({ onCreateTodo, loading }: CreateTodoButtonProps) {
   return (
     <button
       type="button"

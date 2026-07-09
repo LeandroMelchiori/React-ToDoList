@@ -11,10 +11,16 @@ const FOCUSABLE_SELECTOR = [
     '[tabindex]:not([tabindex="-1"])',
 ].join(',');
 
-function Modal({ children, label = 'Dialogo', onClose }) {
-    const dialogRef = React.useRef(null);
+interface ModalProps {
+    children: React.ReactNode;
+    label?: string;
+    onClose?: () => void;
+}
+
+function Modal({ children, label = 'Dialogo', onClose }: ModalProps) {
+    const dialogRef = React.useRef<HTMLDivElement>(null);
     const onCloseRef = React.useRef(onClose);
-    const previousFocusRef = React.useRef(null);
+    const previousFocusRef = React.useRef<Element | null>(null);
 
     React.useEffect(() => {
         onCloseRef.current = onClose;
@@ -35,9 +41,9 @@ function Modal({ children, label = 'Dialogo', onClose }) {
 
         const focusableElements = getFocusableElements();
         const firstFocusableElement = focusableElements[0] || dialogNode;
-        firstFocusableElement.focus();
+        (firstFocusableElement as HTMLElement).focus();
 
-        const handleKeyDown = (event) => {
+        const handleKeyDown = (event: KeyboardEvent) => {
             if (event.key === 'Escape' && onCloseRef.current) {
                 event.preventDefault();
                 onCloseRef.current();
@@ -61,12 +67,12 @@ function Modal({ children, label = 'Dialogo', onClose }) {
 
             if (event.shiftKey && document.activeElement === firstElement) {
                 event.preventDefault();
-                lastElement.focus();
+                (lastElement as HTMLElement).focus();
             }
 
             if (!event.shiftKey && document.activeElement === lastElement) {
                 event.preventDefault();
-                firstElement.focus();
+                (firstElement as HTMLElement).focus();
             }
         };
 
@@ -76,12 +82,12 @@ function Modal({ children, label = 'Dialogo', onClose }) {
             document.removeEventListener('keydown', handleKeyDown);
 
             if (previousFocusRef.current && document.contains(previousFocusRef.current)) {
-                previousFocusRef.current.focus();
+                (previousFocusRef.current as HTMLElement).focus();
             }
         };
     }, []);
 
-    const handleBackdropClick = (event) => {
+    const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
         if (event.target === event.currentTarget && onClose) {
             onClose();
         }
@@ -95,12 +101,12 @@ function Modal({ children, label = 'Dialogo', onClose }) {
                 aria-modal="true"
                 aria-label={label}
                 ref={dialogRef}
-                tabIndex="-1"
+                tabIndex={-1}
               >
                 {children}
               </div>
             </div>,
-            document.getElementById('modal')
+            document.getElementById('modal') as Element
     );
 }
 

@@ -1,6 +1,12 @@
 import './DeleteTodoDialog.css';
 
-function DeleteTodoDialog({ todoText, onCancel, onConfirm }) {
+interface DeleteTodoDialogProps {
+  todoText: string;
+  onCancel: () => void;
+  onConfirm: () => void;
+}
+
+function DeleteTodoDialog({ todoText, onCancel, onConfirm }: DeleteTodoDialogProps) {
   return (
     <div className="DeleteTodoDialog">
       <h2>Eliminar tarea</h2>
