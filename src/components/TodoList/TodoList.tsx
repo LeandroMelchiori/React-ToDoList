@@ -5,11 +5,12 @@ import './TodoList.css';
 interface TodoListProps {
   error?: boolean;
   loading?: boolean;
-  totalTodos?: number;
   visibleTodos: Todo[];
   visibleTodoGroups?: TodoGroupView[];
-  onError: () => ReactNode;
-  onLoading: () => ReactNode;
+  totalTodos: number;
+  searchValue?: string;
+  onError: () => React.ReactNode;
+  onLoading: () => React.ReactNode;
   onEmptyTodos: () => ReactNode;
   onEmptySearchResults: () => ReactNode;
   render?: (todo: Todo) => ReactNode;
