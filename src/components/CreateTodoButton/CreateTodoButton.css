@@ -1,5 +1,5 @@
 .CreateTodoButton {
-  background-color: var(--color-accent);
+  background: linear-gradient(135deg, var(--color-accent), #3b82f6);
   box-shadow: 0 14px 26px rgba(14, 165, 233, 0.28);
   border: none;
   border-radius: 50%;
@@ -31,7 +31,7 @@
 
 .CreateTodoButton:hover:not(:disabled),
 .CreateTodoButton:focus-visible {
-  background-color: var(--color-accent-hover);
+  background: linear-gradient(135deg, var(--color-accent-hover), #2563eb);
   box-shadow: 0 16px 30px rgba(14, 165, 233, 0.36);
   outline: none;
   transform: rotate(90deg) scale(1.04);

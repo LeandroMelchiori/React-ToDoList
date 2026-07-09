@@ -18,6 +18,8 @@
 
 .TodoItem:hover {
   border-color: var(--color-border-strong);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
 }
 
 .TodoItem--complete {
@@ -61,6 +63,7 @@
   line-height: 1.45;
   margin: 0;
   overflow-wrap: anywhere;
+  transition: color var(--transition-fast);
 }
 
 .TodoItem-main {
@@ -111,6 +114,7 @@
   font-size: 13px;
   font-weight: 700;
   gap: 8px;
+  transition: color var(--transition-fast);
 }
 
 .TodoItem-subtask input {

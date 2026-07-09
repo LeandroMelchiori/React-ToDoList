@@ -3,6 +3,7 @@
   backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
+  justify-content: center;
   align-items: center;
   color: var(--color-text);
   position: fixed;
@@ -12,6 +13,7 @@
   bottom: 0;
   padding: 24px;
   z-index: 10;
+  animation: modalBackdrop var(--transition-fast) ease-out;
 }
 
 .ModalContent {
@@ -19,8 +21,25 @@
   justify-content: center;
   outline: none;
   width: min(100%, 560px);
+  animation: modalEnter var(--transition-fast) ease-out;
 }
 
 .ModalContent > * {
   width: 100%;
+}
+
+@keyframes modalBackdrop {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
