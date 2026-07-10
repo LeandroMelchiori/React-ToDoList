@@ -630,13 +630,69 @@ describe('App', () => {
     expect(firstSubtask).not.toBeChecked();
     expect(within(checklist).getByLabelText('Validar mobile')).toBeInTheDocument();
 
-    await user.click(firstSubtask);
+    await user.click(screen.getByLabelText('Escribir guia'));
 
-    expect(firstSubtask).toBeChecked();
+    expect(screen.getByLabelText('Escribir guia')).toBeChecked();
     expect(JSON.parse(localStorage.getItem('TODOS_V1'))[0]).toEqual(expect.objectContaining({
+      completed: false,
       subtasks: [
         expect.objectContaining({ text: 'Escribir guia', completed: true }),
         expect.objectContaining({ text: 'Validar mobile', completed: false }),
+      ],
+    }));
+
+    await user.click(within(checklist).getByLabelText('Validar mobile'));
+
+    expect(screen.getByText('Completaste todas tus tareas')).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('TODOS_V1'))[0]).toEqual(expect.objectContaining({
+      completed: true,
+      completedAt: expect.any(String),
+      subtasks: [
+        expect.objectContaining({ text: 'Escribir guia', completed: true }),
+        expect.objectContaining({ text: 'Validar mobile', completed: true }),
+      ],
+    }));
+
+    await user.click(screen.getByLabelText('Escribir guia'));
+
+    expect(screen.getByRole('heading', { name: /Completaste 0 de 1 tareas/ })).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('TODOS_V1'))[0]).toEqual(expect.objectContaining({
+      completed: false,
+      completedAt: null,
+      subtasks: [
+        expect.objectContaining({ text: 'Escribir guia', completed: false }),
+        expect.objectContaining({ text: 'Validar mobile', completed: true }),
+      ],
+    }));
+  });
+
+  test('completes pending subtasks when the parent todo is completed', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      {
+        id: 'todo-1',
+        text: 'Preparar clase',
+        completed: false,
+        subtasks: [
+          { id: 'subtask-1', text: 'Armar consignas', completed: false },
+          { id: 'subtask-2', text: 'Subir material', completed: false },
+        ],
+      },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Preparar clase')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Marcar tarea como completada' }));
+
+    expect(screen.getByLabelText('Armar consignas')).toBeChecked();
+    expect(screen.getByLabelText('Subir material')).toBeChecked();
+    expect(JSON.parse(localStorage.getItem('TODOS_V1'))[0]).toEqual(expect.objectContaining({
+      completed: true,
+      completedAt: expect.any(String),
+      subtasks: [
+        expect.objectContaining({ text: 'Armar consignas', completed: true }),
+        expect.objectContaining({ text: 'Subir material', completed: true }),
       ],
     }));
   });

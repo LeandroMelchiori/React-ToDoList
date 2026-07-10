@@ -339,13 +339,22 @@ function useTodos() {
 
     const completeTodo = (id: string) => {
         const newTodos = normalizedTodos.map(todo =>
-            todo.id === id
-                ? {
-                    ...todo,
-                    completed: !todo.completed,
-                    completedAt: todo.completed ? null : new Date().toISOString(),
+            {
+                if (todo.id !== id) {
+                    return todo;
                 }
-                : todo
+
+                const nextCompleted = !todo.completed;
+
+                return {
+                    ...todo,
+                    completed: nextCompleted,
+                    completedAt: nextCompleted ? new Date().toISOString() : null,
+                    subtasks: nextCompleted
+                        ? todo.subtasks.map(subtask => ({ ...subtask, completed: true }))
+                        : todo.subtasks,
+                };
+            }
         );
         saveActiveTodos(newTodos);
     }
@@ -441,16 +450,35 @@ function useTodos() {
 
     const toggleSubtask = (todoId: string, subtaskId: string) => {
         const newTodos = normalizedTodos.map(todo =>
-            todo.id === todoId
-                ? {
-                    ...todo,
-                    subtasks: todo.subtasks.map(subtask =>
-                        subtask.id === subtaskId
-                            ? { ...subtask, completed: !subtask.completed }
-                            : subtask
-                    ),
+            {
+                if (todo.id !== todoId) {
+                    return todo;
                 }
-                : todo
+
+                const subtasks = todo.subtasks.map(subtask =>
+                    subtask.id === subtaskId
+                        ? { ...subtask, completed: !subtask.completed }
+                        : subtask
+                );
+                const allSubtasksCompleted = subtasks.length > 0 &&
+                    subtasks.every(subtask => subtask.completed);
+                const nextCompleted = allSubtasksCompleted
+                    ? true
+                    : todo.completed && subtasks.some(subtask => !subtask.completed)
+                        ? false
+                        : todo.completed;
+
+                return {
+                    ...todo,
+                    completed: nextCompleted,
+                    completedAt: nextCompleted && !todo.completed
+                        ? new Date().toISOString()
+                        : !nextCompleted
+                            ? null
+                            : todo.completedAt,
+                    subtasks,
+                };
+            }
         );
 
         saveActiveTodos(newTodos);
