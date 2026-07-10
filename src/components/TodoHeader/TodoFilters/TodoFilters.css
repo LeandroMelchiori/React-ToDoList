@@ -1,27 +1,105 @@
 .TodoFilters {
+  align-items: center;
   display: flex;
-  flex-wrap: wrap;
   gap: 10px;
   justify-content: flex-start;
   margin: 16px auto 0;
   max-width: 960px;
+  position: relative;
+}
+
+.TodoFilters-trigger {
+  align-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-strong);
+  cursor: pointer;
+  display: flex;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.TodoFilters-trigger:hover:not(:disabled),
+.TodoFilters-trigger:focus-visible,
+.TodoFilters-trigger--open {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-focus);
+  outline: none;
+}
+
+.TodoFilters-trigger:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.TodoFilters-triggerIcon {
+  display: grid;
+  gap: 3px;
+  width: 16px;
+}
+
+.TodoFilters-triggerIcon span {
+  background: currentColor;
+  border-radius: 999px;
+  display: block;
+  height: 2px;
+}
+
+.TodoFilters-activeLabel {
+  background: var(--color-surface-muted);
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+.TodoFilters-total {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.TodoFilters-total strong {
+  color: var(--color-text-strong);
+}
+
+.TodoFilters-menu {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+  display: grid;
+  gap: 6px;
+  left: 0;
+  min-width: 260px;
+  padding: 8px;
+  position: absolute;
+  top: calc(100% + 8px);
+  z-index: 8;
 }
 
 .TodoFilters-button {
   align-items: center;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
   color: var(--color-text-muted);
   cursor: pointer;
   display: inline-flex;
   font-family: inherit;
   font-size: 14px;
   font-weight: 700;
-  gap: 8px;
-  min-height: 36px;
-  padding: 0 14px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+  justify-content: space-between;
+  min-height: 40px;
+  padding: 0 10px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  width: 100%;
 }
 
 .TodoFilters-button span {
@@ -39,8 +117,7 @@
 
 .TodoFilters-button:hover:not(:disabled),
 .TodoFilters-button:focus-visible {
-  border-color: var(--color-accent);
-  box-shadow: var(--shadow-focus);
+  background: var(--color-surface-muted);
   color: var(--color-text);
   outline: none;
 }
@@ -63,17 +140,21 @@
 
 @media (max-width: 640px) {
   .TodoFilters {
+    align-items: stretch;
     justify-content: flex-start;
   }
 
-  .TodoFilters-button {
-    flex: 1 1 calc(50% - 10px);
-    justify-content: space-between;
+  .TodoFilters-trigger {
+    flex: 1;
   }
-}
 
-@media (max-width: 420px) {
-  .TodoFilters-button {
-    flex-basis: 100%;
+  .TodoFilters-total {
+    align-self: center;
+  }
+
+  .TodoFilters-menu {
+    max-width: calc(100vw - 32px);
+    min-width: 0;
+    width: 100%;
   }
 }

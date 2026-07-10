@@ -14,6 +14,12 @@ async function openTools(user) {
   await user.click(screen.getByRole('button', { name: /Herramientas/ }));
 }
 
+async function openFilters(user) {
+  await user.click(screen.getByRole('button', { name: /Filtros/ }));
+
+  return screen.getByRole('group', { name: 'Filtrar tareas' });
+}
+
 function toDateInputValue(date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -92,14 +98,14 @@ describe('App', () => {
       completedAt: expect.any(String),
     }));
 
-    await user.click(screen.getByRole('button', { name: /Completadas/ }));
+    await user.click(within(await openFilters(user)).getByRole('button', { name: /Completadas/ }));
     expect(screen.getByText('Preparar entrevista tecnica')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /Pendientes/ }));
+    await user.click(within(await openFilters(user)).getByRole('button', { name: /Pendientes/ }));
     expect(screen.queryByText('Preparar entrevista tecnica')).not.toBeInTheDocument();
     expect(screen.getByText('No hay tareas que coincidan con tu busqueda.')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /Todas/ }));
+    await user.click(within(await openFilters(user)).getByRole('button', { name: /Todas/ }));
     await user.click(screen.getByRole('button', { name: 'Eliminar tarea' }));
 
     const deleteDialog = screen.getByRole('dialog', { name: 'Eliminar tarea' });
@@ -298,19 +304,20 @@ describe('App', () => {
     renderApp();
 
     expect(await screen.findByText('Resolver deuda vencida')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Vencidas 1' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Hoy 1' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Proximas 1' })).toBeInTheDocument();
+    const filtersGroup = await openFilters(user);
+    expect(within(filtersGroup).getByRole('button', { name: 'Vencidas 1' })).toBeInTheDocument();
+    expect(within(filtersGroup).getByRole('button', { name: 'Hoy 1' })).toBeInTheDocument();
+    expect(within(filtersGroup).getByRole('button', { name: 'Proximas 1' })).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /Vencidas/ }));
+    await user.click(within(filtersGroup).getByRole('button', { name: /Vencidas/ }));
     expect(screen.getByText('Resolver deuda vencida')).toBeInTheDocument();
     expect(screen.queryByText('Enviar avance de hoy')).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /Hoy/ }));
+    await user.click(within(await openFilters(user)).getByRole('button', { name: /Hoy/ }));
     expect(screen.getByText('Enviar avance de hoy')).toBeInTheDocument();
     expect(screen.queryByText('Resolver deuda vencida')).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /Proximas/ }));
+    await user.click(within(await openFilters(user)).getByRole('button', { name: /Proximas/ }));
     expect(screen.getByText('Preparar proxima mejora')).toBeInTheDocument();
     expect(screen.queryByText('Enviar avance de hoy')).not.toBeInTheDocument();
   });
@@ -555,7 +562,7 @@ describe('App', () => {
 
     expect(await screen.findByText('Preparar demo')).toBeInTheDocument();
 
-    const filtersGroup = screen.getByRole('group', { name: 'Filtrar tareas' });
+    const filtersGroup = await openFilters(user);
     const allFilter = within(filtersGroup).getByRole('button', { name: /Todas/ });
     const pendingFilter = within(filtersGroup).getByRole('button', { name: /Pendientes/ });
     const todayFilter = within(filtersGroup).getByRole('button', { name: /Hoy/ });
