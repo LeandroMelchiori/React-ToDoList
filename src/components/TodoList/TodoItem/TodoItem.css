@@ -59,7 +59,8 @@
 
 .TodoItem-p {
   color: var(--color-text-strong);
-  font-size: 16px;
+  font-size: 17px;
+  font-weight: 800;
   line-height: 1.45;
   margin: 0;
   overflow-wrap: anywhere;
@@ -99,13 +100,32 @@
   text-decoration: line-through;
 }
 
-.TodoItem-subtasks {
-  border-left: 2px solid var(--color-border);
+.TodoItem-checklist {
+  background: var(--color-surface-muted);
+  border: 1px dashed var(--color-border);
+  border-radius: 8px;
   display: grid;
   gap: 6px;
+  margin: 10px 0 0;
+  max-width: 520px;
+  padding: 8px 10px;
+}
+
+.TodoItem-checklistLabel {
+  color: var(--color-text-soft);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.TodoItem-subtasks {
+  display: grid;
+  gap: 5px;
   list-style: none;
-  margin: 8px 0 0;
-  padding: 2px 0 2px 12px;
+  margin: 0;
+  padding: 0;
 }
 
 .TodoItem-subtask label {
@@ -113,7 +133,7 @@
   color: var(--color-text-muted);
   display: flex;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   gap: 8px;
   line-height: 1.35;
   transition: color var(--transition-fast);
@@ -122,10 +142,10 @@
 .TodoItem-subtask input {
   accent-color: var(--color-accent);
   flex: 0 0 auto;
-  height: 13px;
+  height: 12px;
   margin: 0;
-  opacity: 0.82;
-  width: 13px;
+  opacity: 0.72;
+  width: 12px;
 }
 
 .TodoItem-subtaskText--complete {

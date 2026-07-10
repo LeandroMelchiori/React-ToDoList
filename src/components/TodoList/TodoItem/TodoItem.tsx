@@ -105,22 +105,27 @@ function TodoItem(props: TodoItemProps) {
             {props.text}
           </p>
           {subtasks.length > 0 && (
-            <ul className="TodoItem-subtasks" aria-label={`Checklist de ${props.text}`}>
-              {subtasks.map(subtask => (
-                <li className="TodoItem-subtask" key={subtask.id}>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={subtask.completed}
-                      onChange={() => props.onToggleSubtask(subtask.id)}
-                    />
-                    <span className={subtask.completed ? 'TodoItem-subtaskText--complete' : ''}>
-                      {subtask.text}
-                    </span>
-                  </label>
-                </li>
-              ))}
-            </ul>
+            <div className="TodoItem-checklist">
+              <span className="TodoItem-checklistLabel">
+                Subtareas
+              </span>
+              <ul className="TodoItem-subtasks" aria-label={`Checklist de ${props.text}`}>
+                {subtasks.map(subtask => (
+                  <li className="TodoItem-subtask" key={subtask.id}>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={subtask.completed}
+                        onChange={() => props.onToggleSubtask(subtask.id)}
+                      />
+                      <span className={subtask.completed ? 'TodoItem-subtaskText--complete' : ''}>
+                        {subtask.text}
+                      </span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
         <div className="TodoItem-meta" aria-label="Detalles de la tarea">
