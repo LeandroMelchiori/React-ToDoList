@@ -224,7 +224,7 @@ La suite actual cubre:
 - Creacion de tareas con ids y texto limpio.
 - Filtros por busqueda y estado.
 - Filtros temporales por tareas vencidas, de hoy y proximas.
-- Creacion y marcado de subtareas.
+- Creacion, marcado y completado automatico de tareas con subtareas.
 - Plantillas iniciales desde el estado vacio.
 - Reordenamiento manual con botones y drag and drop.
 - Flujo principal desde la UI: crear, validar, buscar, completar, filtrar y eliminar.
@@ -242,7 +242,9 @@ La suite actual cubre:
 
 - Mas plantillas locales para flujos recurrentes de estudio, talleres o proyectos.
 - Migrar componentes y hooks restantes a TypeScript.
-- Soporte opcional de multiples tableros locales sin salir del modelo local-first.
+- Calendario local-first para visualizar fechas limite, pedidos, examenes y eventos importantes.
+- Vista tipo tablero por fecha o estado, inspirada en Trello, para planificar tareas sin backend.
+- Soporte opcional de recordatorios locales y exportacion de agenda compatible con calendario.
 
 ## Autor
 
