@@ -100,29 +100,32 @@
 }
 
 .TodoItem-subtasks {
+  border-left: 2px solid var(--color-border);
   display: grid;
   gap: 6px;
   list-style: none;
-  margin: 10px 0 0;
-  padding: 0;
+  margin: 8px 0 0;
+  padding: 2px 0 2px 12px;
 }
 
 .TodoItem-subtask label {
   align-items: center;
   color: var(--color-text-muted);
   display: flex;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 500;
   gap: 8px;
+  line-height: 1.35;
   transition: color var(--transition-fast);
 }
 
 .TodoItem-subtask input {
   accent-color: var(--color-accent);
   flex: 0 0 auto;
-  height: 14px;
+  height: 13px;
   margin: 0;
-  width: 14px;
+  opacity: 0.82;
+  width: 13px;
 }
 
 .TodoItem-subtaskText--complete {
