@@ -22,7 +22,7 @@ type TodoSavedViewActionResult =
     | { ok: true; view: TodoSavedView; views: TodoSavedView[] }
     | { ok: false; error: string };
 
-const DEFAULT_SAVED_VIEW_NAME = 'Vista';
+const DEFAULT_SAVED_VIEW_NAME = 'Filtro';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null;
@@ -89,7 +89,7 @@ function normalizeTodoSavedViews(views: unknown): TodoSavedView[] {
             const id = typeof view.id === 'string' && view.id
                 ? view.id
                 : `view-${index + 1}`;
-            const name = normalizeViewName(view.name, `Vista ${index + 1}`);
+            const name = normalizeViewName(view.name, `Filtro ${index + 1}`);
             const nameKey = name.toLowerCase();
 
             if (seenIds.has(id) || seenNames.has(nameKey)) {
@@ -120,7 +120,7 @@ function addTodoSavedView(
     const viewName = normalizeViewName(name);
 
     if (!viewName) {
-        return { ok: false, error: 'Escribe un nombre para la vista.' };
+        return { ok: false, error: 'Escribe un nombre para estos filtros.' };
     }
 
     const normalizedViews = normalizeTodoSavedViews(views);
@@ -129,7 +129,7 @@ function addTodoSavedView(
     );
 
     if (alreadyExists) {
-        return { ok: false, error: 'Ya existe una vista con ese nombre.' };
+        return { ok: false, error: 'Ya existen filtros guardados con ese nombre.' };
     }
 
     const view = createTodoSavedView(viewName, criteria);

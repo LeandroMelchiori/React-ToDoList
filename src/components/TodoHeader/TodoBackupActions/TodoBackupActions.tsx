@@ -18,7 +18,7 @@ function getBoardLabel(count: number) {
 }
 
 function getSavedViewLabel(count: number) {
-  return count === 1 ? '1 vista guardada' : `${count} vistas guardadas`;
+  return count === 1 ? '1 filtro guardado' : `${count} filtros guardados`;
 }
 
 function getImportedTaskLabel(count: number) {
@@ -161,7 +161,7 @@ function TodoBackupActions({ loading, onExportTodos, onPreviewImport, onImportTo
                   {importPreview.fileName}: {getBoardLabel(importPreview.boardCount)}, {getTaskLabel(importPreview.totalCount)} y {getSavedViewLabel(importPreview.savedViewCount)}.
                 </p>
                 <p className="TodoBackupActions-previewText">
-                  Al restaurar, se reemplazan tus tableros, tareas y vistas locales.
+                  Al restaurar, se reemplazan tus tableros, tareas y filtros guardados.
                 </p>
               </>
             ) : (

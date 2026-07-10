@@ -441,7 +441,7 @@ describe('App', () => {
     expect(screen.getByText('Ordenar apuntes')).toBeInTheDocument();
   });
 
-  test('saves, applies and deletes a local view', async () => {
+  test('saves, applies and deletes saved filters', async () => {
     const user = userEvent.setup();
     localStorage.setItem('TODOS_V1', JSON.stringify([
       {
@@ -466,10 +466,11 @@ describe('App', () => {
     await user.type(screen.getByLabelText('Buscar tareas'), 'demo');
     await user.click(screen.getByRole('button', { name: 'Filtrar por etiqueta frontend' }));
     await openTools(user);
-    await user.type(screen.getByLabelText('Nombre de la vista'), 'Demo frontend');
-    await user.click(screen.getByRole('button', { name: 'Guardar vista' }));
+    await user.type(screen.getByLabelText('Nombre para estos filtros'), 'Demo frontend');
+    await user.click(screen.getByRole('button', { name: 'Guardar filtros' }));
 
-    expect(screen.getByRole('status')).toHaveTextContent('Vista guardada.');
+    expect(screen.getByText('Guarda la busqueda y filtros activos para volver a usarlos.')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Filtros guardados.');
 
     await user.click(screen.getByRole('button', { name: 'Limpiar filtros' }));
     await user.clear(screen.getByLabelText('Buscar tareas'));
@@ -482,7 +483,7 @@ describe('App', () => {
     expect(screen.getByText('Preparar demo')).toBeInTheDocument();
     expect(screen.queryByText('Ordenar apuntes')).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Eliminar vista Demo frontend' }));
+    await user.click(screen.getByRole('button', { name: 'Eliminar filtros guardados Demo frontend' }));
 
     expect(screen.queryByRole('button', { name: 'Demo frontend' })).not.toBeInTheDocument();
     expect(JSON.parse(localStorage.getItem('TODO_SAVED_VIEWS_V1'))).toEqual([]);
@@ -993,13 +994,13 @@ describe('App', () => {
     await openTools(user);
     await user.upload(screen.getByLabelText('Importar backup JSON'), backupFile);
 
-    expect(screen.getByText('taskflow-workspace.json: 2 tableros, 2 tareas y 1 vista guardada.')).toBeInTheDocument();
-    expect(screen.getByText('Al restaurar, se reemplazan tus tableros, tareas y vistas locales.')).toBeInTheDocument();
+    expect(screen.getByText('taskflow-workspace.json: 2 tableros, 2 tareas y 1 filtro guardado.')).toBeInTheDocument();
+    expect(screen.getByText('Al restaurar, se reemplazan tus tableros, tareas y filtros guardados.')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Restaurar backup' }));
 
     expect(screen.getByText('Preparar workspace')).toBeInTheDocument();
     expect(screen.queryByText('Tarea anterior')).not.toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('Backup restaurado: 2 tableros, 2 tareas y 1 vista guardada.');
+    expect(screen.getByRole('status')).toHaveTextContent('Backup restaurado: 2 tableros, 2 tareas y 1 filtro guardado.');
 
     const boardSwitcher = screen.getByRole('group', { name: 'Cambiar tablero' });
     expect(within(boardSwitcher).getByRole('button', { name: /Trabajo/ })).toBeInTheDocument();

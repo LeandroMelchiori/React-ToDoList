@@ -37,30 +37,30 @@ function TodoSavedViews({
     }
 
     setViewName('');
-    setMessage('Vista guardada.');
+    setMessage('Filtros guardados.');
   };
 
   const handleApplyView = (viewId: string) => {
     const result = onApplyView(viewId);
 
-    setMessage(result.ok ? 'Vista aplicada.' : (result.error || ''));
+    setMessage(result.ok ? 'Filtros aplicados.' : (result.error || ''));
   };
 
   const handleDeleteView = (view: SavedView) => {
     onDeleteView(view.id);
-    setMessage(`Vista "${view.name}" eliminada.`);
+    setMessage(`Filtros "${view.name}" eliminados.`);
   };
 
   return (
-    <section className="TodoSavedViews" aria-label="Vistas guardadas">
+    <section className="TodoSavedViews" aria-label="Filtros guardados">
       {hasSavedViews && (
         <div
           className="TodoSavedViews-list"
           role="group"
-          aria-label="Aplicar vistas guardadas"
+          aria-label="Aplicar filtros guardados"
           onKeyDown={handleButtonGroupNavigation}
         >
-          <span>Vistas</span>
+          <span>Filtros guardados</span>
           {savedViews.map(view => (
             <div className="TodoSavedViews-item" key={view.id}>
               <button
@@ -74,7 +74,7 @@ function TodoSavedViews({
               <button
                 type="button"
                 className="TodoSavedViews-delete"
-                aria-label={`Eliminar vista ${view.name}`}
+                aria-label={`Eliminar filtros guardados ${view.name}`}
                 disabled={loading}
                 onClick={() => handleDeleteView(view)}
               >
@@ -85,18 +85,21 @@ function TodoSavedViews({
         </div>
       )}
 
-      <form className="TodoSavedViews-form" aria-label="Guardar vista actual" onSubmit={handleSaveView}>
+      <form className="TodoSavedViews-form" aria-label="Guardar filtros actuales" onSubmit={handleSaveView}>
+        <p className="TodoSavedViews-help">
+          Guarda la busqueda y filtros activos para volver a usarlos.
+        </p>
         <input
-          aria-label="Nombre de la vista"
+          aria-label="Nombre para estos filtros"
           disabled={loading}
           maxLength={40}
           onChange={(event) => setViewName(event.target.value)}
-          placeholder="Vista actual"
+          placeholder="Ej: Talleres pendientes"
           type="text"
           value={viewName}
         />
         <button type="submit" disabled={loading}>
-          Guardar vista
+          Guardar filtros
         </button>
       </form>
 

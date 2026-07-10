@@ -322,7 +322,7 @@ function useTodos() {
         const savedView = savedViews.find(view => view.id === viewId);
 
         if (!savedView) {
-            return { ok: false, error: 'No encontramos esa vista.' };
+            return { ok: false, error: 'No encontramos esos filtros guardados.' };
         }
 
         setSearchValue(savedView.searchValue);
@@ -615,7 +615,7 @@ function useTodos() {
             if (mode === 'merge') {
                 return {
                     ok: false,
-                    error: 'El backup completo debe restaurarse para conservar tableros y vistas.',
+                    error: 'El backup completo debe restaurarse para conservar tableros y filtros guardados.',
                 };
             }
 

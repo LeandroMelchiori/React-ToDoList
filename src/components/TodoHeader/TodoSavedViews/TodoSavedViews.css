@@ -1,9 +1,9 @@
 .TodoSavedViews {
-  align-items: center;
+  align-items: start;
   display: grid;
   gap: 10px 14px;
-  grid-template-columns: minmax(0, 1fr) auto;
-  justify-items: stretch;
+  grid-template-columns: 1fr;
+  justify-items: start;
   margin: 16px auto 0;
   max-width: 960px;
 }
@@ -15,6 +15,16 @@
   flex-wrap: wrap;
   gap: 8px;
   justify-content: flex-start;
+  max-width: 560px;
+  width: 100%;
+}
+
+.TodoSavedViews-help {
+  color: var(--color-text-muted);
+  flex-basis: 100%;
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0;
 }
 
 .TodoSavedViews-list > span {

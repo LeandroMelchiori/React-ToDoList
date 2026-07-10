@@ -204,13 +204,13 @@ test('restores a full workspace backup', async ({ page }) => {
     })),
   });
 
-  await expect(page.getByText('taskflow-workspace.json: 2 tableros, 2 tareas y 1 vista guardada.')).toBeVisible();
+  await expect(page.getByText('taskflow-workspace.json: 2 tableros, 2 tareas y 1 filtro guardado.')).toBeVisible();
   await page.getByRole('button', { name: 'Restaurar backup' }).click();
 
   await expect(page.getByText('Preparar workspace')).toBeVisible();
   await expect(getBoardSwitcher(page).getByRole('button', { name: /Trabajo/ })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Trabajo activo', exact: true })).toBeVisible();
-  await expect(page.getByText('Backup restaurado: 2 tableros, 2 tareas y 1 vista guardada.')).toBeVisible();
+  await expect(page.getByText('Backup restaurado: 2 tableros, 2 tareas y 1 filtro guardado.')).toBeVisible();
 
   await expect.poll(async () => page.evaluate(() => ({
     activeBoardId: JSON.parse(localStorage.getItem('ACTIVE_TODO_BOARD_V1') || 'null'),
@@ -254,9 +254,9 @@ test('keeps local boards and saved views in the production flow', async ({ page 
 
   await page.getByLabel('Buscar tareas').fill('taller');
   await page.getByRole('button', { name: 'Filtrar por etiqueta formacion' }).click();
-  await page.getByLabel('Nombre de la vista').fill('Taller activo');
-  await page.getByRole('button', { name: 'Guardar vista' }).click();
-  await expect(page.getByText('Vista guardada.')).toBeVisible();
+  await page.getByLabel('Nombre para estos filtros').fill('Taller activo');
+  await page.getByRole('button', { name: 'Guardar filtros' }).click();
+  await expect(page.getByText('Filtros guardados.')).toBeVisible();
 
   await page.getByRole('button', { name: 'Limpiar filtros' }).click();
   await page.getByLabel('Buscar tareas').fill('');

@@ -572,7 +572,7 @@ describe('todo helpers', () => {
 
     expect(addTodoSavedView(addResult.views, 'demo frontend', {})).toEqual({
       ok: false,
-      error: 'Ya existe una vista con ese nombre.',
+      error: 'Ya existen filtros guardados con ese nombre.',
     });
     expect(normalizeTodoSavedViews([
       { id: 'view-1', name: 'Vencidas', filter: TODO_FILTERS.overdue },
