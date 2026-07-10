@@ -101,7 +101,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 
 ```mermaid
 flowchart TD
-  App["App.jsx"] --> Header["TodoHeader"]
+  App["App.tsx"] --> Header["TodoHeader"]
   App --> List["TodoList"]
   App --> Modal["Modal"]
   App --> Alert["ChangeAlert"]
@@ -110,7 +110,7 @@ flowchart TD
   App --> Todos["useTodos"]
   Todos --> Model["todoModel.ts"]
   Todos --> Storage["useLocalStorage"]
-  Storage --> Adapter["todoStorage.js"]
+  Storage --> Adapter["todoStorage.ts"]
   Adapter --> IndexedDB["IndexedDB taskflow-db"]
   Adapter --> LocalStorage["localStorage TODOS_V1"]
   Todos --> Filters["search + filters + facets + counts"]
@@ -121,20 +121,20 @@ flowchart TD
   Modal --> DeleteDialog["DeleteTodoDialog"]
 ```
 
-El estado de negocio vive en `useTodos`; las reglas puras de tareas viven en `todoModel.ts`; la persistencia y sincronizacion con el navegador quedan aisladas en `useLocalStorage` y `todoStorage.js`. Los componentes visuales reciben datos y callbacks, lo que mantiene la UI facil de probar y cambiar.
+El estado de negocio vive en `useTodos`; las reglas puras de tareas viven en `todoModel.ts`; la persistencia y sincronizacion con el navegador quedan aisladas en `useLocalStorage` y `todoStorage.ts`. Los componentes visuales reciben datos y callbacks, lo que mantiene la UI facil de probar y cambiar.
 
 ## Estructura
 
 ```txt
 src/
   App/
-    App.jsx
+    App.tsx
     todoModel.ts
-    todoStorage.js
-    useTodos.js
-    useLocalStorage.js
-    usePwaStatus.js
-    useTheme.js
+    todoStorage.ts
+    useTodos.ts
+    useLocalStorage.ts
+    usePwaStatus.ts
+    useTheme.ts
   components/
     ChangeAlert/
     CreateTodoButton/

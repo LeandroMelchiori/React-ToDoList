@@ -8,15 +8,15 @@ Actua siempre como un programador experto, con criterio senior, buen manejo de U
 
 Este repositorio es una aplicacion React de lista de tareas creada con Vite.
 
-- Entrada principal: `src/index.jsx`.
+- Entrada principal: `src/index.tsx`.
 - Registro PWA: `src/serviceWorkerRegistration.js`.
-- Componente raiz: `src/App/App.jsx`.
-- Estado de todos: `src/App/useTodos.js`.
-- Modelo puro de tareas: `src/App/todoModel.js`.
-- Persistencia: `src/App/useLocalStorage.js` + `src/App/todoStorage.js`.
+- Componente raiz: `src/App/App.tsx`.
+- Estado de todos: `src/App/useTodos.ts`.
+- Modelo puro de tareas: `src/App/todoModel.ts`.
+- Persistencia: `src/App/useLocalStorage.ts` + `src/App/todoStorage.ts`.
 - Base local principal: IndexedDB (`taskflow-db`), con migracion/espejo desde `localStorage`.
 - Claves locales: tareas `TODOS_V1`, tema `THEME_V1`.
-- Tema visual: `src/App/useTheme.js`, con modo claro/oscuro persistido.
+- Tema visual: `src/App/useTheme.ts`, con modo claro/oscuro persistido.
 - Componentes UI: `src/components/`, organizados por dominio visual.
 - Estilos: archivos `.css` junto a cada componente.
 - PWA/offline shell: `public/sw.js` y `public/manifest.json`.
@@ -42,7 +42,7 @@ Los tests unitarios e integracion corren con `npm test`, usando Vitest, jsdom y 
 
 - Trata la app como local-first: debe seguir funcionando sin backend.
 - IndexedDB es la persistencia principal para tareas; `localStorage` se mantiene como compatibilidad/migracion y para eventos `storage`.
-- Toda tarea debe normalizarse con los helpers de `todoModel.js` antes de persistirse o importarse.
+- Toda tarea debe normalizarse con los helpers de `todoModel.ts` antes de persistirse o importarse.
 - Conserva compatibilidad con tareas antiguas sin `id`, `priority` o `dueDate`.
 - Export/import usa JSON versionado; valida y normaliza cualquier archivo importado antes de guardarlo.
 - No rompas el service worker ni el manifest al cambiar rutas, assets o comportamiento de build.
@@ -62,7 +62,7 @@ Los tests unitarios e integracion corren con `npm test`, usando Vitest, jsdom y 
 
 - Prefiere componentes funcionales y hooks.
 - Manten la logica de estado en hooks cuando sea compartida o compleja.
-- Manten helpers puros de tareas en `src/App/todoModel.js`; no vuelvas a mezclar modelo puro dentro de `useTodos.js`.
+- Manten helpers puros de tareas en `src/App/todoModel.ts`; no vuelvas a mezclar modelo puro dentro de `useTodos.ts`.
 - Evita mutar objetos de estado directamente; crea nuevas referencias antes de guardar.
 - Usa nombres consistentes y corrige typos solo cuando el cambio sea seguro o este dentro del alcance.
 - Evita logs de depuracion en produccion salvo que sean parte explicita del comportamiento esperado.
