@@ -60,6 +60,9 @@ function TodoItem(props: TodoItemProps) {
   const priorityLabel = props.priority ? TODO_PRIORITY_LABELS[props.priority] : TODO_PRIORITY_LABELS.medium;
   const tags = Array.isArray(props.tags) ? props.tags : [];
   const subtasks = Array.isArray(props.subtasks) ? props.subtasks : [];
+  const isCompletedBySubtasks = props.completed &&
+    subtasks.length > 0 &&
+    subtasks.every(subtask => subtask.completed);
   const itemClassName = [
     'TodoItem',
     props.completed ? 'TodoItem--complete' : '',
@@ -97,6 +100,7 @@ function TodoItem(props: TodoItemProps) {
       </div>
       <CompleteIcon 
         completed={props.completed}
+        disabled={isCompletedBySubtasks}
         onComplete={props.onComplete}
       />
       <div className="TodoItem-main">

@@ -652,6 +652,9 @@ describe('App', () => {
     await user.click(within(checklist).getByLabelText('Validar mobile'));
 
     expect(screen.getByText('Completaste todas tus tareas')).toBeInTheDocument();
+    expect(screen.getByRole('button', {
+      name: 'Tarea completa porque todas sus subtareas estan completas',
+    })).toBeDisabled();
     expect(JSON.parse(localStorage.getItem('TODOS_V1'))[0]).toEqual(expect.objectContaining({
       completed: true,
       completedAt: expect.any(String),
@@ -695,6 +698,14 @@ describe('App', () => {
 
     expect(screen.getByLabelText('Armar consignas')).toBeChecked();
     expect(screen.getByLabelText('Subir material')).toBeChecked();
+    const completedBySubtasksButton = screen.getByRole('button', {
+      name: 'Tarea completa porque todas sus subtareas estan completas',
+    });
+
+    expect(completedBySubtasksButton).toBeDisabled();
+
+    await user.click(completedBySubtasksButton);
+
     expect(JSON.parse(localStorage.getItem('TODOS_V1'))[0]).toEqual(expect.objectContaining({
       completed: true,
       completedAt: expect.any(String),

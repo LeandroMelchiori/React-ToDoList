@@ -344,6 +344,14 @@ function useTodos() {
                     return todo;
                 }
 
+                const isCompletedBySubtasks = todo.completed &&
+                    todo.subtasks.length > 0 &&
+                    todo.subtasks.every(subtask => subtask.completed);
+
+                if (isCompletedBySubtasks) {
+                    return todo;
+                }
+
                 const nextCompleted = !todo.completed;
 
                 return {
