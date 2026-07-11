@@ -12,6 +12,8 @@ import { TodoBackupActions } from '../components/TodoHeader/TodoBackupActions/To
 import { TodoHeaderTools } from '../components/TodoHeader/TodoHeaderTools/TodoHeaderTools';
 import { TodoList } from '../components/TodoList/TodoList';
 import { TodoItem } from '../components/TodoList/TodoItem/TodoItem';
+import { TodoCalendar } from '../components/TodoCalendar/TodoCalendar';
+import { TodoViewMode, TodoViewToggle } from '../components/TodoViewToggle/TodoViewToggle';
 import { CreateTodoButton } from '../components/CreateTodoButton/CreateTodoButton';
 import { Modal } from '../components/Modal/Modal';
 import { TodoForm } from '../components/TodoList/TodoForm/TodoForm';
@@ -53,6 +55,7 @@ function App() {
         isOnline,
     } = usePwaStatus();
     const searchInputRef = React.useRef<HTMLInputElement>(null);
+    const [todoViewMode, setTodoViewMode] = React.useState<TodoViewMode>('list');
     const [dragState, setDragState] = React.useState<{
         draggedTodoId: string | null;
         targetTodoId: string | null;
@@ -311,61 +314,90 @@ function App() {
                 loading={loading}
              />
 
-            <TodoList
-                error={error}
-                loading={loading}
-                visibleTodos={visibleTodos}
-                visibleTodoGroups={visibleTodoGroups}
-                totalTodos={totalTodos}
-                searchValue={searchValue}
-                onError={() => <TodosError />}
-                onLoading={() => <TodosLoading />}
-                onEmptyTodos={() => (
-                    <EmptyTodos
-                        onCreateTemplate={(template) => addTodo(template.todo.text, template.todo)}
-                    />
-                )}
-                onEmptySearchResults={() => (
-                    <p className="TodoList-emptySearch">
-                        {searchValue
-                            ? 'No hay tareas que coincidan con tu busqueda.'
-                            : 'No hay tareas para este filtro.'}
-                    </p>
-                )}
-                render={todo => (
-                        <TodoItem
-                            key={todo.id}
-                            text={todo.text}
-                            description={todo.description}
-                            completed={todo.completed}
-                            priority={todo.priority}
-                            dateType={todo.dateType}
-                            dueDate={todo.dueDate}
-                            startDate={todo.startDate}
-                            endDate={todo.endDate}
-                            project={todo.project}
-                            tags={todo.tags}
-                            subtasks={todo.subtasks}
-                            canMoveUp={todo.order > 0}
-                            canMoveDown={todo.order < totalTodos - 1}
-                            isDragging={dragState.draggedTodoId === todo.id}
-                            dropPosition={dragState.targetTodoId === todo.id ? dragState.position : null}
-                            onComplete={() => completeTodo(todo.id)}
-                            onToggleSubtask={(subtaskId) => toggleSubtask(todo.id, subtaskId)}
-                            onMoveUp={() => moveTodo(todo.id, 'up')}
-                            onMoveDown={() => moveTodo(todo.id, 'down')}
-                            onDragStart={(event) => startTodoDrag(todo.id, event)}
-                            onDragOver={(event) => updateTodoDropTarget(todo.id, event)}
-                            onDragLeave={(event) => clearTodoDropTarget(todo.id, event)}
-                            onDrop={(event) => dropTodo(todo.id, event)}
-                            onDragEnd={clearDragState}
-                            onFilterProject={() => selectProjectFilter(todo.project)}
-                            onFilterTag={selectTagFilter}
-                            onEdit={() => startEditingTodo(todo.id)}
-                            onDelete={() => startDeletingTodo(todo.id)}
-                    />
-                )}
+            <TodoViewToggle
+                activeView={todoViewMode}
+                onChangeView={setTodoViewMode}
             />
+
+            {todoViewMode === 'calendar' ? (
+                <TodoCalendar
+                    error={error}
+                    loading={loading}
+                    visibleTodos={visibleTodos}
+                    totalTodos={totalTodos}
+                    onEditTodo={startEditingTodo}
+                    onError={() => <TodosError />}
+                    onLoading={() => <TodosLoading />}
+                    onEmptyTodos={() => (
+                        <EmptyTodos
+                            onCreateTemplate={(template) => addTodo(template.todo.text, template.todo)}
+                        />
+                    )}
+                    onEmptySearchResults={() => (
+                        <p className="TodoList-emptySearch">
+                            {searchValue
+                                ? 'No hay tareas que coincidan con tu busqueda.'
+                                : 'No hay tareas para este filtro.'}
+                        </p>
+                    )}
+                />
+            ) : (
+                <TodoList
+                    error={error}
+                    loading={loading}
+                    visibleTodos={visibleTodos}
+                    visibleTodoGroups={visibleTodoGroups}
+                    totalTodos={totalTodos}
+                    searchValue={searchValue}
+                    onError={() => <TodosError />}
+                    onLoading={() => <TodosLoading />}
+                    onEmptyTodos={() => (
+                        <EmptyTodos
+                            onCreateTemplate={(template) => addTodo(template.todo.text, template.todo)}
+                        />
+                    )}
+                    onEmptySearchResults={() => (
+                        <p className="TodoList-emptySearch">
+                            {searchValue
+                                ? 'No hay tareas que coincidan con tu busqueda.'
+                                : 'No hay tareas para este filtro.'}
+                        </p>
+                    )}
+                    render={todo => (
+                            <TodoItem
+                                key={todo.id}
+                                text={todo.text}
+                                description={todo.description}
+                                completed={todo.completed}
+                                priority={todo.priority}
+                                dateType={todo.dateType}
+                                dueDate={todo.dueDate}
+                                startDate={todo.startDate}
+                                endDate={todo.endDate}
+                                project={todo.project}
+                                tags={todo.tags}
+                                subtasks={todo.subtasks}
+                                canMoveUp={todo.order > 0}
+                                canMoveDown={todo.order < totalTodos - 1}
+                                isDragging={dragState.draggedTodoId === todo.id}
+                                dropPosition={dragState.targetTodoId === todo.id ? dragState.position : null}
+                                onComplete={() => completeTodo(todo.id)}
+                                onToggleSubtask={(subtaskId) => toggleSubtask(todo.id, subtaskId)}
+                                onMoveUp={() => moveTodo(todo.id, 'up')}
+                                onMoveDown={() => moveTodo(todo.id, 'down')}
+                                onDragStart={(event) => startTodoDrag(todo.id, event)}
+                                onDragOver={(event) => updateTodoDropTarget(todo.id, event)}
+                                onDragLeave={(event) => clearTodoDropTarget(todo.id, event)}
+                                onDrop={(event) => dropTodo(todo.id, event)}
+                                onDragEnd={clearDragState}
+                                onFilterProject={() => selectProjectFilter(todo.project)}
+                                onFilterTag={selectTagFilter}
+                                onEdit={() => startEditingTodo(todo.id)}
+                                onDelete={() => startDeletingTodo(todo.id)}
+                        />
+                    )}
+                />
+            )}
             </main>
 
             {openModal && (

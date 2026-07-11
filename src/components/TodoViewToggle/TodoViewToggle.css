@@ -1,0 +1,32 @@
+.TodoViewToggle {
+  align-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  display: inline-flex;
+  gap: 4px;
+  margin: 20px auto 0;
+  padding: 4px;
+}
+
+.TodoViewToggle-button {
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 800;
+  min-height: 34px;
+  padding: 0 14px;
+}
+
+.TodoViewToggle-button--active {
+  background: var(--color-active);
+  color: var(--color-active-text);
+}
+
+.TodoViewToggle-button:not(.TodoViewToggle-button--active):hover {
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+}

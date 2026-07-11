@@ -46,6 +46,11 @@ test('manages a todo through the production flow', async ({ page }) => {
   await expect(page.getByLabel('Revisar copy')).toBeVisible();
   await expect(page.getByLabel('Validar responsive')).toBeVisible();
 
+  await page.getByRole('button', { name: 'Calendario' }).click();
+  await expect(page.getByRole('grid', { name: /Calendario/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Limite Preparar demo del proyecto/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Lista' }).click();
+
   await page.getByRole('button', { name: 'Filtrar por etiqueta frontend' }).click();
   await expect(page.getByRole('button', { name: 'Limpiar filtros' })).toBeVisible();
   await expect(page.getByText('Preparar demo del proyecto')).toBeVisible();

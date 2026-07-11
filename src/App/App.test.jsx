@@ -171,6 +171,53 @@ describe('App', () => {
     ]);
   });
 
+  test('shows scheduled todos in the calendar view and opens editing from it', async () => {
+    const user = userEvent.setup();
+    const today = getRelativeDateInputValue(0);
+    const tomorrow = getRelativeDateInputValue(1);
+
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      {
+        id: 'todo-exam',
+        text: 'Rendir parcial',
+        completed: false,
+        dateType: 'event',
+        startDate: today,
+        order: 0,
+      },
+      {
+        id: 'todo-period',
+        text: 'Inscripcion a finales',
+        completed: false,
+        dateType: 'period',
+        startDate: today,
+        endDate: tomorrow,
+        order: 1,
+      },
+      {
+        id: 'todo-unscheduled',
+        text: 'Leer bibliografia',
+        completed: false,
+        order: 2,
+      },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Rendir parcial')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Calendario' }));
+
+    expect(screen.getByRole('grid', { name: /Calendario/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Dia Rendir parcial/ })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /Periodo Inscripcion a finales/ }).length).toBeGreaterThan(0);
+    expect(within(screen.getByRole('complementary', { name: 'Tareas sin fecha' })).getByRole('button', { name: 'Leer bibliografia' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /Dia Rendir parcial/ }));
+
+    const editDialog = screen.getByRole('dialog', { name: 'Editar tarea' });
+    expect(within(editDialog).getByLabelText('Editar tarea')).toHaveValue('Rendir parcial');
+  });
+
   test('creates a starter todo from the empty onboarding templates', async () => {
     const user = userEvent.setup();
     renderApp();
