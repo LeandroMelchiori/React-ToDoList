@@ -12,10 +12,11 @@ import {
     getVisibleTodos,
     mergeSubtasks,
     moveTodoToPosition as reorderTodoToPosition,
-    normalizeDueDate,
+    normalizeDescription,
     normalizePriority,
     normalizeProject,
     normalizeTags,
+    normalizeTodoSchedule,
     normalizeTodos,
     reindexTodos,
 } from './todoModel';
@@ -219,10 +220,16 @@ function useTodos() {
         saveBoards(upsertTodoBoardTodos(todoBoards, activeBoardId, nextTodos));
     }, [activeBoardId, saveBoards, saveTodos, todoBoards]);
 
-    const resetTodoView = () => {
+    const resetTodoView = ({ preserveProject = false }: { preserveProject?: boolean } = {}) => {
         setSearchValue('');
         setFilter(TODO_FILTERS.all);
-        clearFacetFilters();
+
+        if (preserveProject) {
+            setActiveTag(null);
+        } else {
+            clearFacetFilters();
+        }
+
         setEditingTodoId(null);
         setDeletingTodoId(null);
         setRecentlyDeletedTodo(null);
@@ -394,12 +401,13 @@ function useTodos() {
             return { ok: false, error: 'Esa tarea ya existe.' };
         }
 
+        const project = activeProject || normalizeProject(details.project);
         const newTodos = [
             ...normalizedTodos,
-            createTodo(trimmedText, { ...details, order: normalizedTodos.length }),
+            createTodo(trimmedText, { ...details, project, order: normalizedTodos.length }),
         ];
         saveActiveTodos(newTodos);
-        resetTodoView();
+        resetTodoView({ preserveProject: Boolean(activeProject) });
         return { ok: true };
     }
 
@@ -424,13 +432,23 @@ function useTodos() {
             return { ok: false, error: 'Ya existe otra tarea con ese texto.' };
         }
 
+        const schedule = normalizeTodoSchedule({
+            dateType: details.dateType,
+            dueDate: details.dueDate,
+            startDate: details.startDate,
+            endDate: details.endDate,
+        });
         const newTodos = normalizedTodos.map(todo =>
             todo.id === id
                 ? {
                     ...todo,
                     text: trimmedText,
+                    description: normalizeDescription(details.description),
                     priority: normalizePriority(details.priority),
-                    dueDate: normalizeDueDate(details.dueDate),
+                    dateType: schedule.dateType,
+                    dueDate: schedule.dueDate,
+                    startDate: schedule.startDate,
+                    endDate: schedule.endDate,
                     project: normalizeProject(details.project),
                     tags: normalizeTags(details.tags),
                     subtasks: mergeSubtasks(todo.subtasks, details.subtasks),

@@ -1,6 +1,7 @@
 type TodoFilter = 'all' | 'active' | 'completed' | 'overdue' | 'today' | 'upcoming';
 type TodoDateStatus = 'overdue' | 'today' | 'upcoming';
 type TodoPriority = 'low' | 'medium' | 'high';
+type TodoDateType = 'due' | 'event' | 'period';
 type TodoGroup = 'overdue' | 'today' | 'upcoming' | 'unscheduled' | 'completed';
 type ImportMode = 'merge' | 'replace';
 
@@ -13,10 +14,14 @@ type TodoSubtask = {
 type Todo = {
     id: string;
     text: string;
+    description: string | null;
     completed: boolean;
     order: number;
     priority: TodoPriority;
+    dateType: TodoDateType;
     dueDate: string | null;
+    startDate: string | null;
+    endDate: string | null;
     project: string | null;
     tags: string[];
     subtasks: TodoSubtask[];
@@ -62,8 +67,12 @@ type SplitImportResult = {
 
 type TodoDetails = {
     order?: unknown;
+    description?: unknown;
     priority?: unknown;
+    dateType?: unknown;
     dueDate?: unknown;
+    startDate?: unknown;
+    endDate?: unknown;
     project?: unknown;
     tags?: unknown;
     subtasks?: unknown;
@@ -92,6 +101,12 @@ const TODO_PRIORITIES = {
     medium: 'medium',
     high: 'high',
 } as const satisfies Record<TodoPriority, TodoPriority>;
+
+const TODO_DATE_TYPES = {
+    due: 'due',
+    event: 'event',
+    period: 'period',
+} as const satisfies Record<TodoDateType, TodoDateType>;
 
 const TODO_GROUPS = {
     overdue: 'overdue',
@@ -130,8 +145,67 @@ function normalizePriority(priority: unknown): TodoPriority {
     return validPriority || TODO_PRIORITIES.medium;
 }
 
+function normalizeDescription(description: unknown): string | null {
+    return typeof description === 'string' && description.trim()
+        ? description.trim()
+        : null;
+}
+
+function normalizeDateType(dateType: unknown): TodoDateType {
+    const validDateType = Object.values(TODO_DATE_TYPES).find(value => value === dateType);
+
+    return validDateType || TODO_DATE_TYPES.due;
+}
+
 function normalizeDueDate(dueDate: unknown): string | null {
     return typeof dueDate === 'string' && dueDate ? dueDate : null;
+}
+
+function normalizeTodoSchedule(details: {
+    dateType?: unknown;
+    dueDate?: unknown;
+    startDate?: unknown;
+    endDate?: unknown;
+}): {
+    dateType: TodoDateType;
+    dueDate: string | null;
+    startDate: string | null;
+    endDate: string | null;
+} {
+    const dateType = normalizeDateType(details.dateType);
+    const dueDate = normalizeDueDate(details.dueDate);
+    const startDate = normalizeDueDate(details.startDate);
+    const endDate = normalizeDueDate(details.endDate);
+
+    if (dateType === TODO_DATE_TYPES.event) {
+        return {
+            dateType,
+            dueDate: null,
+            startDate: startDate || dueDate,
+            endDate: null,
+        };
+    }
+
+    if (dateType === TODO_DATE_TYPES.period) {
+        const normalizedStartDate = startDate || dueDate || endDate;
+        const normalizedEndDate = endDate || normalizedStartDate;
+
+        return {
+            dateType,
+            dueDate: null,
+            startDate: normalizedStartDate,
+            endDate: normalizedStartDate && normalizedEndDate && normalizedEndDate < normalizedStartDate
+                ? normalizedStartDate
+                : normalizedEndDate,
+        };
+    }
+
+    return {
+        dateType: TODO_DATE_TYPES.due,
+        dueDate: dueDate || endDate || startDate,
+        startDate: null,
+        endDate: null,
+    };
 }
 
 function normalizeOrder(order: unknown, fallback = 0): number {
@@ -261,13 +335,24 @@ function mergeSubtasks(existingSubtasks: unknown, nextSubtasks: unknown): TodoSu
 }
 
 function createTodo(text: string, details: TodoDetails = {}): Todo {
+    const schedule = normalizeTodoSchedule({
+        dateType: 'dateType' in details ? details.dateType : undefined,
+        dueDate: 'dueDate' in details ? details.dueDate : undefined,
+        startDate: 'startDate' in details ? details.startDate : undefined,
+        endDate: 'endDate' in details ? details.endDate : undefined,
+    });
+
     return {
         id: createTodoId(),
         text: text.trim(),
+        description: normalizeDescription('description' in details ? details.description : undefined),
         completed: false,
         order: normalizeOrder('order' in details ? details.order : undefined),
         priority: normalizePriority('priority' in details ? details.priority : undefined),
-        dueDate: normalizeDueDate('dueDate' in details ? details.dueDate : undefined),
+        dateType: schedule.dateType,
+        dueDate: schedule.dueDate,
+        startDate: schedule.startDate,
+        endDate: schedule.endDate,
         project: normalizeProject('project' in details ? details.project : undefined),
         tags: normalizeTags('tags' in details ? details.tags : undefined),
         subtasks: normalizeSubtasks('subtasks' in details ? details.subtasks : undefined),
@@ -283,19 +368,32 @@ function normalizeTodos(todos: unknown): Todo[] {
 
     const normalizedTodos = todos
         .filter((todo): todo is TodoInputWithText => isRecord(todo) && typeof todo.text === 'string' && Boolean(todo.text.trim()))
-        .map((todo, index) => ({
-            id: typeof todo.id === 'string' && todo.id ? todo.id : createLegacyTodoId(todo, index),
-            text: todo.text.trim(),
-            completed: Boolean(todo.completed),
-            order: normalizeOrder(todo.order, index),
-            priority: normalizePriority(todo.priority),
-            dueDate: normalizeDueDate(todo.dueDate),
-            project: normalizeProject(todo.project),
-            tags: normalizeTags(todo.tags),
-            subtasks: normalizeSubtasks(todo.subtasks),
-            createdAt: normalizeDateTime(todo.createdAt),
-            completedAt: normalizeDateTime(todo.completedAt),
-        }));
+        .map((todo, index) => {
+            const schedule = normalizeTodoSchedule({
+                dateType: todo.dateType,
+                dueDate: todo.dueDate,
+                startDate: todo.startDate,
+                endDate: todo.endDate,
+            });
+
+            return {
+                id: typeof todo.id === 'string' && todo.id ? todo.id : createLegacyTodoId(todo, index),
+                text: todo.text.trim(),
+                description: normalizeDescription(todo.description),
+                completed: Boolean(todo.completed),
+                order: normalizeOrder(todo.order, index),
+                priority: normalizePriority(todo.priority),
+                dateType: schedule.dateType,
+                dueDate: schedule.dueDate,
+                startDate: schedule.startDate,
+                endDate: schedule.endDate,
+                project: normalizeProject(todo.project),
+                tags: normalizeTags(todo.tags),
+                subtasks: normalizeSubtasks(todo.subtasks),
+                createdAt: normalizeDateTime(todo.createdAt),
+                completedAt: normalizeDateTime(todo.completedAt),
+            };
+        });
 
     return reindexTodos(normalizedTodos.sort((firstTodo, secondTodo) =>
         firstTodo.order - secondTodo.order
@@ -353,6 +451,7 @@ function getVisibleTodos(
         const todoTags = Array.isArray(todo.tags) ? todo.tags : [];
         const searchableText = [
             todo.text,
+            todo.description,
             todo.project,
             ...todoTags,
         ]
@@ -408,15 +507,41 @@ function getTodoFacets(todos: Todo[]): {
 }
 
 function getTodoDateStatus(todo: Todo, todayDate = getTodayDateValue()): TodoDateStatus | null {
-    if (todo.completed || !todo.dueDate) {
+    if (todo.completed) {
         return null;
     }
 
-    if (todo.dueDate < todayDate) {
+    if (todo.dateType === TODO_DATE_TYPES.period) {
+        if (!todo.startDate) {
+            return null;
+        }
+
+        const endDate = todo.endDate || todo.startDate;
+
+        if (endDate < todayDate) {
+            return TODO_FILTERS.overdue;
+        }
+
+        if (todo.startDate <= todayDate && todayDate <= endDate) {
+            return TODO_FILTERS.today;
+        }
+
+        return TODO_FILTERS.upcoming;
+    }
+
+    const dateValue = todo.dateType === TODO_DATE_TYPES.event
+        ? todo.startDate
+        : todo.dueDate;
+
+    if (!dateValue) {
+        return null;
+    }
+
+    if (dateValue < todayDate) {
         return TODO_FILTERS.overdue;
     }
 
-    if (todo.dueDate === todayDate) {
+    if (dateValue === todayDate) {
         return TODO_FILTERS.today;
     }
 
@@ -613,6 +738,7 @@ function applyTodosImport(existingTodos: Todo[], backup: unknown, mode: ImportMo
 }
 
 export {
+    TODO_DATE_TYPES,
     TODO_FILTERS,
     TODO_BACKUP_VERSION,
     TODO_GROUPS,
@@ -631,11 +757,14 @@ export {
     mergeSubtasks,
     moveTodoToPosition,
     normalizeDueDate,
+    normalizeDateType,
+    normalizeDescription,
     normalizeOrder,
     normalizePriority,
     normalizeProject,
     normalizeSubtasks,
     normalizeTags,
+    normalizeTodoSchedule,
     normalizeTodos,
     readTodosBackup,
     reindexTodos,
@@ -645,6 +774,7 @@ export type {
     ImportMode,
     Todo,
     TodoBackup,
+    TodoDateType,
     TodoDetails,
     TodoFilter,
     TodoGroupView,

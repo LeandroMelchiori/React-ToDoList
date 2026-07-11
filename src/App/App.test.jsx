@@ -71,7 +71,7 @@ describe('App', () => {
 
     expect(screen.getByText('Preparar entrevista tecnica')).toBeInTheDocument();
     expect(screen.getByText('Alta')).toBeInTheDocument();
-    expect(screen.getByText('20/07/2026')).toBeInTheDocument();
+    expect(screen.getByText('Limite 20/07/2026')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Filtrar por proyecto TaskFlow' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Filtrar por etiqueta React' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Filtrar por etiqueta testing' })).toBeInTheDocument();
@@ -83,7 +83,10 @@ describe('App', () => {
       text: 'Preparar entrevista tecnica',
       completed: false,
       priority: 'high',
+      dateType: 'due',
       dueDate: '2026-07-20',
+      startDate: null,
+      endDate: null,
       project: 'TaskFlow',
       tags: ['React', 'testing'],
     }));
@@ -113,6 +116,59 @@ describe('App', () => {
     await user.click(within(deleteDialog).getByRole('button', { name: 'Eliminar' }));
 
     expect(screen.getByText('Organiza tu dia con una primera tarea')).toBeInTheDocument();
+  });
+
+  test('creates todos with descriptions, event days and periods', async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    expect(await screen.findByText('Organiza tu dia con una primera tarea')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Crear nueva tarea' }));
+    await user.type(screen.getByLabelText('Nueva tarea'), 'Rendir parcial de algebra');
+    await user.type(screen.getByLabelText('Descripcion'), 'Aula 4, llevar DNI y calculadora');
+    await user.selectOptions(screen.getByLabelText('Tipo de fecha'), 'event');
+    await user.type(screen.getByLabelText('Dia de la tarea'), '2026-08-15');
+    await user.click(screen.getByRole('button', { name: 'Agregar' }));
+
+    expect(screen.getByText('Rendir parcial de algebra')).toBeInTheDocument();
+    expect(screen.getByText('Aula 4, llevar DNI y calculadora')).toBeInTheDocument();
+    expect(screen.getByText('Dia 15/08/2026')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Crear nueva tarea' }));
+    await user.type(screen.getByLabelText('Nueva tarea'), 'Inscripcion a finales');
+    await user.selectOptions(screen.getByLabelText('Tipo de fecha'), 'period');
+    await user.type(screen.getByLabelText('Inicio del periodo'), '2026-09-01');
+    await user.type(screen.getByLabelText('Fin del periodo'), '2026-08-30');
+    await user.click(screen.getByRole('button', { name: 'Agregar' }));
+
+    expect(screen.getByText('La fecha de fin no puede ser anterior al inicio.')).toBeInTheDocument();
+
+    await user.clear(screen.getByLabelText('Fin del periodo'));
+    await user.type(screen.getByLabelText('Fin del periodo'), '2026-09-15');
+    await user.click(screen.getByRole('button', { name: 'Agregar' }));
+
+    expect(screen.getByText('Inscripcion a finales')).toBeInTheDocument();
+    expect(screen.getByText('Periodo 01/09/2026 - 15/09/2026')).toBeInTheDocument();
+
+    const storedTodos = JSON.parse(localStorage.getItem('TODOS_V1'));
+    expect(storedTodos).toEqual([
+      expect.objectContaining({
+        text: 'Rendir parcial de algebra',
+        description: 'Aula 4, llevar DNI y calculadora',
+        dateType: 'event',
+        dueDate: null,
+        startDate: '2026-08-15',
+        endDate: null,
+      }),
+      expect.objectContaining({
+        text: 'Inscripcion a finales',
+        dateType: 'period',
+        dueDate: null,
+        startDate: '2026-09-01',
+        endDate: '2026-09-15',
+      }),
+    ]);
   });
 
   test('creates a starter todo from the empty onboarding templates', async () => {
@@ -432,6 +488,24 @@ describe('App', () => {
     expect(screen.getByText('Preparar demo')).toBeInTheDocument();
     expect(screen.queryByText('Ordenar apuntes')).not.toBeInTheDocument();
 
+    await user.click(screen.getByRole('button', { name: 'Crear nueva tarea' }));
+    const dialog = screen.getByRole('dialog', { name: 'Crear tarea' });
+    const projectInput = within(dialog).getByLabelText('Proyecto');
+
+    expect(projectInput).toHaveValue('TaskFlow');
+    expect(projectInput).toHaveAttribute('readonly');
+
+    await user.type(within(dialog).getByLabelText('Nueva tarea'), 'Nueva dentro de TaskFlow');
+    await user.click(within(dialog).getByRole('button', { name: 'Agregar' }));
+
+    expect(screen.getByText('Nueva dentro de TaskFlow')).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('TODOS_V1'))).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        text: 'Nueva dentro de TaskFlow',
+        project: 'TaskFlow',
+      }),
+    ]));
+
     await user.click(screen.getByRole('button', { name: 'Limpiar filtros' }));
     expect(screen.getByText('Ordenar apuntes')).toBeInTheDocument();
 
@@ -629,7 +703,10 @@ describe('App', () => {
 
     await user.click(screen.getByRole('button', { name: 'Crear nueva tarea' }));
     await user.type(screen.getByLabelText('Nueva tarea'), 'Organizar lanzamiento');
-    await user.type(screen.getByLabelText('Subtareas'), 'Escribir guia{enter}Validar mobile');
+    await user.type(screen.getByLabelText('Subtareas'), 'Escribir guia');
+    await user.click(screen.getByRole('button', { name: 'Agregar subtarea' }));
+    expect(within(screen.getByRole('list', { name: 'Subtareas agregadas' })).getByText('Escribir guia')).toBeInTheDocument();
+    await user.type(screen.getByLabelText('Subtareas'), 'Validar mobile');
     await user.click(screen.getByRole('button', { name: 'Agregar' }));
 
     const checklist = screen.getByRole('list', { name: 'Checklist de Organizar lanzamiento' });
@@ -901,7 +978,7 @@ describe('App', () => {
 
     expect(await screen.findByText('Importar tareas')).toBeInTheDocument();
     expect(screen.getByText('Baja')).toBeInTheDocument();
-    expect(screen.getByText('01/08/2026')).toBeInTheDocument();
+    expect(screen.getByText('Limite 01/08/2026')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Filtrar por proyecto Administracion' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Filtrar por etiqueta json' })).toBeInTheDocument();
     expect(screen.getByLabelText('Validar archivo')).toBeInTheDocument();
@@ -1101,11 +1178,10 @@ describe('App', () => {
     const textarea = within(dialog).getByLabelText('Editar tarea');
     const projectInput = within(dialog).getByLabelText('Proyecto');
     const tagsInput = within(dialog).getByLabelText('Etiquetas');
-    const subtasksInput = within(dialog).getByLabelText('Subtareas');
     expect(textarea).toHaveValue('Actualizar portfolio');
     expect(projectInput).toHaveValue('Web');
     expect(tagsInput).toHaveValue('portfolio');
-    expect(subtasksInput).toHaveValue('Revisar copy');
+    expect(within(dialog).getByRole('list', { name: 'Subtareas agregadas' })).toHaveTextContent('Revisar copy');
 
     await user.clear(textarea);
     await user.type(textarea, 'preparar entrevista');
@@ -1196,18 +1272,27 @@ describe('App', () => {
 
     const dialog = screen.getByRole('dialog', { name: 'Crear tarea' });
     const textarea = within(dialog).getByLabelText('Nueva tarea');
+    const descriptionInput = within(dialog).getByLabelText('Descripcion');
     const prioritySelect = within(dialog).getByLabelText('Prioridad');
+    const dateTypeSelect = within(dialog).getByLabelText('Tipo de fecha');
     const dueDateInput = within(dialog).getByLabelText('Fecha limite');
     const projectInput = within(dialog).getByLabelText('Proyecto');
     const tagsInput = within(dialog).getByLabelText('Etiquetas');
     const subtasksInput = within(dialog).getByLabelText('Subtareas');
+    const addSubtaskButton = within(dialog).getByRole('button', { name: 'Agregar subtarea' });
     const cancelButton = within(dialog).getByRole('button', { name: 'Cancelar' });
     const submitButton = within(dialog).getByRole('button', { name: 'Agregar' });
 
     expect(textarea).toHaveFocus();
 
     await user.tab();
+    expect(descriptionInput).toHaveFocus();
+
+    await user.tab();
     expect(prioritySelect).toHaveFocus();
+
+    await user.tab();
+    expect(dateTypeSelect).toHaveFocus();
 
     await user.tab();
     expect(dueDateInput).toHaveFocus();
@@ -1220,6 +1305,9 @@ describe('App', () => {
 
     await user.tab();
     expect(subtasksInput).toHaveFocus();
+
+    await user.tab();
+    expect(addSubtaskButton).toHaveFocus();
 
     await user.tab();
     expect(cancelButton).toHaveFocus();

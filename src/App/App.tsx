@@ -336,9 +336,13 @@ function App() {
                         <TodoItem
                             key={todo.id}
                             text={todo.text}
+                            description={todo.description}
                             completed={todo.completed}
                             priority={todo.priority}
+                            dateType={todo.dateType}
                             dueDate={todo.dueDate}
+                            startDate={todo.startDate}
+                            endDate={todo.endDate}
                             project={todo.project}
                             tags={todo.tags}
                             subtasks={todo.subtasks}
@@ -375,12 +379,17 @@ function App() {
                     ) : (
                         <TodoForm 
                             initialValue={editingTodo?.text || ''}
+                            initialDescription={editingTodo?.description}
                             initialPriority={editingTodo?.priority}
+                            initialDateType={editingTodo?.dateType}
                             initialDueDate={editingTodo?.dueDate}
+                            initialStartDate={editingTodo?.startDate}
+                            initialEndDate={editingTodo?.endDate}
                             initialProject={editingTodo?.project}
                             initialTags={editingTodo?.tags}
                             initialSubtasks={editingTodo?.subtasks}
                             label={editingTodo ? 'Editar tarea' : 'Nueva tarea'}
+                            lockedProject={!editingTodo ? activeProject : null}
                             mode={formMode}
                             onCancel={closeModal}
                             onSubmitTodo={(text, details) => (

@@ -6,7 +6,7 @@ import { MoveIcon } from '../../TodoIcon/MoveIcon';
 import { handleButtonGroupNavigation } from '../../buttonGroupNavigation';
 
 import React from 'react';
-import { TodoPriority, TodoSubtask } from '../../../App/todoModel';
+import { TODO_DATE_TYPES, TodoDateType, TodoPriority, TodoSubtask } from '../../../App/todoModel';
 
 const TODO_PRIORITY_LABELS: Record<TodoPriority, string> = {
     low: 'Baja',
@@ -14,25 +14,59 @@ const TODO_PRIORITY_LABELS: Record<TodoPriority, string> = {
     high: 'Alta',
 };
 
-function formatDueDate(dueDate?: string | null) {
-    if (!dueDate) {
+function formatDateValue(dateValue?: string | null) {
+    if (!dateValue) {
         return null;
     }
 
-    const [year, month, day] = dueDate.split('-');
+    const [year, month, day] = dateValue.split('-');
 
     if (!year || !month || !day) {
-        return dueDate;
+        return dateValue;
     }
 
     return `${day}/${month}/${year}`;
 }
 
+function getScheduleLabel(
+  dateType: TodoDateType = TODO_DATE_TYPES.due,
+  dueDate?: string | null,
+  startDate?: string | null,
+  endDate?: string | null,
+) {
+  if (dateType === TODO_DATE_TYPES.event) {
+    const eventDate = formatDateValue(startDate);
+
+    return eventDate ? `Dia ${eventDate}` : null;
+  }
+
+  if (dateType === TODO_DATE_TYPES.period) {
+    const periodStart = formatDateValue(startDate);
+    const periodEnd = formatDateValue(endDate || startDate);
+
+    if (!periodStart) {
+      return null;
+    }
+
+    return periodEnd && periodEnd !== periodStart
+      ? `Periodo ${periodStart} - ${periodEnd}`
+      : `Periodo ${periodStart}`;
+  }
+
+  const formattedDueDate = formatDateValue(dueDate);
+
+  return formattedDueDate ? `Limite ${formattedDueDate}` : null;
+}
+
 interface TodoItemProps {
   text: string;
+  description?: string | null;
   completed: boolean;
   priority?: TodoPriority;
+  dateType?: TodoDateType;
   dueDate?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
   project?: string | null;
   tags?: string[];
   subtasks?: TodoSubtask[];
@@ -56,7 +90,7 @@ interface TodoItemProps {
 }
 
 function TodoItem(props: TodoItemProps) {
-  const dueDateLabel = formatDueDate(props.dueDate);
+  const scheduleLabel = getScheduleLabel(props.dateType, props.dueDate, props.startDate, props.endDate);
   const priorityLabel = props.priority ? TODO_PRIORITY_LABELS[props.priority] : TODO_PRIORITY_LABELS.medium;
   const tags = Array.isArray(props.tags) ? props.tags : [];
   const subtasks = Array.isArray(props.subtasks) ? props.subtasks : [];
@@ -108,6 +142,11 @@ function TodoItem(props: TodoItemProps) {
           <p className={`TodoItem-p ${props.completed ? 'TodoItem-p--complete' : ''}`}>
             {props.text}
           </p>
+          {props.description && (
+            <p className="TodoItem-description">
+              {props.description}
+            </p>
+          )}
           {subtasks.length > 0 && (
             <div className="TodoItem-checklist">
               <span className="TodoItem-checklistLabel">
@@ -157,9 +196,9 @@ function TodoItem(props: TodoItemProps) {
               #{tag}
             </button>
           ))}
-          {dueDateLabel && (
+          {scheduleLabel && (
             <span className="TodoItem-dueDate">
-              {dueDateLabel}
+              {scheduleLabel}
             </span>
           )}
         </div>

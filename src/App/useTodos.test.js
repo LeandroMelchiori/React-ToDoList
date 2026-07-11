@@ -1,4 +1,5 @@
 import {
+  TODO_DATE_TYPES,
   TODO_FILTERS,
   TODO_BACKUP_VERSION,
   TODO_GROUPS,
@@ -15,6 +16,7 @@ import {
   getVisibleTodos,
   moveTodoToPosition,
   normalizeDueDate,
+  normalizeTodoSchedule,
   normalizePriority,
   normalizeProject,
   normalizeSubtasks,
@@ -55,10 +57,14 @@ describe('todo helpers', () => {
       {
         id: 'legacy-0-preparar-entrevista',
         text: 'Preparar entrevista',
+        description: null,
         completed: true,
         order: 0,
         priority: TODO_PRIORITIES.medium,
+        dateType: TODO_DATE_TYPES.due,
         dueDate: null,
+        startDate: null,
+        endDate: null,
         project: null,
         tags: [],
         subtasks: [],
@@ -68,10 +74,14 @@ describe('todo helpers', () => {
       {
         id: 'todo-2',
         text: 'Actualizar CV',
+        description: null,
         completed: false,
         order: 1,
         priority: TODO_PRIORITIES.medium,
+        dateType: TODO_DATE_TYPES.due,
         dueDate: null,
+        startDate: null,
+        endDate: null,
         project: null,
         tags: [],
         subtasks: [],
@@ -122,6 +132,7 @@ describe('todo helpers', () => {
     const todo = createTodo('  Practicar React  ', {
       priority: TODO_PRIORITIES.high,
       dueDate: '2026-07-20',
+      description: 'Caso tecnico para entrevista',
       project: 'TaskFlow',
       tags: 'React, testing, React',
       subtasks: 'Armar caso\nValidar UI',
@@ -131,8 +142,12 @@ describe('todo helpers', () => {
       text: 'Practicar React',
       completed: false,
       order: 0,
+      description: 'Caso tecnico para entrevista',
       priority: TODO_PRIORITIES.high,
+      dateType: TODO_DATE_TYPES.due,
       dueDate: '2026-07-20',
+      startDate: null,
+      endDate: null,
       project: 'TaskFlow',
       tags: ['React', 'testing'],
       subtasks: [
@@ -150,6 +165,28 @@ describe('todo helpers', () => {
     expect(normalizePriority(TODO_PRIORITIES.low)).toBe(TODO_PRIORITIES.low);
     expect(normalizeDueDate('2026-07-20')).toBe('2026-07-20');
     expect(normalizeDueDate(null)).toBeNull();
+  });
+
+  test('normalizes event and period schedule dates', () => {
+    expect(normalizeTodoSchedule({
+      dateType: TODO_DATE_TYPES.event,
+      dueDate: '2026-08-10',
+    })).toEqual({
+      dateType: TODO_DATE_TYPES.event,
+      dueDate: null,
+      startDate: '2026-08-10',
+      endDate: null,
+    });
+    expect(normalizeTodoSchedule({
+      dateType: TODO_DATE_TYPES.period,
+      startDate: '2026-08-10',
+      endDate: '2026-08-05',
+    })).toEqual({
+      dateType: TODO_DATE_TYPES.period,
+      dueDate: null,
+      startDate: '2026-08-10',
+      endDate: '2026-08-10',
+    });
   });
 
   test('normalizes project and tags values', () => {
@@ -255,6 +292,42 @@ describe('todo helpers', () => {
     ]);
     expect(getVisibleTodos(todos, '', TODO_FILTERS.upcoming, '2026-07-06')).toEqual([
       todos[2],
+    ]);
+  });
+
+  test('uses event and period dates in date status filters', () => {
+    const todos = [
+      {
+        id: 'event-today',
+        text: 'Rendir examen',
+        completed: false,
+        dateType: TODO_DATE_TYPES.event,
+        startDate: '2026-07-06',
+      },
+      {
+        id: 'period-active',
+        text: 'Inscripcion abierta',
+        completed: false,
+        dateType: TODO_DATE_TYPES.period,
+        startDate: '2026-07-01',
+        endDate: '2026-07-10',
+      },
+      {
+        id: 'period-future',
+        text: 'Semana de finales',
+        completed: false,
+        dateType: TODO_DATE_TYPES.period,
+        startDate: '2026-08-01',
+        endDate: '2026-08-15',
+      },
+    ];
+
+    expect(getTodoDateStatus(todos[0], '2026-07-06')).toBe(TODO_FILTERS.today);
+    expect(getTodoDateStatus(todos[1], '2026-07-06')).toBe(TODO_FILTERS.today);
+    expect(getTodoDateStatus(todos[2], '2026-07-06')).toBe(TODO_FILTERS.upcoming);
+    expect(getVisibleTodos(todos, '', TODO_FILTERS.today, '2026-07-06')).toEqual([
+      todos[0],
+      todos[1],
     ]);
   });
 

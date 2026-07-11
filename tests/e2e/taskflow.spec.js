@@ -21,20 +21,25 @@ test('manages a todo through the production flow', async ({ page }) => {
   await expect(initialCreateDialog).not.toBeVisible();
 
   await page.getByRole('button', { name: 'Crear nueva tarea' }).click();
-  await page.getByRole('button', { name: 'Agregar' }).click();
+  await page.getByRole('button', { name: 'Agregar', exact: true }).click();
   await expect(page.getByText('Escribe una tarea antes de agregarla.')).toBeVisible();
 
   const createDialog = page.getByRole('dialog', { name: 'Crear tarea' });
   await createDialog.getByRole('textbox', { name: 'Nueva tarea' }).fill('Preparar demo del proyecto');
+  await createDialog.getByLabel('Descripcion').fill('Ensayar historia del producto y decisiones tecnicas');
   await createDialog.getByLabel('Prioridad').selectOption('high');
-  await createDialog.getByLabel('Fecha limite').fill('2026-07-20');
+  await createDialog.getByLabel('Fecha limite', { exact: true }).fill('2026-07-20');
   await createDialog.getByLabel('Proyecto').fill('TaskFlow');
   await createDialog.getByLabel('Etiquetas').fill('frontend, testing');
-  await createDialog.getByLabel('Subtareas').fill('Revisar copy\nValidar responsive');
-  await createDialog.getByRole('button', { name: 'Agregar' }).click();
+  await createDialog.getByRole('textbox', { name: 'Subtareas', exact: true }).fill('Revisar copy');
+  await createDialog.getByRole('button', { name: 'Agregar subtarea' }).click();
+  await createDialog.getByRole('textbox', { name: 'Subtareas', exact: true }).fill('Validar responsive');
+  await createDialog.getByRole('button', { name: 'Agregar subtarea' }).click();
+  await createDialog.getByRole('button', { name: 'Agregar', exact: true }).click();
   await expect(page.getByText('Preparar demo del proyecto')).toBeVisible();
+  await expect(page.getByText('Ensayar historia del producto y decisiones tecnicas')).toBeVisible();
   await expect(page.getByText('Alta', { exact: true })).toBeVisible();
-  await expect(page.getByText('20/07/2026')).toBeVisible();
+  await expect(page.getByText('Limite 20/07/2026')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Filtrar por proyecto TaskFlow' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Filtrar por etiqueta frontend' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Filtrar por etiqueta testing' })).toBeVisible();
@@ -55,16 +60,18 @@ test('manages a todo through the production flow', async ({ page }) => {
   await page.getByRole('button', { name: 'Editar tarea' }).click();
   const editDialog = page.getByRole('dialog', { name: 'Editar tarea' });
   await expect(editDialog.getByRole('textbox', { name: 'Editar tarea' })).toHaveValue('Preparar demo del proyecto');
+  await expect(editDialog.getByLabel('Descripcion')).toHaveValue('Ensayar historia del producto y decisiones tecnicas');
   await expect(editDialog.getByLabel('Proyecto')).toHaveValue('TaskFlow');
   await expect(editDialog.getByLabel('Etiquetas')).toHaveValue('frontend, testing');
-  await expect(editDialog.getByLabel('Subtareas')).toHaveValue('Revisar copy\nValidar responsive');
+  await expect(editDialog.getByRole('list', { name: 'Subtareas agregadas' })).toContainText('Revisar copy');
+  await expect(editDialog.getByRole('list', { name: 'Subtareas agregadas' })).toContainText('Validar responsive');
 
   await editDialog.getByRole('textbox', { name: 'Editar tarea' }).fill('Preparar demo publica');
   await editDialog.getByLabel('Etiquetas').fill('frontend, qa');
   await editDialog.getByRole('button', { name: 'Guardar' }).click();
   await expect(page.getByText('Preparar demo publica')).toBeVisible();
   await expect(page.getByText('Alta', { exact: true })).toBeVisible();
-  await expect(page.getByText('20/07/2026')).toBeVisible();
+  await expect(page.getByText('Limite 20/07/2026')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Filtrar por proyecto TaskFlow' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Filtrar por etiqueta frontend' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Filtrar por etiqueta qa' })).toBeVisible();
@@ -229,7 +236,7 @@ test('keeps local boards and saved views in the production flow', async ({ page 
   await page.getByRole('button', { name: 'Crear nueva tarea' }).click();
   let dialog = page.getByRole('dialog', { name: 'Crear tarea' });
   await dialog.getByRole('textbox', { name: 'Nueva tarea' }).fill('Plan personal');
-  await dialog.getByRole('button', { name: 'Agregar' }).click();
+  await dialog.getByRole('button', { name: 'Agregar', exact: true }).click();
   await expect(page.getByText('Plan personal')).toBeVisible();
 
   await openTools(page);
@@ -244,7 +251,7 @@ test('keeps local boards and saved views in the production flow', async ({ page 
   await dialog.getByRole('textbox', { name: 'Nueva tarea' }).fill('Preparar taller');
   await dialog.getByLabel('Proyecto').fill('Talleres');
   await dialog.getByLabel('Etiquetas').fill('formacion');
-  await dialog.getByRole('button', { name: 'Agregar' }).click();
+  await dialog.getByRole('button', { name: 'Agregar', exact: true }).click();
   await expect(page.getByText('Preparar taller')).toBeVisible();
 
   await page.getByLabel('Nombre del tablero actual').fill('Capacitaciones');
