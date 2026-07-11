@@ -1,8 +1,10 @@
 import React, { ChangeEvent, FormEvent } from 'react';
 import {
     TODO_DATE_TYPES,
+    TODO_RECURRENCES,
     TodoDateType,
     TodoPriority,
+    TodoRecurrence,
     TodoSubtask,
     TodoDetails,
 } from '../../../App/todoModel';
@@ -20,6 +22,14 @@ const TODO_DATE_TYPE_OPTIONS: Array<{ value: TodoDateType; label: string }> = [
     { value: TODO_DATE_TYPES.period, label: 'Periodo' },
 ];
 
+const TODO_RECURRENCE_OPTIONS: Array<{ value: TodoRecurrence; label: string }> = [
+    { value: TODO_RECURRENCES.none, label: 'No se repite' },
+    { value: TODO_RECURRENCES.daily, label: 'Diaria' },
+    { value: TODO_RECURRENCES.weekly, label: 'Semanal' },
+    { value: TODO_RECURRENCES.monthly, label: 'Mensual' },
+    { value: TODO_RECURRENCES.yearly, label: 'Anual' },
+];
+
 interface TodoFormProps {
     initialValue?: string;
     initialDescription?: string | null;
@@ -28,6 +38,7 @@ interface TodoFormProps {
     initialDueDate?: string | null;
     initialStartDate?: string | null;
     initialEndDate?: string | null;
+    initialRecurrence?: TodoRecurrence;
     initialProject?: string | null;
     initialTags?: string[];
     initialSubtasks?: TodoSubtask[];
@@ -47,6 +58,7 @@ function TodoForm({
     initialDueDate = '',
     initialStartDate = '',
     initialEndDate = '',
+    initialRecurrence = TODO_RECURRENCES.none,
     initialProject = '',
     initialTags = [],
     initialSubtasks = [],
@@ -64,6 +76,7 @@ function TodoForm({
     const [dueDateValue, setDueDateValue] = React.useState(initialDueDate || '');
     const [startDateValue, setStartDateValue] = React.useState(initialStartDate || '');
     const [endDateValue, setEndDateValue] = React.useState(initialEndDate || '');
+    const [recurrenceValue, setRecurrenceValue] = React.useState<TodoRecurrence>(initialRecurrence || TODO_RECURRENCES.none);
     const [projectValue, setProjectValue] = React.useState(lockedProject || initialProject || '');
     const [tagsValue, setTagsValue] = React.useState(Array.isArray(initialTags) ? initialTags.join(', ') : '');
     const [subtasksValue, setSubtasksValue] = React.useState<string[]>(
@@ -77,6 +90,7 @@ function TodoForm({
     const descriptionId = mode === 'edit' ? 'editTodoDescription' : 'newTodoDescription';
     const priorityId = mode === 'edit' ? 'editTodoPriority' : 'newTodoPriority';
     const dateTypeId = mode === 'edit' ? 'editTodoDateType' : 'newTodoDateType';
+    const recurrenceId = mode === 'edit' ? 'editTodoRecurrence' : 'newTodoRecurrence';
     const dueDateId = mode === 'edit' ? 'editTodoDueDate' : 'newTodoDueDate';
     const startDateId = mode === 'edit' ? 'editTodoStartDate' : 'newTodoStartDate';
     const endDateId = mode === 'edit' ? 'editTodoEndDate' : 'newTodoEndDate';
@@ -159,6 +173,15 @@ function TodoForm({
             return;
         }
 
+        const recurrenceAnchorDate = dateTypeValue === TODO_DATE_TYPES.due
+            ? dueDateValue
+            : startDateValue;
+
+        if (recurrenceValue !== TODO_RECURRENCES.none && !recurrenceAnchorDate) {
+            setFormError('Agrega una fecha para poder repetir la tarea.');
+            return;
+        }
+
         const submittedSubtasks = getSubmittedSubtasks();
 
         if (!submittedSubtasks) {
@@ -172,6 +195,7 @@ function TodoForm({
             dueDate: dueDateValue,
             startDate: startDateValue,
             endDate: endDateValue,
+            recurrence: recurrenceValue,
             project: isProjectLocked ? lockedProject : projectValue,
             tags: tagsValue,
             subtasks: submittedSubtasks,
@@ -234,6 +258,20 @@ function TodoForm({
                         onChange={event => setDateTypeValue(event.target.value as TodoDateType)}
                     >
                         {TODO_DATE_TYPE_OPTIONS.map(option => (
+                            <option key={option.value} value={option.value}>
+                                {option.label}
+                            </option>
+                        ))}
+                    </select>
+                </label>
+                <label htmlFor={recurrenceId}>
+                    Repeticion
+                    <select
+                        id={recurrenceId}
+                        value={recurrenceValue}
+                        onChange={event => setRecurrenceValue(event.target.value as TodoRecurrence)}
+                    >
+                        {TODO_RECURRENCE_OPTIONS.map(option => (
                             <option key={option.value} value={option.value}>
                                 {option.label}
                             </option>

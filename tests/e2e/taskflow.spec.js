@@ -28,6 +28,7 @@ test('manages a todo through the production flow', async ({ page }) => {
   await createDialog.getByRole('textbox', { name: 'Nueva tarea' }).fill('Preparar demo del proyecto');
   await createDialog.getByLabel('Descripcion').fill('Ensayar historia del producto y decisiones tecnicas');
   await createDialog.getByLabel('Prioridad').selectOption('high');
+  await createDialog.getByLabel('Repeticion').selectOption('weekly');
   await createDialog.getByLabel('Fecha limite', { exact: true }).fill('2026-07-20');
   await createDialog.getByLabel('Proyecto').fill('TaskFlow');
   await createDialog.getByLabel('Etiquetas').fill('frontend, testing');
@@ -39,6 +40,7 @@ test('manages a todo through the production flow', async ({ page }) => {
   await expect(page.getByText('Preparar demo del proyecto')).toBeVisible();
   await expect(page.getByText('Ensayar historia del producto y decisiones tecnicas')).toBeVisible();
   await expect(page.getByText('Alta', { exact: true })).toBeVisible();
+  await expect(page.getByText('Semanal', { exact: true })).toBeVisible();
   await expect(page.getByText('Limite 20/07/2026')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Filtrar por proyecto TaskFlow' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Filtrar por etiqueta frontend' })).toBeVisible();
@@ -48,7 +50,7 @@ test('manages a todo through the production flow', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Calendario' }).click();
   await expect(page.getByRole('grid', { name: /Calendario/ })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Limite Preparar demo del proyecto/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Limite Semanal Preparar demo del proyecto/ }).first()).toBeVisible();
   await page.getByRole('button', { name: 'Lista' }).click();
 
   await page.getByRole('button', { name: 'Filtrar por etiqueta frontend' }).click();
@@ -66,6 +68,7 @@ test('manages a todo through the production flow', async ({ page }) => {
   const editDialog = page.getByRole('dialog', { name: 'Editar tarea' });
   await expect(editDialog.getByRole('textbox', { name: 'Editar tarea' })).toHaveValue('Preparar demo del proyecto');
   await expect(editDialog.getByLabel('Descripcion')).toHaveValue('Ensayar historia del producto y decisiones tecnicas');
+  await expect(editDialog.getByLabel('Repeticion')).toHaveValue('weekly');
   await expect(editDialog.getByLabel('Proyecto')).toHaveValue('TaskFlow');
   await expect(editDialog.getByLabel('Etiquetas')).toHaveValue('frontend, testing');
   await expect(editDialog.getByRole('list', { name: 'Subtareas agregadas' })).toContainText('Revisar copy');
@@ -76,6 +79,7 @@ test('manages a todo through the production flow', async ({ page }) => {
   await editDialog.getByRole('button', { name: 'Guardar' }).click();
   await expect(page.getByText('Preparar demo publica')).toBeVisible();
   await expect(page.getByText('Alta', { exact: true })).toBeVisible();
+  await expect(page.getByText('Semanal', { exact: true })).toBeVisible();
   await expect(page.getByText('Limite 20/07/2026')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Filtrar por proyecto TaskFlow' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Filtrar por etiqueta frontend' })).toBeVisible();

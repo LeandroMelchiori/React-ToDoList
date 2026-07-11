@@ -1,5 +1,12 @@
 import React, { ReactNode } from 'react';
-import { TODO_DATE_TYPES, Todo, TodoDateType } from '../../App/todoModel';
+import {
+  TODO_DATE_TYPES,
+  TODO_RECURRENCES,
+  Todo,
+  TodoDateType,
+  TodoRecurrence,
+  isTodoRecurringOnDate,
+} from '../../App/todoModel';
 import './TodoCalendar.css';
 
 const WEEK_DAYS = ['Lun', 'Mar', 'Mier', 'Jue', 'Vie', 'Sab', 'Dom'];
@@ -8,6 +15,14 @@ const TODO_DATE_TYPE_LABELS: Record<TodoDateType, string> = {
   [TODO_DATE_TYPES.due]: 'Limite',
   [TODO_DATE_TYPES.event]: 'Dia',
   [TODO_DATE_TYPES.period]: 'Periodo',
+};
+
+const TODO_RECURRENCE_LABELS: Record<TodoRecurrence, string> = {
+  [TODO_RECURRENCES.none]: '',
+  [TODO_RECURRENCES.daily]: 'Diaria',
+  [TODO_RECURRENCES.weekly]: 'Semanal',
+  [TODO_RECURRENCES.monthly]: 'Mensual',
+  [TODO_RECURRENCES.yearly]: 'Anual',
 };
 
 type TodoScheduleRange = {
@@ -93,6 +108,10 @@ function getTodoScheduleRange(todo: Todo): TodoScheduleRange | null {
 }
 
 function isTodoVisibleOnDay(todo: Todo, dateValue: string): boolean {
+  if (todo.recurrence && todo.recurrence !== TODO_RECURRENCES.none) {
+    return isTodoRecurringOnDate(todo, dateValue);
+  }
+
   const schedule = getTodoScheduleRange(todo);
 
   return Boolean(schedule && schedule.startDate <= dateValue && dateValue <= schedule.endDate);
@@ -123,6 +142,12 @@ function getSortedTodosForDay(todos: Todo[], dateValue: string): Todo[] {
 
 function getUnscheduledTodos(todos: Todo[]): Todo[] {
   return todos.filter(todo => !getTodoScheduleRange(todo));
+}
+
+function getTodoRecurrenceLabel(todo: Todo): string {
+  return todo.recurrence && todo.recurrence !== TODO_RECURRENCES.none
+    ? TODO_RECURRENCE_LABELS[todo.recurrence]
+    : '';
 }
 
 function TodoCalendar({
@@ -215,20 +240,28 @@ function TodoCalendar({
                       {dayTodos.map(todo => {
                         const schedule = getTodoScheduleRange(todo);
                         const type = schedule?.type || TODO_DATE_TYPES.due;
+                        const recurrenceLabel = getTodoRecurrenceLabel(todo);
+                        const eventLabel = [
+                          TODO_DATE_TYPE_LABELS[type],
+                          recurrenceLabel,
+                          todo.text,
+                        ].filter(Boolean).join(' ');
 
                         return (
                           <li key={todo.id}>
                             <button
                               type="button"
-                              aria-label={`${TODO_DATE_TYPE_LABELS[type]} ${todo.text}`}
+                              aria-label={eventLabel}
                               className={[
                                 'TodoCalendar-event',
                                 `TodoCalendar-event--${type}`,
+                                recurrenceLabel ? 'TodoCalendar-event--recurring' : '',
                                 todo.completed ? 'TodoCalendar-event--completed' : '',
                               ].filter(Boolean).join(' ')}
                               onClick={() => onEditTodo(todo.id)}
                             >
                               <span>{TODO_DATE_TYPE_LABELS[type]}</span>
+                              {recurrenceLabel && <small>{recurrenceLabel}</small>}
                               {todo.text}
                             </button>
                           </li>

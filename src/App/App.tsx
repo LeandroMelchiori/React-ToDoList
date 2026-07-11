@@ -374,6 +374,7 @@ function App() {
                                 dueDate={todo.dueDate}
                                 startDate={todo.startDate}
                                 endDate={todo.endDate}
+                                recurrence={todo.recurrence}
                                 project={todo.project}
                                 tags={todo.tags}
                                 subtasks={todo.subtasks}
@@ -417,6 +418,7 @@ function App() {
                             initialDueDate={editingTodo?.dueDate}
                             initialStartDate={editingTodo?.startDate}
                             initialEndDate={editingTodo?.endDate}
+                            initialRecurrence={editingTodo?.recurrence}
                             initialProject={editingTodo?.project}
                             initialTags={editingTodo?.tags}
                             initialSubtasks={editingTodo?.subtasks}

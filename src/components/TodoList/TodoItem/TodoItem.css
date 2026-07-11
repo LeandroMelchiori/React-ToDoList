@@ -173,6 +173,7 @@
 
 .TodoItem-priority,
 .TodoItem-dueDate,
+.TodoItem-recurrence,
 .TodoItem-project,
 .TodoItem-tag {
   border-radius: 999px;
@@ -216,6 +217,16 @@
 .TodoItem-dueDate {
   background-color: var(--color-badge-date-bg);
   color: var(--color-badge-date-text);
+}
+
+.TodoItem-recurrence {
+  background-color: #ccfbf1;
+  color: #0f766e;
+}
+
+[data-theme='dark'] .TodoItem-recurrence {
+  background-color: rgba(20, 184, 166, 0.16);
+  color: #99f6e4;
 }
 
 .TodoItem-project {

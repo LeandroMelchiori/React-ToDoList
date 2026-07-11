@@ -4,6 +4,7 @@ import {
   TODO_BACKUP_VERSION,
   TODO_GROUPS,
   TODO_PRIORITIES,
+  TODO_RECURRENCES,
   analyzeTodosImport,
   applyTodosImport,
   createTodosBackup,
@@ -19,6 +20,7 @@ import {
   normalizeTodoSchedule,
   normalizePriority,
   normalizeProject,
+  normalizeRecurrence,
   normalizeSubtasks,
   normalizeTags,
   normalizeTodos,
@@ -65,6 +67,7 @@ describe('todo helpers', () => {
         dueDate: null,
         startDate: null,
         endDate: null,
+        recurrence: TODO_RECURRENCES.none,
         project: null,
         tags: [],
         subtasks: [],
@@ -82,6 +85,7 @@ describe('todo helpers', () => {
         dueDate: null,
         startDate: null,
         endDate: null,
+        recurrence: TODO_RECURRENCES.none,
         project: null,
         tags: [],
         subtasks: [],
@@ -132,6 +136,7 @@ describe('todo helpers', () => {
     const todo = createTodo('  Practicar React  ', {
       priority: TODO_PRIORITIES.high,
       dueDate: '2026-07-20',
+      recurrence: TODO_RECURRENCES.weekly,
       description: 'Caso tecnico para entrevista',
       project: 'TaskFlow',
       tags: 'React, testing, React',
@@ -148,6 +153,7 @@ describe('todo helpers', () => {
       dueDate: '2026-07-20',
       startDate: null,
       endDate: null,
+      recurrence: TODO_RECURRENCES.weekly,
       project: 'TaskFlow',
       tags: ['React', 'testing'],
       subtasks: [
@@ -163,6 +169,8 @@ describe('todo helpers', () => {
   test('normalizes invalid priority and due date values', () => {
     expect(normalizePriority('urgent')).toBe(TODO_PRIORITIES.medium);
     expect(normalizePriority(TODO_PRIORITIES.low)).toBe(TODO_PRIORITIES.low);
+    expect(normalizeRecurrence('quarterly')).toBe(TODO_RECURRENCES.none);
+    expect(normalizeRecurrence(TODO_RECURRENCES.monthly)).toBe(TODO_RECURRENCES.monthly);
     expect(normalizeDueDate('2026-07-20')).toBe('2026-07-20');
     expect(normalizeDueDate(null)).toBeNull();
   });
@@ -325,6 +333,49 @@ describe('todo helpers', () => {
     expect(getTodoDateStatus(todos[0], '2026-07-06')).toBe(TODO_FILTERS.today);
     expect(getTodoDateStatus(todos[1], '2026-07-06')).toBe(TODO_FILTERS.today);
     expect(getTodoDateStatus(todos[2], '2026-07-06')).toBe(TODO_FILTERS.upcoming);
+    expect(getVisibleTodos(todos, '', TODO_FILTERS.today, '2026-07-06')).toEqual([
+      todos[0],
+      todos[1],
+    ]);
+  });
+
+  test('uses recurring schedules in date status filters', () => {
+    const todos = [
+      {
+        id: 'daily',
+        text: 'Repasar vocabulario',
+        completed: false,
+        dueDate: '2026-07-01',
+        recurrence: TODO_RECURRENCES.daily,
+      },
+      {
+        id: 'weekly',
+        text: 'Planificacion semanal',
+        completed: false,
+        dueDate: '2026-07-06',
+        recurrence: TODO_RECURRENCES.weekly,
+      },
+      {
+        id: 'monthly',
+        text: 'Revisar presupuesto',
+        completed: false,
+        dueDate: '2026-07-15',
+        recurrence: TODO_RECURRENCES.monthly,
+      },
+      {
+        id: 'completed',
+        text: 'Rutina completada',
+        completed: true,
+        dueDate: '2026-07-01',
+        recurrence: TODO_RECURRENCES.daily,
+      },
+    ];
+
+    expect(getTodoDateStatus(todos[0], '2026-07-06')).toBe(TODO_FILTERS.today);
+    expect(getTodoDateStatus(todos[1], '2026-07-13')).toBe(TODO_FILTERS.today);
+    expect(getTodoDateStatus(todos[1], '2026-07-14')).toBe(TODO_FILTERS.upcoming);
+    expect(getTodoDateStatus(todos[2], '2026-07-14')).toBe(TODO_FILTERS.upcoming);
+    expect(getTodoDateStatus(todos[3], '2026-07-06')).toBeNull();
     expect(getVisibleTodos(todos, '', TODO_FILTERS.today, '2026-07-06')).toEqual([
       todos[0],
       todos[1],

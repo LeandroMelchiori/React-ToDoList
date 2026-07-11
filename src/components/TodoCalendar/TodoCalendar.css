@@ -140,6 +140,18 @@
   text-transform: uppercase;
 }
 
+.TodoCalendar-event small {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 900;
+  margin: 0 0 4px;
+  opacity: 0.72;
+}
+
+.TodoCalendar-event--recurring {
+  border-style: dashed;
+}
+
 .TodoCalendar-event--due {
   background: var(--color-badge-date-bg);
   color: var(--color-badge-date-text);

@@ -62,4 +62,44 @@ describe('TodoCalendar helpers', () => {
       expect.objectContaining({ id: 'todo-1' }),
     ]);
   });
+
+  test('projects recurring todos on matching calendar days', () => {
+    const dailyTodo = {
+      id: 'daily',
+      text: 'Repasar vocabulario',
+      dateType: 'due',
+      dueDate: '2026-07-01',
+      recurrence: 'daily',
+    };
+    const weeklyTodo = {
+      id: 'weekly',
+      text: 'Planificacion semanal',
+      dateType: 'due',
+      dueDate: '2026-07-06',
+      recurrence: 'weekly',
+    };
+    const monthlyTodo = {
+      id: 'monthly',
+      text: 'Revisar presupuesto',
+      dateType: 'due',
+      dueDate: '2026-07-15',
+      recurrence: 'monthly',
+    };
+    const yearlyTodo = {
+      id: 'yearly',
+      text: 'Renovar dominio',
+      dateType: 'event',
+      startDate: '2026-07-20',
+      recurrence: 'yearly',
+    };
+
+    expect(isTodoVisibleOnDay(dailyTodo, '2026-07-10')).toBe(true);
+    expect(isTodoVisibleOnDay(dailyTodo, '2026-06-30')).toBe(false);
+    expect(isTodoVisibleOnDay(weeklyTodo, '2026-07-13')).toBe(true);
+    expect(isTodoVisibleOnDay(weeklyTodo, '2026-07-14')).toBe(false);
+    expect(isTodoVisibleOnDay(monthlyTodo, '2026-08-15')).toBe(true);
+    expect(isTodoVisibleOnDay(monthlyTodo, '2026-08-16')).toBe(false);
+    expect(isTodoVisibleOnDay(yearlyTodo, '2027-07-20')).toBe(true);
+    expect(isTodoVisibleOnDay(yearlyTodo, '2027-07-21')).toBe(false);
+  });
 });

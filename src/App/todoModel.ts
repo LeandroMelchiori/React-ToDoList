@@ -2,6 +2,7 @@ type TodoFilter = 'all' | 'active' | 'completed' | 'overdue' | 'today' | 'upcomi
 type TodoDateStatus = 'overdue' | 'today' | 'upcoming';
 type TodoPriority = 'low' | 'medium' | 'high';
 type TodoDateType = 'due' | 'event' | 'period';
+type TodoRecurrence = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 type TodoGroup = 'overdue' | 'today' | 'upcoming' | 'unscheduled' | 'completed';
 type ImportMode = 'merge' | 'replace';
 
@@ -22,6 +23,7 @@ type Todo = {
     dueDate: string | null;
     startDate: string | null;
     endDate: string | null;
+    recurrence: TodoRecurrence;
     project: string | null;
     tags: string[];
     subtasks: TodoSubtask[];
@@ -73,6 +75,7 @@ type TodoDetails = {
     dueDate?: unknown;
     startDate?: unknown;
     endDate?: unknown;
+    recurrence?: unknown;
     project?: unknown;
     tags?: unknown;
     subtasks?: unknown;
@@ -107,6 +110,14 @@ const TODO_DATE_TYPES = {
     event: 'event',
     period: 'period',
 } as const satisfies Record<TodoDateType, TodoDateType>;
+
+const TODO_RECURRENCES = {
+    none: 'none',
+    daily: 'daily',
+    weekly: 'weekly',
+    monthly: 'monthly',
+    yearly: 'yearly',
+} as const satisfies Record<TodoRecurrence, TodoRecurrence>;
 
 const TODO_GROUPS = {
     overdue: 'overdue',
@@ -155,6 +166,12 @@ function normalizeDateType(dateType: unknown): TodoDateType {
     const validDateType = Object.values(TODO_DATE_TYPES).find(value => value === dateType);
 
     return validDateType || TODO_DATE_TYPES.due;
+}
+
+function normalizeRecurrence(recurrence: unknown): TodoRecurrence {
+    const validRecurrence = Object.values(TODO_RECURRENCES).find(value => value === recurrence);
+
+    return validRecurrence || TODO_RECURRENCES.none;
 }
 
 function normalizeDueDate(dueDate: unknown): string | null {
@@ -225,6 +242,30 @@ function getDateValueOffset(dateValue: string, offsetDays: number): string {
     date.setDate(date.getDate() + offsetDays);
 
     return getTodayDateValue(date);
+}
+
+function getDateParts(dateValue: string): { year: number; month: number; day: number } | null {
+    const [year, month, day] = dateValue.split('-').map(Number);
+
+    if (!year || !month || !day) {
+        return null;
+    }
+
+    return { year, month, day };
+}
+
+function getDateDiffInDays(startDate: string, endDate: string): number {
+    const start = getDateParts(startDate);
+    const end = getDateParts(endDate);
+
+    if (!start || !end) {
+        return Number.NaN;
+    }
+
+    const startTime = Date.UTC(start.year, start.month - 1, start.day);
+    const endTime = Date.UTC(end.year, end.month - 1, end.day);
+
+    return Math.floor((endTime - startTime) / 86_400_000);
 }
 
 function normalizeDateTime(dateValue: unknown): string | null {
@@ -353,6 +394,7 @@ function createTodo(text: string, details: TodoDetails = {}): Todo {
         dueDate: schedule.dueDate,
         startDate: schedule.startDate,
         endDate: schedule.endDate,
+        recurrence: normalizeRecurrence('recurrence' in details ? details.recurrence : undefined),
         project: normalizeProject('project' in details ? details.project : undefined),
         tags: normalizeTags('tags' in details ? details.tags : undefined),
         subtasks: normalizeSubtasks('subtasks' in details ? details.subtasks : undefined),
@@ -387,6 +429,7 @@ function normalizeTodos(todos: unknown): Todo[] {
                 dueDate: schedule.dueDate,
                 startDate: schedule.startDate,
                 endDate: schedule.endDate,
+                recurrence: normalizeRecurrence(todo.recurrence),
                 project: normalizeProject(todo.project),
                 tags: normalizeTags(todo.tags),
                 subtasks: normalizeSubtasks(todo.subtasks),
@@ -511,6 +554,16 @@ function getTodoDateStatus(todo: Todo, todayDate = getTodayDateValue()): TodoDat
         return null;
     }
 
+    if (normalizeRecurrence(todo.recurrence) !== TODO_RECURRENCES.none) {
+        const anchorDate = getTodoRecurrenceAnchorDate(todo);
+
+        if (!anchorDate) {
+            return null;
+        }
+
+        return isTodoRecurringOnDate(todo, todayDate) ? TODO_FILTERS.today : TODO_FILTERS.upcoming;
+    }
+
     if (todo.dateType === TODO_DATE_TYPES.period) {
         if (!todo.startDate) {
             return null;
@@ -546,6 +599,56 @@ function getTodoDateStatus(todo: Todo, todayDate = getTodayDateValue()): TodoDat
     }
 
     return TODO_FILTERS.upcoming;
+}
+
+function getTodoRecurrenceAnchorDate(todo: Pick<Todo, 'dateType' | 'dueDate' | 'startDate'>): string | null {
+    return todo.dateType === TODO_DATE_TYPES.event || todo.dateType === TODO_DATE_TYPES.period
+        ? todo.startDate
+        : todo.dueDate;
+}
+
+function isTodoRecurringOnDate(
+    todo: Pick<Todo, 'dateType' | 'dueDate' | 'startDate' | 'recurrence'>,
+    dateValue: string
+): boolean {
+    const recurrence = normalizeRecurrence(todo.recurrence);
+
+    if (recurrence === TODO_RECURRENCES.none) {
+        return false;
+    }
+
+    const anchorDate = getTodoRecurrenceAnchorDate(todo);
+
+    if (!anchorDate || dateValue < anchorDate) {
+        return false;
+    }
+
+    const differenceInDays = getDateDiffInDays(anchorDate, dateValue);
+
+    if (!Number.isFinite(differenceInDays)) {
+        return false;
+    }
+
+    if (recurrence === TODO_RECURRENCES.daily) {
+        return true;
+    }
+
+    if (recurrence === TODO_RECURRENCES.weekly) {
+        return differenceInDays % 7 === 0;
+    }
+
+    const anchorParts = getDateParts(anchorDate);
+    const dateParts = getDateParts(dateValue);
+
+    if (!anchorParts || !dateParts) {
+        return false;
+    }
+
+    if (recurrence === TODO_RECURRENCES.monthly) {
+        return anchorParts.day === dateParts.day;
+    }
+
+    return anchorParts.month === dateParts.month && anchorParts.day === dateParts.day;
 }
 
 function getTodosDateCounts(
@@ -743,6 +846,7 @@ export {
     TODO_BACKUP_VERSION,
     TODO_GROUPS,
     TODO_PRIORITIES,
+    TODO_RECURRENCES,
     analyzeTodosImport,
     applyTodosImport,
     createTodosBackup,
@@ -752,8 +856,10 @@ export {
     getTodoDateStatus,
     getTodoGroups,
     getTodoInsights,
+    getTodoRecurrenceAnchorDate,
     getTodosDateCounts,
     getVisibleTodos,
+    isTodoRecurringOnDate,
     mergeSubtasks,
     moveTodoToPosition,
     normalizeDueDate,
@@ -762,6 +868,7 @@ export {
     normalizeOrder,
     normalizePriority,
     normalizeProject,
+    normalizeRecurrence,
     normalizeSubtasks,
     normalizeTags,
     normalizeTodoSchedule,
@@ -780,5 +887,6 @@ export type {
     TodoGroupView,
     TodoInsights,
     TodoPriority,
+    TodoRecurrence,
     TodoSubtask,
 };

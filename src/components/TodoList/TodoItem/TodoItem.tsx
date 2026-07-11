@@ -6,12 +6,27 @@ import { MoveIcon } from '../../TodoIcon/MoveIcon';
 import { handleButtonGroupNavigation } from '../../buttonGroupNavigation';
 
 import React from 'react';
-import { TODO_DATE_TYPES, TodoDateType, TodoPriority, TodoSubtask } from '../../../App/todoModel';
+import {
+  TODO_DATE_TYPES,
+  TODO_RECURRENCES,
+  TodoDateType,
+  TodoPriority,
+  TodoRecurrence,
+  TodoSubtask,
+} from '../../../App/todoModel';
 
 const TODO_PRIORITY_LABELS: Record<TodoPriority, string> = {
     low: 'Baja',
     medium: 'Media',
     high: 'Alta',
+};
+
+const TODO_RECURRENCE_LABELS: Record<TodoRecurrence, string> = {
+  [TODO_RECURRENCES.none]: '',
+  [TODO_RECURRENCES.daily]: 'Diaria',
+  [TODO_RECURRENCES.weekly]: 'Semanal',
+  [TODO_RECURRENCES.monthly]: 'Mensual',
+  [TODO_RECURRENCES.yearly]: 'Anual',
 };
 
 function formatDateValue(dateValue?: string | null) {
@@ -67,6 +82,7 @@ interface TodoItemProps {
   dueDate?: string | null;
   startDate?: string | null;
   endDate?: string | null;
+  recurrence?: TodoRecurrence;
   project?: string | null;
   tags?: string[];
   subtasks?: TodoSubtask[];
@@ -92,6 +108,9 @@ interface TodoItemProps {
 function TodoItem(props: TodoItemProps) {
   const scheduleLabel = getScheduleLabel(props.dateType, props.dueDate, props.startDate, props.endDate);
   const priorityLabel = props.priority ? TODO_PRIORITY_LABELS[props.priority] : TODO_PRIORITY_LABELS.medium;
+  const recurrenceLabel = props.recurrence && props.recurrence !== TODO_RECURRENCES.none
+    ? TODO_RECURRENCE_LABELS[props.recurrence]
+    : null;
   const tags = Array.isArray(props.tags) ? props.tags : [];
   const subtasks = Array.isArray(props.subtasks) ? props.subtasks : [];
   const isCompletedBySubtasks = props.completed &&
@@ -199,6 +218,11 @@ function TodoItem(props: TodoItemProps) {
           {scheduleLabel && (
             <span className="TodoItem-dueDate">
               {scheduleLabel}
+            </span>
+          )}
+          {recurrenceLabel && (
+            <span className="TodoItem-recurrence">
+              {recurrenceLabel}
             </span>
           )}
         </div>

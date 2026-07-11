@@ -128,12 +128,14 @@ describe('App', () => {
     await user.type(screen.getByLabelText('Nueva tarea'), 'Rendir parcial de algebra');
     await user.type(screen.getByLabelText('Descripcion'), 'Aula 4, llevar DNI y calculadora');
     await user.selectOptions(screen.getByLabelText('Tipo de fecha'), 'event');
+    await user.selectOptions(screen.getByLabelText('Repeticion'), 'yearly');
     await user.type(screen.getByLabelText('Dia de la tarea'), '2026-08-15');
     await user.click(screen.getByRole('button', { name: 'Agregar' }));
 
     expect(screen.getByText('Rendir parcial de algebra')).toBeInTheDocument();
     expect(screen.getByText('Aula 4, llevar DNI y calculadora')).toBeInTheDocument();
     expect(screen.getByText('Dia 15/08/2026')).toBeInTheDocument();
+    expect(screen.getByText('Anual')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Crear nueva tarea' }));
     await user.type(screen.getByLabelText('Nueva tarea'), 'Inscripcion a finales');
@@ -160,6 +162,7 @@ describe('App', () => {
         dueDate: null,
         startDate: '2026-08-15',
         endDate: null,
+        recurrence: 'yearly',
       }),
       expect.objectContaining({
         text: 'Inscripcion a finales',
@@ -200,6 +203,15 @@ describe('App', () => {
         completed: false,
         order: 2,
       },
+      {
+        id: 'todo-recurring',
+        text: 'Pagar cuota',
+        completed: false,
+        dateType: 'due',
+        dueDate: today,
+        recurrence: 'weekly',
+        order: 3,
+      },
     ]));
     renderApp();
 
@@ -210,6 +222,7 @@ describe('App', () => {
     expect(screen.getByRole('grid', { name: /Calendario/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Dia Rendir parcial/ })).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /Periodo Inscripcion a finales/ }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('button', { name: /Limite Semanal Pagar cuota/ }).length).toBeGreaterThan(0);
     expect(within(screen.getByRole('complementary', { name: 'Tareas sin fecha' })).getByRole('button', { name: 'Leer bibliografia' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /Dia Rendir parcial/ }));
@@ -390,6 +403,21 @@ describe('App', () => {
 
     expect(screen.getByText('Esa tarea ya existe.')).toBeInTheDocument();
     expect(within(screen.getByRole('dialog')).getByLabelText('Nueva tarea')).toHaveValue('actualizar portfolio');
+  });
+
+  test('requires a base date for recurring todos', async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    expect(await screen.findByText('Organiza tu dia con una primera tarea')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Crear nueva tarea' }));
+    await user.type(screen.getByLabelText('Nueva tarea'), 'Repasar vocabulario');
+    await user.selectOptions(screen.getByLabelText('Repeticion'), 'weekly');
+    await user.click(screen.getByRole('button', { name: 'Agregar' }));
+
+    expect(screen.getByText('Agrega una fecha para poder repetir la tarea.')).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('TODOS_V1') || '[]')).toEqual([]);
   });
 
   test('filters todos by due date status', async () => {
@@ -1209,6 +1237,8 @@ describe('App', () => {
         id: 'todo-1',
         text: 'Actualizar portfolio',
         completed: false,
+        dueDate: '2026-07-20',
+        recurrence: 'weekly',
         project: 'Web',
         tags: ['portfolio'],
         subtasks: [{ id: 'subtask-1', text: 'Revisar copy', completed: true }],
@@ -1223,9 +1253,11 @@ describe('App', () => {
 
     const dialog = screen.getByRole('dialog', { name: 'Editar tarea' });
     const textarea = within(dialog).getByLabelText('Editar tarea');
+    const recurrenceSelect = within(dialog).getByLabelText('Repeticion');
     const projectInput = within(dialog).getByLabelText('Proyecto');
     const tagsInput = within(dialog).getByLabelText('Etiquetas');
     expect(textarea).toHaveValue('Actualizar portfolio');
+    expect(recurrenceSelect).toHaveValue('weekly');
     expect(projectInput).toHaveValue('Web');
     expect(tagsInput).toHaveValue('portfolio');
     expect(within(dialog).getByRole('list', { name: 'Subtareas agregadas' })).toHaveTextContent('Revisar copy');
@@ -1238,6 +1270,7 @@ describe('App', () => {
 
     await user.clear(textarea);
     await user.type(textarea, 'Actualizar README del portfolio');
+    await user.selectOptions(recurrenceSelect, 'monthly');
     await user.clear(projectInput);
     await user.type(projectInput, 'TaskFlow');
     await user.clear(tagsInput);
@@ -1247,12 +1280,14 @@ describe('App', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.getByText('Actualizar README del portfolio')).toBeInTheDocument();
     expect(screen.queryByText('Actualizar portfolio')).not.toBeInTheDocument();
+    expect(screen.getByText('Mensual')).toBeInTheDocument();
 
     const storedTodos = JSON.parse(localStorage.getItem('TODOS_V1'));
     expect(storedTodos[0]).toEqual(expect.objectContaining({
       id: 'todo-1',
       text: 'Actualizar README del portfolio',
       completed: false,
+      recurrence: 'monthly',
       project: 'TaskFlow',
       tags: ['docs', 'ui'],
       subtasks: [{ id: 'subtask-1', text: 'Revisar copy', completed: true }],
@@ -1322,6 +1357,7 @@ describe('App', () => {
     const descriptionInput = within(dialog).getByLabelText('Descripcion');
     const prioritySelect = within(dialog).getByLabelText('Prioridad');
     const dateTypeSelect = within(dialog).getByLabelText('Tipo de fecha');
+    const recurrenceSelect = within(dialog).getByLabelText('Repeticion');
     const dueDateInput = within(dialog).getByLabelText('Fecha limite');
     const projectInput = within(dialog).getByLabelText('Proyecto');
     const tagsInput = within(dialog).getByLabelText('Etiquetas');
@@ -1340,6 +1376,9 @@ describe('App', () => {
 
     await user.tab();
     expect(dateTypeSelect).toHaveFocus();
+
+    await user.tab();
+    expect(recurrenceSelect).toHaveFocus();
 
     await user.tab();
     expect(dueDateInput).toHaveFocus();
