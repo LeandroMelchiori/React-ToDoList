@@ -1,6 +1,6 @@
 import './TodoViewToggle.css';
 
-type TodoViewMode = 'list' | 'calendar' | 'week';
+type TodoViewMode = 'list' | 'today' | 'calendar' | 'week';
 
 interface TodoViewToggleProps {
   activeView: TodoViewMode;
@@ -17,6 +17,14 @@ function TodoViewToggle({ activeView, onChangeView }: TodoViewToggleProps) {
         onClick={() => onChangeView('list')}
       >
         Lista
+      </button>
+      <button
+        type="button"
+        aria-pressed={activeView === 'today'}
+        className={activeView === 'today' ? 'TodoViewToggle-button TodoViewToggle-button--active' : 'TodoViewToggle-button'}
+        onClick={() => onChangeView('today')}
+      >
+        Hoy
       </button>
       <button
         type="button"

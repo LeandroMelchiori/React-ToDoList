@@ -277,6 +277,83 @@ describe('App', () => {
     expect(within(editDialog).getByLabelText('Editar tarea')).toHaveValue('Rendir parcial');
   });
 
+  test('shows a focused today view separated by tasks and agenda items', async () => {
+    const user = userEvent.setup();
+    const yesterday = getRelativeDateInputValue(-1);
+    const today = getRelativeDateInputValue(0);
+    const tomorrow = getRelativeDateInputValue(1);
+
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      {
+        id: 'todo-task',
+        text: 'Preparar entrega',
+        kind: 'task',
+        completed: false,
+        dateType: 'due',
+        dueDate: today,
+        order: 0,
+      },
+      {
+        id: 'todo-event',
+        text: 'Rendir parcial',
+        kind: 'event',
+        completed: false,
+        dateType: 'event',
+        startDate: today,
+        startTime: '10:00',
+        order: 1,
+      },
+      {
+        id: 'todo-schedule',
+        text: 'Cursar programacion',
+        kind: 'schedule',
+        completed: false,
+        dateType: 'period',
+        startDate: today,
+        endDate: tomorrow,
+        startTime: '14:00',
+        endTime: '16:00',
+        order: 2,
+      },
+      {
+        id: 'todo-period',
+        text: 'Inscripcion a finales',
+        kind: 'period',
+        completed: false,
+        dateType: 'period',
+        startDate: yesterday,
+        endDate: tomorrow,
+        order: 3,
+      },
+      {
+        id: 'todo-tomorrow',
+        text: 'Evento de manana',
+        kind: 'event',
+        completed: false,
+        dateType: 'event',
+        startDate: tomorrow,
+        order: 4,
+      },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Preparar entrega')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Hoy' }));
+
+    expect(screen.getByRole('heading', { name: 'Tu dia en foco' })).toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: 'Tareas para completar' })).getByText('Preparar entrega')).toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: 'Eventos del dia' })).getByText('Rendir parcial')).toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: 'Horarios y cursadas' })).getByText('Cursar programacion')).toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: 'Periodos activos' })).getByText('Inscripcion a finales')).toBeInTheDocument();
+    expect(screen.queryByText('Evento de manana')).not.toBeInTheDocument();
+
+    await user.click(within(screen.getByRole('region', { name: 'Eventos del dia' })).getByRole('button', { name: /Rendir parcial/ }));
+
+    const editDialog = screen.getByRole('dialog', { name: 'Editar tarea' });
+    expect(within(editDialog).getByLabelText('Editar tarea')).toHaveValue('Rendir parcial');
+  });
+
   test('creates a starter todo from the empty onboarding templates', async () => {
     const user = userEvent.setup();
     renderApp();

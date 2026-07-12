@@ -4,6 +4,7 @@
   border: 1px solid var(--color-border);
   border-radius: 8px;
   display: inline-flex;
+  flex-wrap: wrap;
   gap: 4px;
   margin: 20px auto 0;
   padding: 4px;

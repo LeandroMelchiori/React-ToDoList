@@ -13,6 +13,7 @@ import { TodoHeaderTools } from '../components/TodoHeader/TodoHeaderTools/TodoHe
 import { TodoList } from '../components/TodoList/TodoList';
 import { TodoItem } from '../components/TodoList/TodoItem/TodoItem';
 import { TodoCalendar } from '../components/TodoCalendar/TodoCalendar';
+import { TodoToday } from '../components/TodoToday/TodoToday';
 import { TodoWeekCalendar } from '../components/TodoWeekCalendar/TodoWeekCalendar';
 import { TodoViewMode, TodoViewToggle } from '../components/TodoViewToggle/TodoViewToggle';
 import { CreateTodoButton } from '../components/CreateTodoButton/CreateTodoButton';
@@ -322,7 +323,29 @@ function App() {
                 onChangeView={setTodoViewMode}
             />
 
-            {todoViewMode === 'calendar' ? (
+            {todoViewMode === 'today' ? (
+                <TodoToday
+                    error={error}
+                    loading={loading}
+                    visibleTodos={visibleTodos}
+                    totalTodos={totalTodos}
+                    onEditTodo={startEditingTodo}
+                    onError={() => <TodosError />}
+                    onLoading={() => <TodosLoading />}
+                    onEmptyTodos={() => (
+                        <EmptyTodos
+                            onCreateTemplate={(template) => addTodo(template.todo.text, template.todo)}
+                        />
+                    )}
+                    onEmptySearchResults={() => (
+                        <p className="TodoList-emptySearch">
+                            {searchValue
+                                ? 'No hay elementos que coincidan con tu busqueda.'
+                                : 'No hay elementos para este filtro.'}
+                        </p>
+                    )}
+                />
+            ) : todoViewMode === 'calendar' ? (
                 <TodoCalendar
                     error={error}
                     loading={loading}
