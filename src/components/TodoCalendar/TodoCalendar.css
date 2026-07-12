@@ -118,6 +118,69 @@
   padding: 0;
 }
 
+.TodoCalendar-dailyDetails {
+  margin-top: 6px;
+}
+
+.TodoCalendar-dailyDetails summary {
+  align-items: center;
+  background: var(--color-surface-muted);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+  min-height: 24px;
+  padding: 0 9px;
+}
+
+.TodoCalendar-dailyDetails summary:focus-visible {
+  box-shadow: var(--shadow-focus);
+  outline: none;
+}
+
+.TodoCalendar-dailyDetails ul {
+  display: grid;
+  gap: 4px;
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+}
+
+.TodoCalendar-dailyTodo {
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: block;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.25;
+  overflow: hidden;
+  padding: 3px 4px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.TodoCalendar-dailyTodo:hover,
+.TodoCalendar-dailyTodo:focus-visible {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-hover);
+  outline: none;
+}
+
+.TodoCalendar-dailyTodo--completed {
+  opacity: 0.62;
+  text-decoration: line-through;
+}
+
 .TodoCalendar-event {
   border: 1px solid var(--color-border);
   border-radius: 7px;

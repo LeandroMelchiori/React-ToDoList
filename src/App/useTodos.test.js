@@ -9,6 +9,7 @@ import {
   applyTodosImport,
   createTodosBackup,
   createTodo,
+  getAllowedRecurrencesForDateType,
   getTodoFacets,
   getTodoDateStatus,
   getTodoGroups,
@@ -23,6 +24,7 @@ import {
   normalizeRecurrence,
   normalizeSubtasks,
   normalizeTags,
+  normalizeTodoRecurrence,
   normalizeTodos,
   readTodosBackup,
 } from './todoModel';
@@ -171,6 +173,11 @@ describe('todo helpers', () => {
     expect(normalizePriority(TODO_PRIORITIES.low)).toBe(TODO_PRIORITIES.low);
     expect(normalizeRecurrence('quarterly')).toBe(TODO_RECURRENCES.none);
     expect(normalizeRecurrence(TODO_RECURRENCES.monthly)).toBe(TODO_RECURRENCES.monthly);
+    expect(getAllowedRecurrencesForDateType(TODO_DATE_TYPES.event)).not.toContain(TODO_RECURRENCES.daily);
+    expect(getAllowedRecurrencesForDateType(TODO_DATE_TYPES.period)).toEqual([TODO_RECURRENCES.none]);
+    expect(normalizeTodoRecurrence(TODO_DATE_TYPES.event, TODO_RECURRENCES.daily)).toBe(TODO_RECURRENCES.none);
+    expect(normalizeTodoRecurrence(TODO_DATE_TYPES.event, TODO_RECURRENCES.yearly)).toBe(TODO_RECURRENCES.yearly);
+    expect(normalizeTodoRecurrence(TODO_DATE_TYPES.period, TODO_RECURRENCES.yearly)).toBe(TODO_RECURRENCES.none);
     expect(normalizeDueDate('2026-07-20')).toBe('2026-07-20');
     expect(normalizeDueDate(null)).toBeNull();
   });

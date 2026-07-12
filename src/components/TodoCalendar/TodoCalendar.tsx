@@ -150,6 +150,10 @@ function getTodoRecurrenceLabel(todo: Todo): string {
     : '';
 }
 
+function isCompactRecurringTodo(todo: Todo): boolean {
+  return todo.recurrence === TODO_RECURRENCES.daily;
+}
+
 function TodoCalendar({
   error,
   loading,
@@ -226,6 +230,8 @@ function TodoCalendar({
           <div className="TodoCalendar-grid" role="grid" aria-label={`Calendario ${monthLabel}`}>
             {calendarDays.map(day => {
               const dayTodos = getSortedTodosForDay(visibleTodos, day.dateValue);
+              const compactRecurringTodos = dayTodos.filter(isCompactRecurringTodo);
+              const listedTodos = dayTodos.filter(todo => !isCompactRecurringTodo(todo));
               const className = [
                 'TodoCalendar-day',
                 day.isCurrentMonth ? '' : 'TodoCalendar-day--muted',
@@ -235,9 +241,9 @@ function TodoCalendar({
               return (
                 <div className={className} role="gridcell" key={day.dateValue} aria-label={day.dateValue}>
                   <time dateTime={day.dateValue}>{day.dayNumber}</time>
-                  {dayTodos.length > 0 && (
+                  {listedTodos.length > 0 && (
                     <ul className="TodoCalendar-events" aria-label={`Tareas del ${day.dateValue}`}>
-                      {dayTodos.map(todo => {
+                      {listedTodos.map(todo => {
                         const schedule = getTodoScheduleRange(todo);
                         const type = schedule?.type || TODO_DATE_TYPES.due;
                         const recurrenceLabel = getTodoRecurrenceLabel(todo);
@@ -268,6 +274,31 @@ function TodoCalendar({
                         );
                       })}
                     </ul>
+                  )}
+                  {compactRecurringTodos.length > 0 && (
+                    <details className="TodoCalendar-dailyDetails">
+                      <summary aria-label={`${compactRecurringTodos.length} tareas diarias`}>
+                        {compactRecurringTodos.length === 1
+                          ? '1 diaria'
+                          : `${compactRecurringTodos.length} diarias`}
+                      </summary>
+                      <ul aria-label={`Rutinas diarias del ${day.dateValue}`}>
+                        {compactRecurringTodos.map(todo => (
+                          <li key={todo.id}>
+                            <button
+                              type="button"
+                              className={[
+                                'TodoCalendar-dailyTodo',
+                                todo.completed ? 'TodoCalendar-dailyTodo--completed' : '',
+                              ].filter(Boolean).join(' ')}
+                              onClick={() => onEditTodo(todo.id)}
+                            >
+                              {todo.text}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
                   )}
                 </div>
               );
@@ -306,5 +337,6 @@ export {
   getCalendarDays,
   getTodoScheduleRange,
   getUnscheduledTodos,
+  isCompactRecurringTodo,
   isTodoVisibleOnDay,
 };

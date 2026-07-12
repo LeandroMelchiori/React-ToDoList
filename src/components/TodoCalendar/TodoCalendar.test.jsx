@@ -2,6 +2,7 @@ import {
   getCalendarDays,
   getTodoScheduleRange,
   getUnscheduledTodos,
+  isCompactRecurringTodo,
   isTodoVisibleOnDay,
 } from './TodoCalendar';
 
@@ -101,5 +102,11 @@ describe('TodoCalendar helpers', () => {
     expect(isTodoVisibleOnDay(monthlyTodo, '2026-08-16')).toBe(false);
     expect(isTodoVisibleOnDay(yearlyTodo, '2027-07-20')).toBe(true);
     expect(isTodoVisibleOnDay(yearlyTodo, '2027-07-21')).toBe(false);
+  });
+
+  test('compacts daily recurring todos in the calendar grid', () => {
+    expect(isCompactRecurringTodo({ recurrence: 'daily' })).toBe(true);
+    expect(isCompactRecurringTodo({ recurrence: 'weekly' })).toBe(false);
+    expect(isCompactRecurringTodo({ recurrence: 'none' })).toBe(false);
   });
 });

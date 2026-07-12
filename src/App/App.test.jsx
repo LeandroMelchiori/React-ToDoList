@@ -128,6 +128,7 @@ describe('App', () => {
     await user.type(screen.getByLabelText('Nueva tarea'), 'Rendir parcial de algebra');
     await user.type(screen.getByLabelText('Descripcion'), 'Aula 4, llevar DNI y calculadora');
     await user.selectOptions(screen.getByLabelText('Tipo de fecha'), 'event');
+    expect(within(screen.getByLabelText('Repeticion')).queryByRole('option', { name: 'Diaria' })).not.toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText('Repeticion'), 'yearly');
     await user.type(screen.getByLabelText('Dia de la tarea'), '2026-08-15');
     await user.click(screen.getByRole('button', { name: 'Agregar' }));
@@ -140,6 +141,7 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: 'Crear nueva tarea' }));
     await user.type(screen.getByLabelText('Nueva tarea'), 'Inscripcion a finales');
     await user.selectOptions(screen.getByLabelText('Tipo de fecha'), 'period');
+    expect(screen.getByLabelText('Repeticion')).toBeDisabled();
     await user.type(screen.getByLabelText('Inicio del periodo'), '2026-09-01');
     await user.type(screen.getByLabelText('Fin del periodo'), '2026-08-30');
     await user.click(screen.getByRole('button', { name: 'Agregar' }));
@@ -212,6 +214,24 @@ describe('App', () => {
         recurrence: 'weekly',
         order: 3,
       },
+      {
+        id: 'todo-daily-1',
+        text: 'Tomar medicacion',
+        completed: false,
+        dateType: 'due',
+        dueDate: today,
+        recurrence: 'daily',
+        order: 4,
+      },
+      {
+        id: 'todo-daily-2',
+        text: 'Repasar vocabulario',
+        completed: false,
+        dateType: 'due',
+        dueDate: today,
+        recurrence: 'daily',
+        order: 5,
+      },
     ]));
     renderApp();
 
@@ -223,7 +243,12 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: /Dia Rendir parcial/ })).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /Periodo Inscripcion a finales/ }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('button', { name: /Limite Semanal Pagar cuota/ }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('2 diarias').length).toBeGreaterThan(0);
     expect(within(screen.getByRole('complementary', { name: 'Tareas sin fecha' })).getByRole('button', { name: 'Leer bibliografia' })).toBeInTheDocument();
+
+    const dailySummary = screen.getAllByText('2 diarias')[0];
+    await user.click(dailySummary);
+    expect(within(dailySummary.closest('details')).getByRole('button', { name: 'Tomar medicacion' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /Dia Rendir parcial/ }));
 
@@ -1378,10 +1403,10 @@ describe('App', () => {
     expect(dateTypeSelect).toHaveFocus();
 
     await user.tab();
-    expect(recurrenceSelect).toHaveFocus();
+    expect(dueDateInput).toHaveFocus();
 
     await user.tab();
-    expect(dueDateInput).toHaveFocus();
+    expect(recurrenceSelect).toHaveFocus();
 
     await user.tab();
     expect(projectInput).toHaveFocus();

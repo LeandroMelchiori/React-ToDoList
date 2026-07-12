@@ -2,6 +2,7 @@ import React, { ChangeEvent, FormEvent } from 'react';
 import {
     TODO_DATE_TYPES,
     TODO_RECURRENCES,
+    getAllowedRecurrencesForDateType,
     TodoDateType,
     TodoPriority,
     TodoRecurrence,
@@ -29,6 +30,12 @@ const TODO_RECURRENCE_OPTIONS: Array<{ value: TodoRecurrence; label: string }> =
     { value: TODO_RECURRENCES.monthly, label: 'Mensual' },
     { value: TODO_RECURRENCES.yearly, label: 'Anual' },
 ];
+
+const TODO_RECURRENCE_HINTS: Record<TodoDateType, string> = {
+    [TODO_DATE_TYPES.due]: 'Se calcula desde la fecha limite.',
+    [TODO_DATE_TYPES.event]: 'Un dia especifico no puede ser rutina diaria.',
+    [TODO_DATE_TYPES.period]: 'Los periodos se muestran como rangos unicos por ahora.',
+};
 
 interface TodoFormProps {
     initialValue?: string;
@@ -98,6 +105,19 @@ function TodoForm({
     const tagsId = mode === 'edit' ? 'editTodoTags' : 'newTodoTags';
     const subtasksId = mode === 'edit' ? 'editTodoSubtasks' : 'newTodoSubtasks';
     const isProjectLocked = Boolean(lockedProject && mode === 'create');
+    const recurrenceHintId = `${recurrenceId}-hint`;
+    const recurrenceOptions = React.useMemo(() => (
+        TODO_RECURRENCE_OPTIONS.filter(option =>
+            getAllowedRecurrencesForDateType(dateTypeValue).includes(option.value)
+        )
+    ), [dateTypeValue]);
+    const isRecurrenceDisabled = recurrenceOptions.length === 1;
+
+    React.useEffect(() => {
+        if (!recurrenceOptions.some(option => option.value === recurrenceValue)) {
+            setRecurrenceValue(TODO_RECURRENCES.none);
+        }
+    }, [recurrenceOptions, recurrenceValue]);
 
     const onChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
         setNewTodoValue(event.target.value);
@@ -179,6 +199,11 @@ function TodoForm({
 
         if (recurrenceValue !== TODO_RECURRENCES.none && !recurrenceAnchorDate) {
             setFormError('Agrega una fecha para poder repetir la tarea.');
+            return;
+        }
+
+        if (!recurrenceOptions.some(option => option.value === recurrenceValue)) {
+            setFormError('Esa repeticion no corresponde al tipo de fecha elegido.');
             return;
         }
 
@@ -264,20 +289,6 @@ function TodoForm({
                         ))}
                     </select>
                 </label>
-                <label htmlFor={recurrenceId}>
-                    Repeticion
-                    <select
-                        id={recurrenceId}
-                        value={recurrenceValue}
-                        onChange={event => setRecurrenceValue(event.target.value as TodoRecurrence)}
-                    >
-                        {TODO_RECURRENCE_OPTIONS.map(option => (
-                            <option key={option.value} value={option.value}>
-                                {option.label}
-                            </option>
-                        ))}
-                    </select>
-                </label>
                 {dateTypeValue === TODO_DATE_TYPES.due && (
                     <label htmlFor={dueDateId}>
                         Fecha limite
@@ -322,6 +333,27 @@ function TodoForm({
                         </label>
                     </>
                 )}
+                <div className="TodoForm-field">
+                    <label htmlFor={recurrenceId}>
+                        Repeticion
+                    </label>
+                    <select
+                        id={recurrenceId}
+                        value={recurrenceValue}
+                        disabled={isRecurrenceDisabled}
+                        aria-describedby={recurrenceHintId}
+                        onChange={event => setRecurrenceValue(event.target.value as TodoRecurrence)}
+                    >
+                        {recurrenceOptions.map(option => (
+                            <option key={option.value} value={option.value}>
+                                {option.label}
+                            </option>
+                        ))}
+                    </select>
+                    <span className="TodoForm-fieldHint" id={recurrenceHintId}>
+                        {TODO_RECURRENCE_HINTS[dateTypeValue]}
+                    </span>
+                </div>
                 <div className="TodoForm-field">
                     <label htmlFor={projectId}>
                         Proyecto

@@ -174,6 +174,34 @@ function normalizeRecurrence(recurrence: unknown): TodoRecurrence {
     return validRecurrence || TODO_RECURRENCES.none;
 }
 
+function getAllowedRecurrencesForDateType(dateType: unknown): TodoRecurrence[] {
+    const normalizedDateType = normalizeDateType(dateType);
+
+    if (normalizedDateType === TODO_DATE_TYPES.event) {
+        return [
+            TODO_RECURRENCES.none,
+            TODO_RECURRENCES.weekly,
+            TODO_RECURRENCES.monthly,
+            TODO_RECURRENCES.yearly,
+        ];
+    }
+
+    if (normalizedDateType === TODO_DATE_TYPES.period) {
+        return [TODO_RECURRENCES.none];
+    }
+
+    return Object.values(TODO_RECURRENCES);
+}
+
+function normalizeTodoRecurrence(dateType: unknown, recurrence: unknown): TodoRecurrence {
+    const normalizedRecurrence = normalizeRecurrence(recurrence);
+    const allowedRecurrences = getAllowedRecurrencesForDateType(dateType);
+
+    return allowedRecurrences.includes(normalizedRecurrence)
+        ? normalizedRecurrence
+        : TODO_RECURRENCES.none;
+}
+
 function normalizeDueDate(dueDate: unknown): string | null {
     return typeof dueDate === 'string' && dueDate ? dueDate : null;
 }
@@ -394,7 +422,7 @@ function createTodo(text: string, details: TodoDetails = {}): Todo {
         dueDate: schedule.dueDate,
         startDate: schedule.startDate,
         endDate: schedule.endDate,
-        recurrence: normalizeRecurrence('recurrence' in details ? details.recurrence : undefined),
+        recurrence: normalizeTodoRecurrence(schedule.dateType, 'recurrence' in details ? details.recurrence : undefined),
         project: normalizeProject('project' in details ? details.project : undefined),
         tags: normalizeTags('tags' in details ? details.tags : undefined),
         subtasks: normalizeSubtasks('subtasks' in details ? details.subtasks : undefined),
@@ -429,7 +457,7 @@ function normalizeTodos(todos: unknown): Todo[] {
                 dueDate: schedule.dueDate,
                 startDate: schedule.startDate,
                 endDate: schedule.endDate,
-                recurrence: normalizeRecurrence(todo.recurrence),
+                recurrence: normalizeTodoRecurrence(schedule.dateType, todo.recurrence),
                 project: normalizeProject(todo.project),
                 tags: normalizeTags(todo.tags),
                 subtasks: normalizeSubtasks(todo.subtasks),
@@ -851,6 +879,7 @@ export {
     applyTodosImport,
     createTodosBackup,
     createTodo,
+    getAllowedRecurrencesForDateType,
     getTodayDateValue,
     getTodoFacets,
     getTodoDateStatus,
@@ -869,6 +898,7 @@ export {
     normalizePriority,
     normalizeProject,
     normalizeRecurrence,
+    normalizeTodoRecurrence,
     normalizeSubtasks,
     normalizeTags,
     normalizeTodoSchedule,
