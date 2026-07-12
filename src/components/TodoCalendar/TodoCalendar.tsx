@@ -1,9 +1,11 @@
 import React, { ReactNode } from 'react';
 import {
   TODO_DATE_TYPES,
+  TODO_KINDS,
   TODO_RECURRENCES,
   Todo,
   TodoDateType,
+  TodoKind,
   TodoRecurrence,
   isTodoRecurringOnDate,
 } from '../../App/todoModel';
@@ -15,6 +17,13 @@ const TODO_DATE_TYPE_LABELS: Record<TodoDateType, string> = {
   [TODO_DATE_TYPES.due]: 'Limite',
   [TODO_DATE_TYPES.event]: 'Dia',
   [TODO_DATE_TYPES.period]: 'Periodo',
+};
+
+const TODO_KIND_LABELS: Record<TodoKind, string> = {
+  [TODO_KINDS.task]: 'Tarea',
+  [TODO_KINDS.event]: 'Evento',
+  [TODO_KINDS.schedule]: 'Horario',
+  [TODO_KINDS.period]: 'Periodo',
 };
 
 const TODO_RECURRENCE_LABELS: Record<TodoRecurrence, string> = {
@@ -168,8 +177,18 @@ function getTodoTimeLabel(todo: Pick<Todo, 'dateType' | 'startTime' | 'endTime'>
     : todo.startTime;
 }
 
+function getTodoCalendarTypeLabel(todo: Todo): string {
+  if (todo.kind && todo.kind !== TODO_KINDS.task) {
+    return TODO_KIND_LABELS[todo.kind];
+  }
+
+  const schedule = getTodoScheduleRange(todo);
+
+  return TODO_DATE_TYPE_LABELS[schedule?.type || TODO_DATE_TYPES.due];
+}
+
 function isCompactRecurringTodo(todo: Todo): boolean {
-  return todo.recurrence === TODO_RECURRENCES.daily;
+  return todo.kind === TODO_KINDS.task && todo.recurrence === TODO_RECURRENCES.daily;
 }
 
 function TodoCalendar({
@@ -203,7 +222,7 @@ function TodoCalendar({
       className="TodoCalendar"
       id="todo-list"
       tabIndex={-1}
-      aria-label="Tareas"
+      aria-label="Calendario de agenda"
     >
       {error && onError()}
       {loading && onLoading()}
@@ -260,14 +279,15 @@ function TodoCalendar({
                 <div className={className} role="gridcell" key={day.dateValue} aria-label={day.dateValue}>
                   <time dateTime={day.dateValue}>{day.dayNumber}</time>
                   {listedTodos.length > 0 && (
-                    <ul className="TodoCalendar-events" aria-label={`Tareas del ${day.dateValue}`}>
+                    <ul className="TodoCalendar-events" aria-label={`Elementos del ${day.dateValue}`}>
                       {listedTodos.map(todo => {
                         const schedule = getTodoScheduleRange(todo);
                         const type = schedule?.type || TODO_DATE_TYPES.due;
+                        const typeLabel = getTodoCalendarTypeLabel(todo);
                         const recurrenceLabel = getTodoRecurrenceLabel(todo);
                         const timeLabel = getTodoTimeLabel(todo);
                         const eventLabel = [
-                          TODO_DATE_TYPE_LABELS[type],
+                          typeLabel,
                           recurrenceLabel,
                           timeLabel,
                           todo.text,
@@ -281,12 +301,13 @@ function TodoCalendar({
                               className={[
                                 'TodoCalendar-event',
                                 `TodoCalendar-event--${type}`,
+                                `TodoCalendar-event--kind-${todo.kind || TODO_KINDS.task}`,
                                 recurrenceLabel ? 'TodoCalendar-event--recurring' : '',
                                 todo.completed ? 'TodoCalendar-event--completed' : '',
                               ].filter(Boolean).join(' ')}
                               onClick={() => onEditTodo(todo.id)}
                             >
-                              <span>{TODO_DATE_TYPE_LABELS[type]}</span>
+                              <span>{typeLabel}</span>
                               {recurrenceLabel && <small>{recurrenceLabel}</small>}
                               {timeLabel && <small>{timeLabel}</small>}
                               {todo.text}
@@ -333,12 +354,12 @@ function TodoCalendar({
 
           {scheduledTodosInMonth === 0 && (
             <p className="TodoCalendar-emptyMonth">
-              No hay tareas con fecha en este mes.
+              No hay elementos con fecha en este mes.
             </p>
           )}
 
           {unscheduledTodos.length > 0 && (
-            <aside className="TodoCalendar-unscheduled" aria-label="Tareas sin fecha">
+            <aside className="TodoCalendar-unscheduled" aria-label="Elementos sin fecha">
               <h3>Sin fecha</h3>
               <ul>
                 {unscheduledTodos.map(todo => (
@@ -361,6 +382,7 @@ function TodoCalendar({
 export { TodoCalendar };
 export {
   getCalendarDays,
+  getTodoCalendarTypeLabel,
   getTodoScheduleRange,
   getTodoTimeLabel,
   getUnscheduledTodos,

@@ -239,6 +239,16 @@
   color: var(--color-badge-project-text);
 }
 
+.TodoCalendar-event--kind-schedule {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+
+[data-theme='dark'] .TodoCalendar-event--kind-schedule {
+  background: rgba(20, 184, 166, 0.16);
+  color: #99f6e4;
+}
+
 .TodoCalendar-event--completed {
   opacity: 0.62;
   text-decoration: line-through;

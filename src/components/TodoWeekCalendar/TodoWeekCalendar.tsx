@@ -1,9 +1,11 @@
 import React, { ReactNode } from 'react';
 import {
   TODO_DATE_TYPES,
+  TODO_KINDS,
   TODO_RECURRENCES,
   Todo,
   TodoDateType,
+  TodoKind,
   TodoRecurrence,
 } from '../../App/todoModel';
 import {
@@ -21,6 +23,13 @@ const TODO_DATE_TYPE_LABELS: Record<TodoDateType, string> = {
   [TODO_DATE_TYPES.due]: 'Limite',
   [TODO_DATE_TYPES.event]: 'Dia',
   [TODO_DATE_TYPES.period]: 'Periodo',
+};
+
+const TODO_KIND_LABELS: Record<TodoKind, string> = {
+  [TODO_KINDS.task]: 'Tarea',
+  [TODO_KINDS.event]: 'Evento',
+  [TODO_KINDS.schedule]: 'Horario',
+  [TODO_KINDS.period]: 'Periodo',
 };
 
 const TODO_RECURRENCE_LABELS: Record<TodoRecurrence, string> = {
@@ -195,6 +204,10 @@ function getUnscheduledTodos(todos: Todo[]): Todo[] {
 }
 
 function getTodoTypeLabel(todo: Todo): string {
+  if (todo.kind && todo.kind !== TODO_KINDS.task) {
+    return TODO_KIND_LABELS[todo.kind];
+  }
+
   const schedule = getTodoScheduleRange(todo);
 
   return TODO_DATE_TYPE_LABELS[schedule?.type || TODO_DATE_TYPES.due];
@@ -243,7 +256,7 @@ function TodoWeekCalendar({
       className="TodoWeekCalendar"
       id="todo-list"
       tabIndex={-1}
-      aria-label="Tareas"
+      aria-label="Agenda semanal"
     >
       {error && onError()}
       {loading && onLoading()}
@@ -310,6 +323,7 @@ function TodoWeekCalendar({
                             className={[
                               'TodoWeekCalendar-event',
                               `TodoWeekCalendar-event--${getTodoScheduleRange(todo)?.type || TODO_DATE_TYPES.due}`,
+                              `TodoWeekCalendar-event--kind-${todo.kind || TODO_KINDS.task}`,
                               todo.completed ? 'TodoWeekCalendar-event--completed' : '',
                             ].filter(Boolean).join(' ')}
                             aria-label={getTodoWeekAriaLabel(todo)}
@@ -330,12 +344,12 @@ function TodoWeekCalendar({
 
           {timedTodos.length === 0 && (
             <p className="TodoWeekCalendar-emptyWeek">
-              No hay tareas con horario esta semana.
+              No hay elementos con horario esta semana.
             </p>
           )}
 
           {untimedTodos.length > 0 && (
-            <aside className="TodoWeekCalendar-sideList" aria-label="Tareas sin horario esta semana">
+            <aside className="TodoWeekCalendar-sideList" aria-label="Elementos sin horario esta semana">
               <h3>Sin horario esta semana</h3>
               <ul>
                 {untimedTodos.map(({ dateValue, dayLabel, todo }) => (
@@ -351,7 +365,7 @@ function TodoWeekCalendar({
           )}
 
           {unscheduledTodos.length > 0 && (
-            <aside className="TodoWeekCalendar-sideList" aria-label="Tareas sin fecha">
+            <aside className="TodoWeekCalendar-sideList" aria-label="Elementos sin fecha">
               <h3>Sin fecha</h3>
               <ul>
                 {unscheduledTodos.map(todo => (

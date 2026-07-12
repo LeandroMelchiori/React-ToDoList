@@ -254,11 +254,11 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: 'Calendario' }));
 
     expect(screen.getByRole('grid', { name: /Calendario/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Dia 10:00 Rendir parcial/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Evento 10:00 Rendir parcial/ })).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /Periodo 10:00 a 12:00 Inscripcion a finales/ }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('button', { name: /Limite Semanal Pagar cuota/ }).length).toBeGreaterThan(0);
     expect(screen.getAllByText('2 diarias').length).toBeGreaterThan(0);
-    expect(within(screen.getByRole('complementary', { name: 'Tareas sin fecha' })).getByRole('button', { name: 'Leer bibliografia' })).toBeInTheDocument();
+    expect(within(screen.getByRole('complementary', { name: 'Elementos sin fecha' })).getByRole('button', { name: 'Leer bibliografia' })).toBeInTheDocument();
 
     const dailySummary = screen.getAllByText('2 diarias')[0];
     await user.click(dailySummary);
@@ -267,11 +267,11 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: 'Semana' }));
 
     expect(screen.getByRole('grid', { name: /Agenda semanal/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /10:00 Dia Rendir parcial/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /10:00 Evento Rendir parcial/ })).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /10:00 a 12:00 Periodo Inscripcion a finales/ }).length).toBeGreaterThan(0);
-    expect(within(screen.getByRole('complementary', { name: 'Tareas sin fecha' })).getByRole('button', { name: 'Leer bibliografia' })).toBeInTheDocument();
+    expect(within(screen.getByRole('complementary', { name: 'Elementos sin fecha' })).getByRole('button', { name: 'Leer bibliografia' })).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /10:00 Dia Rendir parcial/ }));
+    await user.click(screen.getByRole('button', { name: /10:00 Evento Rendir parcial/ }));
 
     const editDialog = screen.getByRole('dialog', { name: 'Editar tarea' });
     expect(within(editDialog).getByLabelText('Editar tarea')).toHaveValue('Rendir parcial');

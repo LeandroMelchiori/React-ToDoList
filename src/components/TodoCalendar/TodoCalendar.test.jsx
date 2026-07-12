@@ -1,5 +1,6 @@
 import {
   getCalendarDays,
+  getTodoCalendarTypeLabel,
   getTodoScheduleRange,
   getTodoTimeLabel,
   getUnscheduledTodos,
@@ -114,9 +115,16 @@ describe('TodoCalendar helpers', () => {
   });
 
   test('compacts daily recurring todos in the calendar grid', () => {
-    expect(isCompactRecurringTodo({ recurrence: 'daily' })).toBe(true);
-    expect(isCompactRecurringTodo({ recurrence: 'weekly' })).toBe(false);
-    expect(isCompactRecurringTodo({ recurrence: 'none' })).toBe(false);
+    expect(isCompactRecurringTodo({ kind: 'task', recurrence: 'daily' })).toBe(true);
+    expect(isCompactRecurringTodo({ kind: 'task', recurrence: 'weekly' })).toBe(false);
+    expect(isCompactRecurringTodo({ kind: 'task', recurrence: 'none' })).toBe(false);
+    expect(isCompactRecurringTodo({ kind: 'schedule', recurrence: 'daily' })).toBe(false);
+  });
+
+  test('labels calendar items by agenda kind before date type', () => {
+    expect(getTodoCalendarTypeLabel({ kind: 'event', dateType: 'event', startDate: '2026-07-20' })).toBe('Evento');
+    expect(getTodoCalendarTypeLabel({ kind: 'schedule', dateType: 'period', startDate: '2026-07-20' })).toBe('Horario');
+    expect(getTodoCalendarTypeLabel({ kind: 'task', dateType: 'due', dueDate: '2026-07-20' })).toBe('Limite');
   });
 
   test('formats calendar time labels for fixed times and ranges', () => {
