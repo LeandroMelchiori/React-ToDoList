@@ -114,19 +114,83 @@
   border: 1px dashed var(--color-border);
   border-radius: 8px;
   display: grid;
-  gap: 6px;
+  gap: 7px;
   margin: 10px 0 0;
   max-width: 520px;
-  padding: 8px 10px;
+  padding: 9px 10px;
 }
 
-.TodoItem-checklistLabel {
+.TodoItem-checklistSummary {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: grid;
+  font-family: inherit;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  min-height: 24px;
+  padding: 0;
+  text-align: left;
+}
+
+.TodoItem-checklistSummary:focus-visible {
+  box-shadow: var(--shadow-focus);
+  outline: none;
+}
+
+.TodoItem-checklistTitle {
   color: var(--color-text-soft);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.04em;
   line-height: 1;
   text-transform: uppercase;
+}
+
+.TodoItem-checklistCount {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.TodoItem-checklistToggle {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text-soft);
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+  padding: 5px 8px;
+}
+
+.TodoItem-checklistProgress {
+  appearance: none;
+  background: var(--color-border);
+  border: 0;
+  border-radius: 999px;
+  height: 7px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.TodoItem-checklistProgress::-webkit-progress-bar {
+  background: var(--color-border);
+  border-radius: 999px;
+}
+
+.TodoItem-checklistProgress::-webkit-progress-value {
+  background: var(--color-accent);
+  border-radius: 999px;
+}
+
+.TodoItem-checklistProgress::-moz-progress-bar {
+  background: var(--color-accent);
+  border-radius: 999px;
 }
 
 .TodoItem-subtasks {

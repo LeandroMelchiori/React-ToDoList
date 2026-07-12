@@ -812,12 +812,18 @@ describe('App', () => {
     const checklist = screen.getByRole('list', { name: 'Checklist de Organizar lanzamiento' });
     const firstSubtask = within(checklist).getByLabelText('Escribir guia');
 
+    expect(screen.getByRole('progressbar', {
+      name: 'Progreso de subtareas de Organizar lanzamiento: 0 de 2',
+    })).toBeInTheDocument();
     expect(firstSubtask).not.toBeChecked();
     expect(within(checklist).getByLabelText('Validar mobile')).toBeInTheDocument();
 
     await user.click(screen.getByLabelText('Escribir guia'));
 
     expect(screen.getByLabelText('Escribir guia')).toBeChecked();
+    expect(screen.getByRole('progressbar', {
+      name: 'Progreso de subtareas de Organizar lanzamiento: 1 de 2',
+    })).toBeInTheDocument();
     expect(JSON.parse(localStorage.getItem('TODOS_V1'))[0]).toEqual(expect.objectContaining({
       completed: false,
       subtasks: [
@@ -852,6 +858,49 @@ describe('App', () => {
         expect.objectContaining({ text: 'Validar mobile', completed: true }),
       ],
     }));
+  });
+
+  test('collapses long subtasks lists behind progress summary', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      {
+        id: 'todo-routine',
+        text: 'Rutina diaria',
+        completed: false,
+        order: 0,
+        subtasks: [
+          { id: 'subtask-1', text: 'Tender cama', completed: true },
+          { id: 'subtask-2', text: 'Preparar desayuno', completed: false },
+          { id: 'subtask-3', text: 'Ordenar escritorio', completed: true },
+          { id: 'subtask-4', text: 'Sacar basura', completed: false },
+        ],
+      },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Rutina diaria')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', {
+      name: 'Progreso de subtareas de Rutina diaria: 2 de 4',
+    })).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Checklist de Rutina diaria' })).not.toBeInTheDocument();
+
+    const summaryButton = screen.getByRole('button', {
+      name: 'Ver subtareas de Rutina diaria: 2 de 4',
+    });
+    expect(summaryButton).toHaveAttribute('aria-expanded', 'false');
+
+    await user.click(summaryButton);
+
+    const checklist = screen.getByRole('list', { name: 'Checklist de Rutina diaria' });
+    expect(summaryButton).toHaveAttribute('aria-expanded', 'true');
+    expect(within(checklist).getByLabelText('Tender cama')).toBeChecked();
+    expect(within(checklist).getByLabelText('Sacar basura')).not.toBeChecked();
+
+    await user.click(screen.getByRole('button', {
+      name: 'Ocultar subtareas de Rutina diaria: 2 de 4',
+    }));
+
+    expect(screen.queryByRole('list', { name: 'Checklist de Rutina diaria' })).not.toBeInTheDocument();
   });
 
   test('completes pending subtasks when the parent todo is completed', async () => {

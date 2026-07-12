@@ -113,6 +113,11 @@ function TodoItem(props: TodoItemProps) {
     : null;
   const tags = Array.isArray(props.tags) ? props.tags : [];
   const subtasks = Array.isArray(props.subtasks) ? props.subtasks : [];
+  const completedSubtasks = subtasks.filter(subtask => subtask.completed).length;
+  const hasSubtasks = subtasks.length > 0;
+  const [isChecklistExpanded, setIsChecklistExpanded] = React.useState(() => subtasks.length <= 3);
+  const checklistId = React.useId();
+  const subtaskProgressLabel = `${completedSubtasks} de ${subtasks.length}`;
   const isCompletedBySubtasks = props.completed &&
     subtasks.length > 0 &&
     subtasks.every(subtask => subtask.completed);
@@ -166,27 +171,50 @@ function TodoItem(props: TodoItemProps) {
               {props.description}
             </p>
           )}
-          {subtasks.length > 0 && (
+          {hasSubtasks && (
             <div className="TodoItem-checklist">
-              <span className="TodoItem-checklistLabel">
-                Subtareas
-              </span>
-              <ul className="TodoItem-subtasks" aria-label={`Checklist de ${props.text}`}>
-                {subtasks.map(subtask => (
-                  <li className="TodoItem-subtask" key={subtask.id}>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={subtask.completed}
-                        onChange={() => props.onToggleSubtask(subtask.id)}
-                      />
-                      <span className={subtask.completed ? 'TodoItem-subtaskText--complete' : ''}>
-                        {subtask.text}
-                      </span>
-                    </label>
-                  </li>
-                ))}
-              </ul>
+              <button
+                type="button"
+                className="TodoItem-checklistSummary"
+                aria-controls={checklistId}
+                aria-expanded={isChecklistExpanded}
+                aria-label={`${isChecklistExpanded ? 'Ocultar' : 'Ver'} subtareas de ${props.text}: ${subtaskProgressLabel}`}
+                onClick={() => setIsChecklistExpanded(currentValue => !currentValue)}
+              >
+                <span className="TodoItem-checklistTitle">
+                  Subtareas
+                </span>
+                <span className="TodoItem-checklistCount">
+                  {subtaskProgressLabel}
+                </span>
+                <span className="TodoItem-checklistToggle" aria-hidden="true">
+                  {isChecklistExpanded ? 'Ocultar' : 'Ver'}
+                </span>
+              </button>
+              <progress
+                className="TodoItem-checklistProgress"
+                max={subtasks.length}
+                value={completedSubtasks}
+                aria-label={`Progreso de subtareas de ${props.text}: ${subtaskProgressLabel}`}
+              />
+              <div id={checklistId} hidden={!isChecklistExpanded}>
+                <ul className="TodoItem-subtasks" aria-label={`Checklist de ${props.text}`}>
+                  {subtasks.map(subtask => (
+                    <li className="TodoItem-subtask" key={subtask.id}>
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={subtask.completed}
+                          onChange={() => props.onToggleSubtask(subtask.id)}
+                        />
+                        <span className={subtask.completed ? 'TodoItem-subtaskText--complete' : ''}>
+                          {subtask.text}
+                        </span>
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           )}
         </div>
