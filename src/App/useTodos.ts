@@ -2,6 +2,7 @@ import React from 'react';
 import { useLocalStorage } from './useLocalStorage';
 import {
     TODO_FILTERS,
+    TODO_KINDS,
     analyzeTodosImport,
     applyTodosImport,
     createTodo,
@@ -12,11 +13,13 @@ import {
     getVisibleTodos,
     mergeSubtasks,
     moveTodoToPosition as reorderTodoToPosition,
+    normalizeDateTypeForTodoKind,
     normalizeDescription,
     normalizePriority,
     normalizeProject,
     normalizeTags,
-    normalizeTodoRecurrence,
+    normalizeTodoKind,
+    normalizeTodoRecurrenceForKind,
     normalizeTodoSchedule,
     normalizeTodoTimes,
     normalizeTodos,
@@ -434,13 +437,16 @@ function useTodos() {
             return { ok: false, error: 'Ya existe otra tarea con ese texto.' };
         }
 
+        const kind = normalizeTodoKind(details.kind, details.dateType);
+        const dateType = normalizeDateTypeForTodoKind(kind, details.dateType);
         const schedule = normalizeTodoSchedule({
-            dateType: details.dateType,
+            dateType,
             dueDate: details.dueDate,
             startDate: details.startDate,
             endDate: details.endDate,
         });
         const times = normalizeTodoTimes({
+            kind,
             dateType: schedule.dateType,
             startTime: details.startTime,
             endTime: details.endTime,
@@ -450,6 +456,7 @@ function useTodos() {
                 ? {
                     ...todo,
                     text: trimmedText,
+                    kind,
                     description: normalizeDescription(details.description),
                     priority: normalizePriority(details.priority),
                     dateType: schedule.dateType,
@@ -458,10 +465,12 @@ function useTodos() {
                     endDate: schedule.endDate,
                     startTime: times.startTime,
                     endTime: times.endTime,
-                    recurrence: normalizeTodoRecurrence(schedule.dateType, details.recurrence),
+                    recurrence: normalizeTodoRecurrenceForKind(kind, schedule.dateType, details.recurrence),
                     project: normalizeProject(details.project),
                     tags: normalizeTags(details.tags),
-                    subtasks: mergeSubtasks(todo.subtasks, details.subtasks),
+                    subtasks: kind === TODO_KINDS.task ? mergeSubtasks(todo.subtasks, details.subtasks) : [],
+                    completed: kind === TODO_KINDS.task ? todo.completed : false,
+                    completedAt: kind === TODO_KINDS.task ? todo.completedAt : null,
                 }
                 : todo
         );

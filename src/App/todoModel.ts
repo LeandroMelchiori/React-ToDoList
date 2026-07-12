@@ -182,10 +182,38 @@ function normalizeDateType(dateType: unknown): TodoDateType {
     return validDateType || TODO_DATE_TYPES.due;
 }
 
-function normalizeTodoKind(kind: unknown): TodoKind {
+function normalizeTodoKind(kind: unknown, dateType?: unknown): TodoKind {
     const validKind = Object.values(TODO_KINDS).find(value => value === kind);
 
-    return validKind || TODO_KINDS.task;
+    if (validKind) {
+        return validKind;
+    }
+
+    const normalizedDateType = normalizeDateType(dateType);
+
+    if (normalizedDateType === TODO_DATE_TYPES.event) {
+        return TODO_KINDS.event;
+    }
+
+    if (normalizedDateType === TODO_DATE_TYPES.period) {
+        return TODO_KINDS.period;
+    }
+
+    return TODO_KINDS.task;
+}
+
+function normalizeDateTypeForTodoKind(kind: unknown, dateType?: unknown): TodoDateType {
+    const normalizedKind = normalizeTodoKind(kind, dateType);
+
+    if (normalizedKind === TODO_KINDS.event) {
+        return TODO_DATE_TYPES.event;
+    }
+
+    if (normalizedKind === TODO_KINDS.schedule || normalizedKind === TODO_KINDS.period) {
+        return TODO_DATE_TYPES.period;
+    }
+
+    return normalizeDateType(dateType);
 }
 
 function normalizeRecurrence(recurrence: unknown): TodoRecurrence {
@@ -213,9 +241,41 @@ function getAllowedRecurrencesForDateType(dateType: unknown): TodoRecurrence[] {
     return Object.values(TODO_RECURRENCES);
 }
 
+function getAllowedRecurrencesForTodoKind(kind: unknown, dateType: unknown): TodoRecurrence[] {
+    const normalizedKind = normalizeTodoKind(kind, dateType);
+
+    if (normalizedKind === TODO_KINDS.period) {
+        return [TODO_RECURRENCES.none];
+    }
+
+    if (normalizedKind === TODO_KINDS.schedule) {
+        return Object.values(TODO_RECURRENCES);
+    }
+
+    if (normalizedKind === TODO_KINDS.event) {
+        return [
+            TODO_RECURRENCES.none,
+            TODO_RECURRENCES.weekly,
+            TODO_RECURRENCES.monthly,
+            TODO_RECURRENCES.yearly,
+        ];
+    }
+
+    return getAllowedRecurrencesForDateType(dateType);
+}
+
 function normalizeTodoRecurrence(dateType: unknown, recurrence: unknown): TodoRecurrence {
     const normalizedRecurrence = normalizeRecurrence(recurrence);
     const allowedRecurrences = getAllowedRecurrencesForDateType(dateType);
+
+    return allowedRecurrences.includes(normalizedRecurrence)
+        ? normalizedRecurrence
+        : TODO_RECURRENCES.none;
+}
+
+function normalizeTodoRecurrenceForKind(kind: unknown, dateType: unknown, recurrence: unknown): TodoRecurrence {
+    const normalizedRecurrence = normalizeRecurrence(recurrence);
+    const allowedRecurrences = getAllowedRecurrencesForTodoKind(kind, dateType);
 
     return allowedRecurrences.includes(normalizedRecurrence)
         ? normalizedRecurrence
@@ -285,6 +345,7 @@ function normalizeTodoSchedule(details: {
 }
 
 function normalizeTodoTimes(details: {
+    kind?: unknown;
     dateType?: unknown;
     startTime?: unknown;
     endTime?: unknown;
@@ -292,11 +353,12 @@ function normalizeTodoTimes(details: {
     startTime: string | null;
     endTime: string | null;
 } {
+    const kind = normalizeTodoKind(details.kind, details.dateType);
     const dateType = normalizeDateType(details.dateType);
     const startTime = normalizeTimeValue(details.startTime);
     const endTime = normalizeTimeValue(details.endTime);
 
-    if (dateType === TODO_DATE_TYPES.period) {
+    if (kind === TODO_KINDS.schedule || dateType === TODO_DATE_TYPES.period) {
         return {
             startTime,
             endTime: startTime ? endTime : null,
@@ -460,14 +522,19 @@ function mergeSubtasks(existingSubtasks: unknown, nextSubtasks: unknown): TodoSu
 }
 
 function createTodo(text: string, details: TodoDetails = {}): Todo {
-    const kind = normalizeTodoKind('kind' in details ? details.kind : undefined);
+    const kind = normalizeTodoKind(
+        'kind' in details ? details.kind : undefined,
+        'dateType' in details ? details.dateType : undefined
+    );
+    const dateType = normalizeDateTypeForTodoKind(kind, 'dateType' in details ? details.dateType : undefined);
     const schedule = normalizeTodoSchedule({
-        dateType: 'dateType' in details ? details.dateType : undefined,
+        dateType,
         dueDate: 'dueDate' in details ? details.dueDate : undefined,
         startDate: 'startDate' in details ? details.startDate : undefined,
         endDate: 'endDate' in details ? details.endDate : undefined,
     });
     const times = normalizeTodoTimes({
+        kind,
         dateType: schedule.dateType,
         startTime: 'startTime' in details ? details.startTime : undefined,
         endTime: 'endTime' in details ? details.endTime : undefined,
@@ -487,10 +554,12 @@ function createTodo(text: string, details: TodoDetails = {}): Todo {
         endDate: schedule.endDate,
         startTime: times.startTime,
         endTime: times.endTime,
-        recurrence: normalizeTodoRecurrence(schedule.dateType, 'recurrence' in details ? details.recurrence : undefined),
+        recurrence: normalizeTodoRecurrenceForKind(kind, schedule.dateType, 'recurrence' in details ? details.recurrence : undefined),
         project: normalizeProject('project' in details ? details.project : undefined),
         tags: normalizeTags('tags' in details ? details.tags : undefined),
-        subtasks: normalizeSubtasks('subtasks' in details ? details.subtasks : undefined),
+        subtasks: kind === TODO_KINDS.task
+            ? normalizeSubtasks('subtasks' in details ? details.subtasks : undefined)
+            : [],
         createdAt: new Date().toISOString(),
         completedAt: null,
     };
@@ -504,14 +573,16 @@ function normalizeTodos(todos: unknown): Todo[] {
     const normalizedTodos = todos
         .filter((todo): todo is TodoInputWithText => isRecord(todo) && typeof todo.text === 'string' && Boolean(todo.text.trim()))
         .map((todo, index) => {
-            const kind = normalizeTodoKind(todo.kind);
+            const kind = normalizeTodoKind(todo.kind, todo.dateType);
+            const dateType = normalizeDateTypeForTodoKind(kind, todo.dateType);
             const schedule = normalizeTodoSchedule({
-                dateType: todo.dateType,
+                dateType,
                 dueDate: todo.dueDate,
                 startDate: todo.startDate,
                 endDate: todo.endDate,
             });
             const times = normalizeTodoTimes({
+                kind,
                 dateType: schedule.dateType,
                 startTime: todo.startTime,
                 endTime: todo.endTime,
@@ -522,7 +593,7 @@ function normalizeTodos(todos: unknown): Todo[] {
                 text: todo.text.trim(),
                 kind,
                 description: normalizeDescription(todo.description),
-                completed: Boolean(todo.completed),
+                completed: kind === TODO_KINDS.task ? Boolean(todo.completed) : false,
                 order: normalizeOrder(todo.order, index),
                 priority: normalizePriority(todo.priority),
                 dateType: schedule.dateType,
@@ -531,12 +602,12 @@ function normalizeTodos(todos: unknown): Todo[] {
                 endDate: schedule.endDate,
                 startTime: times.startTime,
                 endTime: times.endTime,
-                recurrence: normalizeTodoRecurrence(schedule.dateType, todo.recurrence),
+                recurrence: normalizeTodoRecurrenceForKind(kind, schedule.dateType, todo.recurrence),
                 project: normalizeProject(todo.project),
                 tags: normalizeTags(todo.tags),
-                subtasks: normalizeSubtasks(todo.subtasks),
+                subtasks: kind === TODO_KINDS.task ? normalizeSubtasks(todo.subtasks) : [],
                 createdAt: normalizeDateTime(todo.createdAt),
-                completedAt: normalizeDateTime(todo.completedAt),
+                completedAt: kind === TODO_KINDS.task ? normalizeDateTime(todo.completedAt) : null,
             };
         });
 
@@ -710,7 +781,7 @@ function getTodoRecurrenceAnchorDate(todo: Pick<Todo, 'dateType' | 'dueDate' | '
 }
 
 function isTodoRecurringOnDate(
-    todo: Pick<Todo, 'dateType' | 'dueDate' | 'startDate' | 'recurrence'>,
+    todo: Pick<Todo, 'dateType' | 'dueDate' | 'startDate' | 'recurrence'> & { endDate?: string | null },
     dateValue: string
 ): boolean {
     const recurrence = normalizeRecurrence(todo.recurrence);
@@ -721,7 +792,7 @@ function isTodoRecurringOnDate(
 
     const anchorDate = getTodoRecurrenceAnchorDate(todo);
 
-    if (!anchorDate || dateValue < anchorDate) {
+    if (!anchorDate || dateValue < anchorDate || (todo.endDate && dateValue > todo.endDate)) {
         return false;
     }
 
@@ -955,6 +1026,7 @@ export {
     createTodosBackup,
     createTodo,
     getAllowedRecurrencesForDateType,
+    getAllowedRecurrencesForTodoKind,
     getTodayDateValue,
     getTodoFacets,
     getTodoDateStatus,
@@ -968,6 +1040,7 @@ export {
     moveTodoToPosition,
     normalizeDueDate,
     normalizeDateType,
+    normalizeDateTypeForTodoKind,
     normalizeDescription,
     normalizeOrder,
     normalizePriority,
@@ -975,6 +1048,7 @@ export {
     normalizeRecurrence,
     normalizeTodoKind,
     normalizeTodoRecurrence,
+    normalizeTodoRecurrenceForKind,
     normalizeSubtasks,
     normalizeTags,
     normalizeTodoSchedule,

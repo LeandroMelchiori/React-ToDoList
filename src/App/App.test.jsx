@@ -126,11 +126,11 @@ describe('App', () => {
 
     await user.click(screen.getByRole('button', { name: 'Crear nueva tarea' }));
     await user.type(screen.getByLabelText('Nueva tarea'), 'Rendir parcial de algebra');
+    await user.selectOptions(screen.getByLabelText('Tipo de elemento'), 'event');
     await user.type(screen.getByLabelText('Descripcion'), 'Aula 4, llevar DNI y calculadora');
-    await user.selectOptions(screen.getByLabelText('Tipo de fecha'), 'event');
     expect(within(screen.getByLabelText('Repeticion')).queryByRole('option', { name: 'Diaria' })).not.toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText('Repeticion'), 'yearly');
-    await user.type(screen.getByLabelText('Dia de la tarea'), '2026-08-15');
+    await user.type(screen.getByLabelText('Dia del evento'), '2026-08-15');
     fireEvent.change(screen.getByLabelText('Hora del evento'), { target: { value: '10:00' } });
     await user.click(screen.getByRole('button', { name: 'Agregar' }));
 
@@ -141,7 +141,7 @@ describe('App', () => {
 
     await user.click(screen.getByRole('button', { name: 'Crear nueva tarea' }));
     await user.type(screen.getByLabelText('Nueva tarea'), 'Inscripcion a finales');
-    await user.selectOptions(screen.getByLabelText('Tipo de fecha'), 'period');
+    await user.selectOptions(screen.getByLabelText('Tipo de elemento'), 'period');
     expect(screen.getByLabelText('Repeticion')).toBeDisabled();
     await user.type(screen.getByLabelText('Inicio del periodo'), '2026-09-01');
     await user.type(screen.getByLabelText('Fin del periodo'), '2026-08-30');
@@ -162,6 +162,7 @@ describe('App', () => {
     expect(storedTodos).toEqual([
       expect.objectContaining({
         text: 'Rendir parcial de algebra',
+        kind: 'event',
         description: 'Aula 4, llevar DNI y calculadora',
         dateType: 'event',
         dueDate: null,
@@ -173,6 +174,7 @@ describe('App', () => {
       }),
       expect.objectContaining({
         text: 'Inscripcion a finales',
+        kind: 'period',
         dateType: 'period',
         dueDate: null,
         startDate: '2026-09-01',
@@ -1445,9 +1447,9 @@ describe('App', () => {
 
     const dialog = screen.getByRole('dialog', { name: 'Crear tarea' });
     const textarea = within(dialog).getByLabelText('Nueva tarea');
+    const kindSelect = within(dialog).getByLabelText('Tipo de elemento');
     const descriptionInput = within(dialog).getByLabelText('Descripcion');
     const prioritySelect = within(dialog).getByLabelText('Prioridad');
-    const dateTypeSelect = within(dialog).getByLabelText('Tipo de fecha');
     const recurrenceSelect = within(dialog).getByLabelText('Repeticion');
     const dueDateInput = within(dialog).getByLabelText('Fecha limite');
     const dueTimeInput = within(dialog).getByLabelText('Hora limite');
@@ -1461,13 +1463,13 @@ describe('App', () => {
     expect(textarea).toHaveFocus();
 
     await user.tab();
+    expect(kindSelect).toHaveFocus();
+
+    await user.tab();
     expect(descriptionInput).toHaveFocus();
 
     await user.tab();
     expect(prioritySelect).toHaveFocus();
-
-    await user.tab();
-    expect(dateTypeSelect).toHaveFocus();
 
     await user.tab();
     expect(dueDateInput).toHaveFocus();

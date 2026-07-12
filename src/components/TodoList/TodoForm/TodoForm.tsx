@@ -1,9 +1,10 @@
 import React, { ChangeEvent, FormEvent } from 'react';
 import {
     TODO_DATE_TYPES,
+    TODO_KINDS,
     TODO_RECURRENCES,
-    getAllowedRecurrencesForDateType,
-    TodoDateType,
+    getAllowedRecurrencesForTodoKind,
+    TodoKind,
     TodoPriority,
     TodoRecurrence,
     TodoSubtask,
@@ -17,10 +18,27 @@ const TODO_PRIORITY_OPTIONS = [
     { value: 'high', label: 'Alta' },
 ];
 
-const TODO_DATE_TYPE_OPTIONS: Array<{ value: TodoDateType; label: string }> = [
-    { value: TODO_DATE_TYPES.due, label: 'Fecha limite' },
-    { value: TODO_DATE_TYPES.event, label: 'Dia especifico' },
-    { value: TODO_DATE_TYPES.period, label: 'Periodo' },
+const TODO_KIND_OPTIONS: Array<{ value: TodoKind; label: string; hint: string }> = [
+    {
+        value: TODO_KINDS.task,
+        label: 'Tarea',
+        hint: 'Algo que se completa y puede tener subtareas.',
+    },
+    {
+        value: TODO_KINDS.event,
+        label: 'Evento',
+        hint: 'Algo que sucede en un dia y horario.',
+    },
+    {
+        value: TODO_KINDS.schedule,
+        label: 'Horario',
+        hint: 'Un bloque fijo como cursada, taller o rutina de agenda.',
+    },
+    {
+        value: TODO_KINDS.period,
+        label: 'Periodo',
+        hint: 'Un rango importante, como inscripciones o fechas abiertas.',
+    },
 ];
 
 const TODO_RECURRENCE_OPTIONS: Array<{ value: TodoRecurrence; label: string }> = [
@@ -31,17 +49,18 @@ const TODO_RECURRENCE_OPTIONS: Array<{ value: TodoRecurrence; label: string }> =
     { value: TODO_RECURRENCES.yearly, label: 'Anual' },
 ];
 
-const TODO_RECURRENCE_HINTS: Record<TodoDateType, string> = {
-    [TODO_DATE_TYPES.due]: 'Se calcula desde la fecha limite.',
-    [TODO_DATE_TYPES.event]: 'Un dia especifico no puede ser rutina diaria.',
-    [TODO_DATE_TYPES.period]: 'Los periodos se muestran como rangos unicos por ahora.',
+const TODO_RECURRENCE_HINTS: Record<TodoKind, string> = {
+    [TODO_KINDS.task]: 'Se calcula desde la fecha limite.',
+    [TODO_KINDS.event]: 'Util para eventos que vuelven semanal, mensual o anualmente.',
+    [TODO_KINDS.schedule]: 'Ideal para cursadas o bloques fijos de agenda.',
+    [TODO_KINDS.period]: 'Los periodos se muestran como rangos unicos.',
 };
 
 interface TodoFormProps {
     initialValue?: string;
+    initialKind?: TodoKind;
     initialDescription?: string | null;
     initialPriority?: TodoPriority;
-    initialDateType?: TodoDateType;
     initialDueDate?: string | null;
     initialStartDate?: string | null;
     initialEndDate?: string | null;
@@ -61,9 +80,9 @@ interface TodoFormProps {
 
 function TodoForm({
     initialValue = '',
+    initialKind = TODO_KINDS.task,
     initialDescription = '',
     initialPriority = 'medium',
-    initialDateType = TODO_DATE_TYPES.due,
     initialDueDate = '',
     initialStartDate = '',
     initialEndDate = '',
@@ -81,9 +100,9 @@ function TodoForm({
     submitLabel = 'Agregar',
 }: TodoFormProps) {
     const [newTodoValue, setNewTodoValue] = React.useState(initialValue);
+    const [kindValue, setKindValue] = React.useState<TodoKind>(initialKind || TODO_KINDS.task);
     const [descriptionValue, setDescriptionValue] = React.useState(initialDescription || '');
     const [priorityValue, setPriorityValue] = React.useState<TodoPriority>(initialPriority || 'medium');
-    const [dateTypeValue, setDateTypeValue] = React.useState<TodoDateType>(initialDateType || TODO_DATE_TYPES.due);
     const [dueDateValue, setDueDateValue] = React.useState(initialDueDate || '');
     const [startDateValue, setStartDateValue] = React.useState(initialStartDate || '');
     const [endDateValue, setEndDateValue] = React.useState(initialEndDate || '');
@@ -100,9 +119,9 @@ function TodoForm({
     const [subtaskDraft, setSubtaskDraft] = React.useState('');
     const [formError, setFormError] = React.useState('');
     const inputId = mode === 'edit' ? 'editTodo' : 'newTodo';
+    const kindId = mode === 'edit' ? 'editTodoKind' : 'newTodoKind';
     const descriptionId = mode === 'edit' ? 'editTodoDescription' : 'newTodoDescription';
     const priorityId = mode === 'edit' ? 'editTodoPriority' : 'newTodoPriority';
-    const dateTypeId = mode === 'edit' ? 'editTodoDateType' : 'newTodoDateType';
     const recurrenceId = mode === 'edit' ? 'editTodoRecurrence' : 'newTodoRecurrence';
     const dueDateId = mode === 'edit' ? 'editTodoDueDate' : 'newTodoDueDate';
     const startDateId = mode === 'edit' ? 'editTodoStartDate' : 'newTodoStartDate';
@@ -113,12 +132,22 @@ function TodoForm({
     const tagsId = mode === 'edit' ? 'editTodoTags' : 'newTodoTags';
     const subtasksId = mode === 'edit' ? 'editTodoSubtasks' : 'newTodoSubtasks';
     const isProjectLocked = Boolean(lockedProject && mode === 'create');
+    const isTaskKind = kindValue === TODO_KINDS.task;
+    const isEventKind = kindValue === TODO_KINDS.event;
+    const isScheduleKind = kindValue === TODO_KINDS.schedule;
+    const isPeriodKind = kindValue === TODO_KINDS.period;
+    const kindHint = TODO_KIND_OPTIONS.find(option => option.value === kindValue)?.hint || '';
+    const dateTypeForKind = isEventKind
+        ? TODO_DATE_TYPES.event
+        : isScheduleKind || isPeriodKind
+            ? TODO_DATE_TYPES.period
+            : TODO_DATE_TYPES.due;
     const recurrenceHintId = `${recurrenceId}-hint`;
     const recurrenceOptions = React.useMemo(() => (
         TODO_RECURRENCE_OPTIONS.filter(option =>
-            getAllowedRecurrencesForDateType(dateTypeValue).includes(option.value)
+            getAllowedRecurrencesForTodoKind(kindValue, dateTypeForKind).includes(option.value)
         )
-    ), [dateTypeValue]);
+    ), [dateTypeForKind, kindValue]);
     const isRecurrenceDisabled = recurrenceOptions.length === 1;
 
     React.useEffect(() => {
@@ -132,15 +161,40 @@ function TodoForm({
         setFormError('');
     }
 
-    const handleDateTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        const nextDateType = event.target.value as TodoDateType;
+    const handleKindChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const nextKind = event.target.value as TodoKind;
 
-        setDateTypeValue(nextDateType);
+        setKindValue(nextKind);
         setFormError('');
 
-        if (nextDateType !== TODO_DATE_TYPES.period) {
+        if (nextKind === TODO_KINDS.task) {
+            setEndDateValue('');
             setEndTimeValue('');
+            return;
         }
+
+        if (nextKind === TODO_KINDS.event) {
+            setDueDateValue('');
+            setEndDateValue('');
+            setEndTimeValue('');
+            setSubtasksValue([]);
+            setSubtaskDraft('');
+            setRecurrenceValue(TODO_RECURRENCES.none);
+            return;
+        }
+
+        if (nextKind === TODO_KINDS.schedule) {
+            setDueDateValue('');
+            setSubtasksValue([]);
+            setSubtaskDraft('');
+            setRecurrenceValue(TODO_RECURRENCES.weekly);
+            return;
+        }
+
+        setDueDateValue('');
+        setSubtasksValue([]);
+        setSubtaskDraft('');
+        setRecurrenceValue(TODO_RECURRENCES.none);
     };
 
     const addSubtask = () => {
@@ -203,7 +257,7 @@ function TodoForm({
         event.preventDefault();
 
         if (
-            dateTypeValue === TODO_DATE_TYPES.period &&
+            (isScheduleKind || isPeriodKind) &&
             startDateValue &&
             endDateValue &&
             endDateValue < startDateValue
@@ -218,7 +272,7 @@ function TodoForm({
         }
 
         if (
-            dateTypeValue === TODO_DATE_TYPES.period &&
+            (isScheduleKind || isPeriodKind) &&
             startTimeValue &&
             endTimeValue &&
             endTimeValue <= startTimeValue
@@ -227,7 +281,7 @@ function TodoForm({
             return;
         }
 
-        const recurrenceAnchorDate = dateTypeValue === TODO_DATE_TYPES.due
+        const recurrenceAnchorDate = isTaskKind
             ? dueDateValue
             : startDateValue;
 
@@ -241,21 +295,22 @@ function TodoForm({
             return;
         }
 
-        const submittedSubtasks = getSubmittedSubtasks();
+        const submittedSubtasks = isTaskKind ? getSubmittedSubtasks() : [];
 
         if (!submittedSubtasks) {
             return;
         }
 
         const result = onSubmitTodo(newTodoValue, {
+            kind: kindValue,
             description: descriptionValue,
             priority: priorityValue,
-            dateType: dateTypeValue,
-            dueDate: dueDateValue,
-            startDate: startDateValue,
-            endDate: endDateValue,
+            dateType: dateTypeForKind,
+            dueDate: isTaskKind ? dueDateValue : '',
+            startDate: isTaskKind ? '' : startDateValue,
+            endDate: isScheduleKind || isPeriodKind ? endDateValue : '',
             startTime: startTimeValue,
-            endTime: endTimeValue,
+            endTime: isScheduleKind || isPeriodKind ? endTimeValue : '',
             recurrence: recurrenceValue,
             project: isProjectLocked ? lockedProject : projectValue,
             tags: tagsValue,
@@ -287,6 +342,25 @@ function TodoForm({
                     {formError}
                 </p>
             )}
+            <div className="TodoForm-field TodoForm-kindField">
+                <label htmlFor={kindId}>
+                    Tipo de elemento
+                </label>
+                <select
+                    id={kindId}
+                    value={kindValue}
+                    onChange={handleKindChange}
+                >
+                    {TODO_KIND_OPTIONS.map(option => (
+                        <option key={option.value} value={option.value}>
+                            {option.label}
+                        </option>
+                    ))}
+                </select>
+                <span className="TodoForm-fieldHint">
+                    {kindHint}
+                </span>
+            </div>
             <label className="TodoForm-description" htmlFor={descriptionId}>
                 Descripcion
                 <textarea
@@ -297,36 +371,22 @@ function TodoForm({
                 />
             </label>
             <div className="TodoForm-fields">
-                <label htmlFor={priorityId}>
-                    Prioridad
-                    <select
-                        id={priorityId}
-                        value={priorityValue}
-                        onChange={event => setPriorityValue(event.target.value as TodoPriority)}
-                    >
-                        {TODO_PRIORITY_OPTIONS.map(option => (
-                            <option key={option.value} value={option.value}>
-                                {option.label}
-                            </option>
-                        ))}
-                    </select>
-                </label>
-                <label htmlFor={dateTypeId}>
-                    Tipo de fecha
-                    <select
-                        id={dateTypeId}
-                        value={dateTypeValue}
-                        onChange={handleDateTypeChange}
-                    >
-                        {TODO_DATE_TYPE_OPTIONS.map(option => (
-                            <option key={option.value} value={option.value}>
-                                {option.label}
-                            </option>
-                        ))}
-                    </select>
-                </label>
-                {dateTypeValue === TODO_DATE_TYPES.due && (
+                {isTaskKind && (
                     <>
+                        <label htmlFor={priorityId}>
+                            Prioridad
+                            <select
+                                id={priorityId}
+                                value={priorityValue}
+                                onChange={event => setPriorityValue(event.target.value as TodoPriority)}
+                            >
+                                {TODO_PRIORITY_OPTIONS.map(option => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
                         <label htmlFor={dueDateId}>
                             Fecha limite
                             <input
@@ -347,10 +407,10 @@ function TodoForm({
                         </label>
                     </>
                 )}
-                {dateTypeValue === TODO_DATE_TYPES.event && (
+                {isEventKind && (
                     <>
                         <label htmlFor={startDateId}>
-                            Dia de la tarea
+                            Dia del evento
                             <input
                                 id={startDateId}
                                 type="date"
@@ -369,7 +429,47 @@ function TodoForm({
                         </label>
                     </>
                 )}
-                {dateTypeValue === TODO_DATE_TYPES.period && (
+                {isScheduleKind && (
+                    <>
+                        <label htmlFor={startDateId}>
+                            Primer dia
+                            <input
+                                id={startDateId}
+                                type="date"
+                                value={startDateValue}
+                                onChange={event => setStartDateValue(event.target.value)}
+                            />
+                        </label>
+                        <label htmlFor={endDateId}>
+                            Ultimo dia
+                            <input
+                                id={endDateId}
+                                type="date"
+                                value={endDateValue}
+                                onChange={event => setEndDateValue(event.target.value)}
+                            />
+                        </label>
+                        <label htmlFor={startTimeId}>
+                            Hora de inicio
+                            <input
+                                id={startTimeId}
+                                type="time"
+                                value={startTimeValue}
+                                onChange={event => setStartTimeValue(event.target.value)}
+                            />
+                        </label>
+                        <label htmlFor={endTimeId}>
+                            Hora de fin
+                            <input
+                                id={endTimeId}
+                                type="time"
+                                value={endTimeValue}
+                                onChange={event => setEndTimeValue(event.target.value)}
+                            />
+                        </label>
+                    </>
+                )}
+                {isPeriodKind && (
                     <>
                         <label htmlFor={startDateId}>
                             Inicio del periodo
@@ -427,7 +527,7 @@ function TodoForm({
                         ))}
                     </select>
                     <span className="TodoForm-fieldHint" id={recurrenceHintId}>
-                        {TODO_RECURRENCE_HINTS[dateTypeValue]}
+                        {TODO_RECURRENCE_HINTS[kindValue]}
                     </span>
                 </div>
                 <div className="TodoForm-field">
@@ -460,40 +560,42 @@ function TodoForm({
                     />
                 </label>
             </div>
-            <div className="TodoForm-subtasks">
-                <label htmlFor={subtasksId}>
-                    Subtareas
-                </label>
-                <div className="TodoForm-subtaskControls">
-                    <input
-                        id={subtasksId}
-                        type="text"
-                        placeholder="Ej: leer apunte"
-                        value={subtaskDraft}
-                        onChange={event => setSubtaskDraft(event.target.value)}
-                        onKeyDown={handleSubtaskKeyDown}
-                    />
-                    <button type="button" onClick={addSubtask}>
-                        Agregar subtarea
-                    </button>
+            {isTaskKind && (
+                <div className="TodoForm-subtasks">
+                    <label htmlFor={subtasksId}>
+                        Subtareas
+                    </label>
+                    <div className="TodoForm-subtaskControls">
+                        <input
+                            id={subtasksId}
+                            type="text"
+                            placeholder="Ej: leer apunte"
+                            value={subtaskDraft}
+                            onChange={event => setSubtaskDraft(event.target.value)}
+                            onKeyDown={handleSubtaskKeyDown}
+                        />
+                        <button type="button" onClick={addSubtask}>
+                            Agregar subtarea
+                        </button>
+                    </div>
+                    {subtasksValue.length > 0 && (
+                        <ul className="TodoForm-subtaskList" aria-label="Subtareas agregadas">
+                            {subtasksValue.map(subtask => (
+                                <li key={subtask}>
+                                    <span>{subtask}</span>
+                                    <button
+                                        type="button"
+                                        aria-label={`Quitar subtarea ${subtask}`}
+                                        onClick={() => removeSubtask(subtask)}
+                                    >
+                                        x
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
                 </div>
-                {subtasksValue.length > 0 && (
-                    <ul className="TodoForm-subtaskList" aria-label="Subtareas agregadas">
-                        {subtasksValue.map(subtask => (
-                            <li key={subtask}>
-                                <span>{subtask}</span>
-                                <button
-                                    type="button"
-                                    aria-label={`Quitar subtarea ${subtask}`}
-                                    onClick={() => removeSubtask(subtask)}
-                                >
-                                    x
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-            </div>
+            )}
             <div className='TodoForm-buttonContainer'>
                 <button
                     type="button"

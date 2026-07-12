@@ -437,9 +437,9 @@ function App() {
                     ) : (
                         <TodoForm 
                             initialValue={editingTodo?.text || ''}
+                            initialKind={editingTodo?.kind}
                             initialDescription={editingTodo?.description}
                             initialPriority={editingTodo?.priority}
-                            initialDateType={editingTodo?.dateType}
                             initialDueDate={editingTodo?.dueDate}
                             initialStartDate={editingTodo?.startDate}
                             initialEndDate={editingTodo?.endDate}

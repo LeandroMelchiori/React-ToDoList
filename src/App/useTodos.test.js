@@ -11,6 +11,7 @@ import {
   createTodosBackup,
   createTodo,
   getAllowedRecurrencesForDateType,
+  getAllowedRecurrencesForTodoKind,
   getTodoFacets,
   getTodoDateStatus,
   getTodoGroups,
@@ -186,10 +187,13 @@ describe('todo helpers', () => {
     expect(normalizePriority(TODO_PRIORITIES.low)).toBe(TODO_PRIORITIES.low);
     expect(normalizeTodoKind('schedule')).toBe(TODO_KINDS.schedule);
     expect(normalizeTodoKind('note')).toBe(TODO_KINDS.task);
+    expect(normalizeTodoKind(undefined, TODO_DATE_TYPES.event)).toBe(TODO_KINDS.event);
+    expect(normalizeTodoKind(undefined, TODO_DATE_TYPES.period)).toBe(TODO_KINDS.period);
     expect(normalizeRecurrence('quarterly')).toBe(TODO_RECURRENCES.none);
     expect(normalizeRecurrence(TODO_RECURRENCES.monthly)).toBe(TODO_RECURRENCES.monthly);
     expect(getAllowedRecurrencesForDateType(TODO_DATE_TYPES.event)).not.toContain(TODO_RECURRENCES.daily);
     expect(getAllowedRecurrencesForDateType(TODO_DATE_TYPES.period)).toEqual([TODO_RECURRENCES.none]);
+    expect(getAllowedRecurrencesForTodoKind(TODO_KINDS.schedule, TODO_DATE_TYPES.period)).toContain(TODO_RECURRENCES.weekly);
     expect(normalizeTodoRecurrence(TODO_DATE_TYPES.event, TODO_RECURRENCES.daily)).toBe(TODO_RECURRENCES.none);
     expect(normalizeTodoRecurrence(TODO_DATE_TYPES.event, TODO_RECURRENCES.yearly)).toBe(TODO_RECURRENCES.yearly);
     expect(normalizeTodoRecurrence(TODO_DATE_TYPES.period, TODO_RECURRENCES.yearly)).toBe(TODO_RECURRENCES.none);
