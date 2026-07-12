@@ -195,6 +195,7 @@ describe('App', () => {
         completed: false,
         dateType: 'event',
         startDate: today,
+        startTime: '10:00',
         order: 0,
       },
       {
@@ -204,6 +205,8 @@ describe('App', () => {
         dateType: 'period',
         startDate: today,
         endDate: tomorrow,
+        startTime: '10:00',
+        endTime: '12:00',
         order: 1,
       },
       {
@@ -247,8 +250,8 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: 'Calendario' }));
 
     expect(screen.getByRole('grid', { name: /Calendario/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Dia Rendir parcial/ })).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: /Periodo Inscripcion a finales/ }).length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: /Dia 10:00 Rendir parcial/ })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /Periodo 10:00 a 12:00 Inscripcion a finales/ }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('button', { name: /Limite Semanal Pagar cuota/ }).length).toBeGreaterThan(0);
     expect(screen.getAllByText('2 diarias').length).toBeGreaterThan(0);
     expect(within(screen.getByRole('complementary', { name: 'Tareas sin fecha' })).getByRole('button', { name: 'Leer bibliografia' })).toBeInTheDocument();
@@ -257,7 +260,14 @@ describe('App', () => {
     await user.click(dailySummary);
     expect(within(dailySummary.closest('details')).getByRole('button', { name: 'Tomar medicacion' })).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /Dia Rendir parcial/ }));
+    await user.click(screen.getByRole('button', { name: 'Semana' }));
+
+    expect(screen.getByRole('grid', { name: /Agenda semanal/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /10:00 Dia Rendir parcial/ })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /10:00 a 12:00 Periodo Inscripcion a finales/ }).length).toBeGreaterThan(0);
+    expect(within(screen.getByRole('complementary', { name: 'Tareas sin fecha' })).getByRole('button', { name: 'Leer bibliografia' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /10:00 Dia Rendir parcial/ }));
 
     const editDialog = screen.getByRole('dialog', { name: 'Editar tarea' });
     expect(within(editDialog).getByLabelText('Editar tarea')).toHaveValue('Rendir parcial');

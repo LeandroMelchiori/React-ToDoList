@@ -13,6 +13,7 @@ import { TodoHeaderTools } from '../components/TodoHeader/TodoHeaderTools/TodoHe
 import { TodoList } from '../components/TodoList/TodoList';
 import { TodoItem } from '../components/TodoList/TodoItem/TodoItem';
 import { TodoCalendar } from '../components/TodoCalendar/TodoCalendar';
+import { TodoWeekCalendar } from '../components/TodoWeekCalendar/TodoWeekCalendar';
 import { TodoViewMode, TodoViewToggle } from '../components/TodoViewToggle/TodoViewToggle';
 import { CreateTodoButton } from '../components/CreateTodoButton/CreateTodoButton';
 import { Modal } from '../components/Modal/Modal';
@@ -321,6 +322,28 @@ function App() {
 
             {todoViewMode === 'calendar' ? (
                 <TodoCalendar
+                    error={error}
+                    loading={loading}
+                    visibleTodos={visibleTodos}
+                    totalTodos={totalTodos}
+                    onEditTodo={startEditingTodo}
+                    onError={() => <TodosError />}
+                    onLoading={() => <TodosLoading />}
+                    onEmptyTodos={() => (
+                        <EmptyTodos
+                            onCreateTemplate={(template) => addTodo(template.todo.text, template.todo)}
+                        />
+                    )}
+                    onEmptySearchResults={() => (
+                        <p className="TodoList-emptySearch">
+                            {searchValue
+                                ? 'No hay tareas que coincidan con tu busqueda.'
+                                : 'No hay tareas para este filtro.'}
+                        </p>
+                    )}
+                />
+            ) : todoViewMode === 'week' ? (
+                <TodoWeekCalendar
                     error={error}
                     loading={loading}
                     visibleTodos={visibleTodos}
