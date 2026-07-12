@@ -24,6 +24,7 @@ import {
   normalizeRecurrence,
   normalizeSubtasks,
   normalizeTags,
+  normalizeTimeValue,
   normalizeTodoRecurrence,
   normalizeTodos,
   readTodosBackup,
@@ -69,6 +70,8 @@ describe('todo helpers', () => {
         dueDate: null,
         startDate: null,
         endDate: null,
+        startTime: null,
+        endTime: null,
         recurrence: TODO_RECURRENCES.none,
         project: null,
         tags: [],
@@ -87,6 +90,8 @@ describe('todo helpers', () => {
         dueDate: null,
         startDate: null,
         endDate: null,
+        startTime: null,
+        endTime: null,
         recurrence: TODO_RECURRENCES.none,
         project: null,
         tags: [],
@@ -138,6 +143,7 @@ describe('todo helpers', () => {
     const todo = createTodo('  Practicar React  ', {
       priority: TODO_PRIORITIES.high,
       dueDate: '2026-07-20',
+      startTime: '10:30',
       recurrence: TODO_RECURRENCES.weekly,
       description: 'Caso tecnico para entrevista',
       project: 'TaskFlow',
@@ -155,6 +161,8 @@ describe('todo helpers', () => {
       dueDate: '2026-07-20',
       startDate: null,
       endDate: null,
+      startTime: '10:30',
+      endTime: null,
       recurrence: TODO_RECURRENCES.weekly,
       project: 'TaskFlow',
       tags: ['React', 'testing'],
@@ -180,6 +188,8 @@ describe('todo helpers', () => {
     expect(normalizeTodoRecurrence(TODO_DATE_TYPES.period, TODO_RECURRENCES.yearly)).toBe(TODO_RECURRENCES.none);
     expect(normalizeDueDate('2026-07-20')).toBe('2026-07-20');
     expect(normalizeDueDate(null)).toBeNull();
+    expect(normalizeTimeValue('10:30')).toBe('10:30');
+    expect(normalizeTimeValue('25:00')).toBeNull();
   });
 
   test('normalizes event and period schedule dates', () => {

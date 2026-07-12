@@ -19,7 +19,9 @@
 .ModalContent {
   display: flex;
   justify-content: center;
+  max-height: calc(100vh - 48px);
   outline: none;
+  overflow-y: auto;
   width: min(100%, 560px);
   animation: modalEnter var(--transition-fast) ease-out;
 }

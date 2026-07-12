@@ -43,16 +43,36 @@ function formatDateValue(dateValue?: string | null) {
     return `${day}/${month}/${year}`;
 }
 
+function formatTimeValue(startTime?: string | null, endTime?: string | null) {
+  if (!startTime) {
+    return null;
+  }
+
+  return endTime ? `${startTime} a ${endTime}` : startTime;
+}
+
+function joinScheduleWithTime(schedule: string | null, startTime?: string | null, endTime?: string | null) {
+  const timeLabel = formatTimeValue(startTime, endTime);
+
+  if (!schedule) {
+    return null;
+  }
+
+  return timeLabel ? `${schedule} ${timeLabel}` : schedule;
+}
+
 function getScheduleLabel(
   dateType: TodoDateType = TODO_DATE_TYPES.due,
   dueDate?: string | null,
   startDate?: string | null,
   endDate?: string | null,
+  startTime?: string | null,
+  endTime?: string | null,
 ) {
   if (dateType === TODO_DATE_TYPES.event) {
     const eventDate = formatDateValue(startDate);
 
-    return eventDate ? `Dia ${eventDate}` : null;
+    return joinScheduleWithTime(eventDate ? `Dia ${eventDate}` : null, startTime);
   }
 
   if (dateType === TODO_DATE_TYPES.period) {
@@ -63,14 +83,16 @@ function getScheduleLabel(
       return null;
     }
 
-    return periodEnd && periodEnd !== periodStart
+    const periodLabel = periodEnd && periodEnd !== periodStart
       ? `Periodo ${periodStart} - ${periodEnd}`
       : `Periodo ${periodStart}`;
+
+    return joinScheduleWithTime(periodLabel, startTime, endTime);
   }
 
   const formattedDueDate = formatDateValue(dueDate);
 
-  return formattedDueDate ? `Limite ${formattedDueDate}` : null;
+  return joinScheduleWithTime(formattedDueDate ? `Limite ${formattedDueDate}` : null, startTime);
 }
 
 interface TodoItemProps {
@@ -82,6 +104,8 @@ interface TodoItemProps {
   dueDate?: string | null;
   startDate?: string | null;
   endDate?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
   recurrence?: TodoRecurrence;
   project?: string | null;
   tags?: string[];
@@ -106,7 +130,14 @@ interface TodoItemProps {
 }
 
 function TodoItem(props: TodoItemProps) {
-  const scheduleLabel = getScheduleLabel(props.dateType, props.dueDate, props.startDate, props.endDate);
+  const scheduleLabel = getScheduleLabel(
+    props.dateType,
+    props.dueDate,
+    props.startDate,
+    props.endDate,
+    props.startTime,
+    props.endTime
+  );
   const priorityLabel = props.priority ? TODO_PRIORITY_LABELS[props.priority] : TODO_PRIORITY_LABELS.medium;
   const recurrenceLabel = props.recurrence && props.recurrence !== TODO_RECURRENCES.none
     ? TODO_RECURRENCE_LABELS[props.recurrence]

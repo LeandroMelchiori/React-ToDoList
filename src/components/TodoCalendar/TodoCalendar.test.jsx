@@ -1,6 +1,7 @@
 import {
   getCalendarDays,
   getTodoScheduleRange,
+  getTodoTimeLabel,
   getUnscheduledTodos,
   isCompactRecurringTodo,
   isTodoVisibleOnDay,
@@ -34,22 +35,30 @@ describe('TodoCalendar helpers', () => {
       dateType: 'period',
       startDate: '2026-07-01',
       endDate: '2026-07-10',
+      startTime: '10:00',
+      endTime: '12:00',
     };
 
     expect(getTodoScheduleRange(dueTodo)).toEqual({
       type: 'due',
       startDate: '2026-07-20',
       endDate: '2026-07-20',
+      startTime: null,
+      endTime: null,
     });
     expect(getTodoScheduleRange(eventTodo)).toEqual({
       type: 'event',
       startDate: '2026-07-22',
       endDate: '2026-07-22',
+      startTime: null,
+      endTime: null,
     });
     expect(getTodoScheduleRange(periodTodo)).toEqual({
       type: 'period',
       startDate: '2026-07-01',
       endDate: '2026-07-10',
+      startTime: '10:00',
+      endTime: '12:00',
     });
     expect(isTodoVisibleOnDay(periodTodo, '2026-07-05')).toBe(true);
     expect(isTodoVisibleOnDay(periodTodo, '2026-07-12')).toBe(false);
@@ -108,5 +117,23 @@ describe('TodoCalendar helpers', () => {
     expect(isCompactRecurringTodo({ recurrence: 'daily' })).toBe(true);
     expect(isCompactRecurringTodo({ recurrence: 'weekly' })).toBe(false);
     expect(isCompactRecurringTodo({ recurrence: 'none' })).toBe(false);
+  });
+
+  test('formats calendar time labels for fixed times and ranges', () => {
+    expect(getTodoTimeLabel({
+      dateType: 'event',
+      startTime: '10:00',
+      endTime: null,
+    })).toBe('10:00');
+    expect(getTodoTimeLabel({
+      dateType: 'period',
+      startTime: '10:00',
+      endTime: '12:00',
+    })).toBe('10:00 a 12:00');
+    expect(getTodoTimeLabel({
+      dateType: 'due',
+      startTime: null,
+      endTime: null,
+    })).toBe('');
   });
 });

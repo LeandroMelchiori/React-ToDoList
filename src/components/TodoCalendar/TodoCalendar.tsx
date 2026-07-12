@@ -27,7 +27,9 @@ const TODO_RECURRENCE_LABELS: Record<TodoRecurrence, string> = {
 
 type TodoScheduleRange = {
   endDate: string;
+  endTime: string | null;
   startDate: string;
+  startTime: string | null;
   type: TodoDateType;
 };
 
@@ -81,6 +83,8 @@ function getTodoScheduleRange(todo: Todo): TodoScheduleRange | null {
       ? {
           startDate: todo.startDate,
           endDate: todo.startDate,
+          startTime: todo.startTime || null,
+          endTime: null,
           type: TODO_DATE_TYPES.event,
         }
       : null;
@@ -94,6 +98,8 @@ function getTodoScheduleRange(todo: Todo): TodoScheduleRange | null {
     return {
       startDate: todo.startDate,
       endDate: todo.endDate || todo.startDate,
+      startTime: todo.startTime || null,
+      endTime: todo.endTime || null,
       type: TODO_DATE_TYPES.period,
     };
   }
@@ -102,6 +108,8 @@ function getTodoScheduleRange(todo: Todo): TodoScheduleRange | null {
     ? {
         startDate: todo.dueDate,
         endDate: todo.dueDate,
+        startTime: todo.startTime || null,
+        endTime: null,
         type: TODO_DATE_TYPES.due,
       }
     : null;
@@ -148,6 +156,16 @@ function getTodoRecurrenceLabel(todo: Todo): string {
   return todo.recurrence && todo.recurrence !== TODO_RECURRENCES.none
     ? TODO_RECURRENCE_LABELS[todo.recurrence]
     : '';
+}
+
+function getTodoTimeLabel(todo: Pick<Todo, 'dateType' | 'startTime' | 'endTime'>): string {
+  if (!todo.startTime) {
+    return '';
+  }
+
+  return todo.dateType === TODO_DATE_TYPES.period && todo.endTime
+    ? `${todo.startTime} a ${todo.endTime}`
+    : todo.startTime;
 }
 
 function isCompactRecurringTodo(todo: Todo): boolean {
@@ -247,9 +265,11 @@ function TodoCalendar({
                         const schedule = getTodoScheduleRange(todo);
                         const type = schedule?.type || TODO_DATE_TYPES.due;
                         const recurrenceLabel = getTodoRecurrenceLabel(todo);
+                        const timeLabel = getTodoTimeLabel(todo);
                         const eventLabel = [
                           TODO_DATE_TYPE_LABELS[type],
                           recurrenceLabel,
+                          timeLabel,
                           todo.text,
                         ].filter(Boolean).join(' ');
 
@@ -268,6 +288,7 @@ function TodoCalendar({
                             >
                               <span>{TODO_DATE_TYPE_LABELS[type]}</span>
                               {recurrenceLabel && <small>{recurrenceLabel}</small>}
+                              {timeLabel && <small>{timeLabel}</small>}
                               {todo.text}
                             </button>
                           </li>
@@ -285,6 +306,11 @@ function TodoCalendar({
                       <ul aria-label={`Rutinas diarias del ${day.dateValue}`}>
                         {compactRecurringTodos.map(todo => (
                           <li key={todo.id}>
+                            {getTodoTimeLabel(todo) && (
+                              <small className="TodoCalendar-dailyTime">
+                                {getTodoTimeLabel(todo)}
+                              </small>
+                            )}
                             <button
                               type="button"
                               className={[
@@ -336,6 +362,7 @@ export { TodoCalendar };
 export {
   getCalendarDays,
   getTodoScheduleRange,
+  getTodoTimeLabel,
   getUnscheduledTodos,
   isCompactRecurringTodo,
   isTodoVisibleOnDay,

@@ -45,6 +45,8 @@ interface TodoFormProps {
     initialDueDate?: string | null;
     initialStartDate?: string | null;
     initialEndDate?: string | null;
+    initialStartTime?: string | null;
+    initialEndTime?: string | null;
     initialRecurrence?: TodoRecurrence;
     initialProject?: string | null;
     initialTags?: string[];
@@ -65,6 +67,8 @@ function TodoForm({
     initialDueDate = '',
     initialStartDate = '',
     initialEndDate = '',
+    initialStartTime = '',
+    initialEndTime = '',
     initialRecurrence = TODO_RECURRENCES.none,
     initialProject = '',
     initialTags = [],
@@ -83,6 +87,8 @@ function TodoForm({
     const [dueDateValue, setDueDateValue] = React.useState(initialDueDate || '');
     const [startDateValue, setStartDateValue] = React.useState(initialStartDate || '');
     const [endDateValue, setEndDateValue] = React.useState(initialEndDate || '');
+    const [startTimeValue, setStartTimeValue] = React.useState(initialStartTime || '');
+    const [endTimeValue, setEndTimeValue] = React.useState(initialEndTime || '');
     const [recurrenceValue, setRecurrenceValue] = React.useState<TodoRecurrence>(initialRecurrence || TODO_RECURRENCES.none);
     const [projectValue, setProjectValue] = React.useState(lockedProject || initialProject || '');
     const [tagsValue, setTagsValue] = React.useState(Array.isArray(initialTags) ? initialTags.join(', ') : '');
@@ -101,6 +107,8 @@ function TodoForm({
     const dueDateId = mode === 'edit' ? 'editTodoDueDate' : 'newTodoDueDate';
     const startDateId = mode === 'edit' ? 'editTodoStartDate' : 'newTodoStartDate';
     const endDateId = mode === 'edit' ? 'editTodoEndDate' : 'newTodoEndDate';
+    const startTimeId = mode === 'edit' ? 'editTodoStartTime' : 'newTodoStartTime';
+    const endTimeId = mode === 'edit' ? 'editTodoEndTime' : 'newTodoEndTime';
     const projectId = mode === 'edit' ? 'editTodoProject' : 'newTodoProject';
     const tagsId = mode === 'edit' ? 'editTodoTags' : 'newTodoTags';
     const subtasksId = mode === 'edit' ? 'editTodoSubtasks' : 'newTodoSubtasks';
@@ -123,6 +131,17 @@ function TodoForm({
         setNewTodoValue(event.target.value);
         setFormError('');
     }
+
+    const handleDateTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const nextDateType = event.target.value as TodoDateType;
+
+        setDateTypeValue(nextDateType);
+        setFormError('');
+
+        if (nextDateType !== TODO_DATE_TYPES.period) {
+            setEndTimeValue('');
+        }
+    };
 
     const addSubtask = () => {
         const subtask = subtaskDraft.trim();
@@ -193,6 +212,21 @@ function TodoForm({
             return;
         }
 
+        if (endTimeValue && !startTimeValue) {
+            setFormError('Agrega una hora de inicio para usar hora de fin.');
+            return;
+        }
+
+        if (
+            dateTypeValue === TODO_DATE_TYPES.period &&
+            startTimeValue &&
+            endTimeValue &&
+            endTimeValue <= startTimeValue
+        ) {
+            setFormError('La hora de fin debe ser posterior al inicio.');
+            return;
+        }
+
         const recurrenceAnchorDate = dateTypeValue === TODO_DATE_TYPES.due
             ? dueDateValue
             : startDateValue;
@@ -220,6 +254,8 @@ function TodoForm({
             dueDate: dueDateValue,
             startDate: startDateValue,
             endDate: endDateValue,
+            startTime: startTimeValue,
+            endTime: endTimeValue,
             recurrence: recurrenceValue,
             project: isProjectLocked ? lockedProject : projectValue,
             tags: tagsValue,
@@ -280,7 +316,7 @@ function TodoForm({
                     <select
                         id={dateTypeId}
                         value={dateTypeValue}
-                        onChange={event => setDateTypeValue(event.target.value as TodoDateType)}
+                        onChange={handleDateTypeChange}
                     >
                         {TODO_DATE_TYPE_OPTIONS.map(option => (
                             <option key={option.value} value={option.value}>
@@ -290,26 +326,48 @@ function TodoForm({
                     </select>
                 </label>
                 {dateTypeValue === TODO_DATE_TYPES.due && (
-                    <label htmlFor={dueDateId}>
-                        Fecha limite
-                        <input
-                            id={dueDateId}
-                            type="date"
-                            value={dueDateValue}
-                            onChange={event => setDueDateValue(event.target.value)}
-                        />
-                    </label>
+                    <>
+                        <label htmlFor={dueDateId}>
+                            Fecha limite
+                            <input
+                                id={dueDateId}
+                                type="date"
+                                value={dueDateValue}
+                                onChange={event => setDueDateValue(event.target.value)}
+                            />
+                        </label>
+                        <label htmlFor={startTimeId}>
+                            Hora limite
+                            <input
+                                id={startTimeId}
+                                type="time"
+                                value={startTimeValue}
+                                onChange={event => setStartTimeValue(event.target.value)}
+                            />
+                        </label>
+                    </>
                 )}
                 {dateTypeValue === TODO_DATE_TYPES.event && (
-                    <label htmlFor={startDateId}>
-                        Dia de la tarea
-                        <input
-                            id={startDateId}
-                            type="date"
-                            value={startDateValue}
-                            onChange={event => setStartDateValue(event.target.value)}
-                        />
-                    </label>
+                    <>
+                        <label htmlFor={startDateId}>
+                            Dia de la tarea
+                            <input
+                                id={startDateId}
+                                type="date"
+                                value={startDateValue}
+                                onChange={event => setStartDateValue(event.target.value)}
+                            />
+                        </label>
+                        <label htmlFor={startTimeId}>
+                            Hora del evento
+                            <input
+                                id={startTimeId}
+                                type="time"
+                                value={startTimeValue}
+                                onChange={event => setStartTimeValue(event.target.value)}
+                            />
+                        </label>
+                    </>
                 )}
                 {dateTypeValue === TODO_DATE_TYPES.period && (
                     <>
@@ -329,6 +387,24 @@ function TodoForm({
                                 type="date"
                                 value={endDateValue}
                                 onChange={event => setEndDateValue(event.target.value)}
+                            />
+                        </label>
+                        <label htmlFor={startTimeId}>
+                            Hora de inicio
+                            <input
+                                id={startTimeId}
+                                type="time"
+                                value={startTimeValue}
+                                onChange={event => setStartTimeValue(event.target.value)}
+                            />
+                        </label>
+                        <label htmlFor={endTimeId}>
+                            Hora de fin
+                            <input
+                                id={endTimeId}
+                                type="time"
+                                value={endTimeValue}
+                                onChange={event => setEndTimeValue(event.target.value)}
                             />
                         </label>
                     </>

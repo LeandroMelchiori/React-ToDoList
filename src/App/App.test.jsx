@@ -131,11 +131,12 @@ describe('App', () => {
     expect(within(screen.getByLabelText('Repeticion')).queryByRole('option', { name: 'Diaria' })).not.toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText('Repeticion'), 'yearly');
     await user.type(screen.getByLabelText('Dia de la tarea'), '2026-08-15');
+    fireEvent.change(screen.getByLabelText('Hora del evento'), { target: { value: '10:00' } });
     await user.click(screen.getByRole('button', { name: 'Agregar' }));
 
     expect(screen.getByText('Rendir parcial de algebra')).toBeInTheDocument();
     expect(screen.getByText('Aula 4, llevar DNI y calculadora')).toBeInTheDocument();
-    expect(screen.getByText('Dia 15/08/2026')).toBeInTheDocument();
+    expect(screen.getByText('Dia 15/08/2026 10:00')).toBeInTheDocument();
     expect(screen.getByText('Anual')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Crear nueva tarea' }));
@@ -150,10 +151,12 @@ describe('App', () => {
 
     await user.clear(screen.getByLabelText('Fin del periodo'));
     await user.type(screen.getByLabelText('Fin del periodo'), '2026-09-15');
+    fireEvent.change(screen.getByLabelText('Hora de inicio'), { target: { value: '10:00' } });
+    fireEvent.change(screen.getByLabelText('Hora de fin'), { target: { value: '12:00' } });
     await user.click(screen.getByRole('button', { name: 'Agregar' }));
 
     expect(screen.getByText('Inscripcion a finales')).toBeInTheDocument();
-    expect(screen.getByText('Periodo 01/09/2026 - 15/09/2026')).toBeInTheDocument();
+    expect(screen.getByText('Periodo 01/09/2026 - 15/09/2026 10:00 a 12:00')).toBeInTheDocument();
 
     const storedTodos = JSON.parse(localStorage.getItem('TODOS_V1'));
     expect(storedTodos).toEqual([
@@ -164,6 +167,8 @@ describe('App', () => {
         dueDate: null,
         startDate: '2026-08-15',
         endDate: null,
+        startTime: '10:00',
+        endTime: null,
         recurrence: 'yearly',
       }),
       expect.objectContaining({
@@ -172,6 +177,8 @@ describe('App', () => {
         dueDate: null,
         startDate: '2026-09-01',
         endDate: '2026-09-15',
+        startTime: '10:00',
+        endTime: '12:00',
       }),
     ]);
   });
@@ -1433,6 +1440,7 @@ describe('App', () => {
     const dateTypeSelect = within(dialog).getByLabelText('Tipo de fecha');
     const recurrenceSelect = within(dialog).getByLabelText('Repeticion');
     const dueDateInput = within(dialog).getByLabelText('Fecha limite');
+    const dueTimeInput = within(dialog).getByLabelText('Hora limite');
     const projectInput = within(dialog).getByLabelText('Proyecto');
     const tagsInput = within(dialog).getByLabelText('Etiquetas');
     const subtasksInput = within(dialog).getByLabelText('Subtareas');
@@ -1453,6 +1461,9 @@ describe('App', () => {
 
     await user.tab();
     expect(dueDateInput).toHaveFocus();
+
+    await user.tab();
+    expect(dueTimeInput).toHaveFocus();
 
     await user.tab();
     expect(recurrenceSelect).toHaveFocus();

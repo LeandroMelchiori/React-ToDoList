@@ -18,6 +18,7 @@ import {
     normalizeTags,
     normalizeTodoRecurrence,
     normalizeTodoSchedule,
+    normalizeTodoTimes,
     normalizeTodos,
     reindexTodos,
 } from './todoModel';
@@ -439,6 +440,11 @@ function useTodos() {
             startDate: details.startDate,
             endDate: details.endDate,
         });
+        const times = normalizeTodoTimes({
+            dateType: schedule.dateType,
+            startTime: details.startTime,
+            endTime: details.endTime,
+        });
         const newTodos = normalizedTodos.map(todo =>
             todo.id === id
                 ? {
@@ -450,6 +456,8 @@ function useTodos() {
                     dueDate: schedule.dueDate,
                     startDate: schedule.startDate,
                     endDate: schedule.endDate,
+                    startTime: times.startTime,
+                    endTime: times.endTime,
                     recurrence: normalizeTodoRecurrence(schedule.dateType, details.recurrence),
                     project: normalizeProject(details.project),
                     tags: normalizeTags(details.tags),

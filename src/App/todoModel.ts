@@ -23,6 +23,8 @@ type Todo = {
     dueDate: string | null;
     startDate: string | null;
     endDate: string | null;
+    startTime: string | null;
+    endTime: string | null;
     recurrence: TodoRecurrence;
     project: string | null;
     tags: string[];
@@ -75,6 +77,8 @@ type TodoDetails = {
     dueDate?: unknown;
     startDate?: unknown;
     endDate?: unknown;
+    startTime?: unknown;
+    endTime?: unknown;
     recurrence?: unknown;
     project?: unknown;
     tags?: unknown;
@@ -206,6 +210,17 @@ function normalizeDueDate(dueDate: unknown): string | null {
     return typeof dueDate === 'string' && dueDate ? dueDate : null;
 }
 
+function normalizeTimeValue(timeValue: unknown): string | null {
+    if (typeof timeValue !== 'string') {
+        return null;
+    }
+
+    const trimmedTimeValue = timeValue.trim();
+    const isValidTimeValue = /^([01]\d|2[0-3]):[0-5]\d$/.test(trimmedTimeValue);
+
+    return isValidTimeValue ? trimmedTimeValue : null;
+}
+
 function normalizeTodoSchedule(details: {
     dateType?: unknown;
     dueDate?: unknown;
@@ -250,6 +265,31 @@ function normalizeTodoSchedule(details: {
         dueDate: dueDate || endDate || startDate,
         startDate: null,
         endDate: null,
+    };
+}
+
+function normalizeTodoTimes(details: {
+    dateType?: unknown;
+    startTime?: unknown;
+    endTime?: unknown;
+}): {
+    startTime: string | null;
+    endTime: string | null;
+} {
+    const dateType = normalizeDateType(details.dateType);
+    const startTime = normalizeTimeValue(details.startTime);
+    const endTime = normalizeTimeValue(details.endTime);
+
+    if (dateType === TODO_DATE_TYPES.period) {
+        return {
+            startTime,
+            endTime: startTime ? endTime : null,
+        };
+    }
+
+    return {
+        startTime,
+        endTime: null,
     };
 }
 
@@ -410,6 +450,11 @@ function createTodo(text: string, details: TodoDetails = {}): Todo {
         startDate: 'startDate' in details ? details.startDate : undefined,
         endDate: 'endDate' in details ? details.endDate : undefined,
     });
+    const times = normalizeTodoTimes({
+        dateType: schedule.dateType,
+        startTime: 'startTime' in details ? details.startTime : undefined,
+        endTime: 'endTime' in details ? details.endTime : undefined,
+    });
 
     return {
         id: createTodoId(),
@@ -422,6 +467,8 @@ function createTodo(text: string, details: TodoDetails = {}): Todo {
         dueDate: schedule.dueDate,
         startDate: schedule.startDate,
         endDate: schedule.endDate,
+        startTime: times.startTime,
+        endTime: times.endTime,
         recurrence: normalizeTodoRecurrence(schedule.dateType, 'recurrence' in details ? details.recurrence : undefined),
         project: normalizeProject('project' in details ? details.project : undefined),
         tags: normalizeTags('tags' in details ? details.tags : undefined),
@@ -445,6 +492,11 @@ function normalizeTodos(todos: unknown): Todo[] {
                 startDate: todo.startDate,
                 endDate: todo.endDate,
             });
+            const times = normalizeTodoTimes({
+                dateType: schedule.dateType,
+                startTime: todo.startTime,
+                endTime: todo.endTime,
+            });
 
             return {
                 id: typeof todo.id === 'string' && todo.id ? todo.id : createLegacyTodoId(todo, index),
@@ -457,6 +509,8 @@ function normalizeTodos(todos: unknown): Todo[] {
                 dueDate: schedule.dueDate,
                 startDate: schedule.startDate,
                 endDate: schedule.endDate,
+                startTime: times.startTime,
+                endTime: times.endTime,
                 recurrence: normalizeTodoRecurrence(schedule.dateType, todo.recurrence),
                 project: normalizeProject(todo.project),
                 tags: normalizeTags(todo.tags),
@@ -902,7 +956,9 @@ export {
     normalizeSubtasks,
     normalizeTags,
     normalizeTodoSchedule,
+    normalizeTodoTimes,
     normalizeTodos,
+    normalizeTimeValue,
     readTodosBackup,
     reindexTodos,
 };
