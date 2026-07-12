@@ -76,6 +76,7 @@ function App() {
         activeBoardId,
         savedViews,
         totalTodos,
+        totalTasks,
         completedTodos,
         pendingTodos,
         overdueTodos,
@@ -250,7 +251,8 @@ function App() {
                 <TodoHeader loading={loading}>
 
                 <TodoCounter
-                    totalTodos={totalTodos}
+                    totalTodos={totalTasks}
+                    totalItems={totalTodos}
                     completedTodos={completedTodos}
                 />
                 <TodoBoards
@@ -390,6 +392,7 @@ function App() {
                             <TodoItem
                                 key={todo.id}
                                 text={todo.text}
+                                kind={todo.kind}
                                 description={todo.description}
                                 completed={todo.completed}
                                 priority={todo.priority}

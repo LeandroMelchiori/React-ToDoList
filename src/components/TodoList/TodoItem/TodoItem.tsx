@@ -8,8 +8,10 @@ import { handleButtonGroupNavigation } from '../../buttonGroupNavigation';
 import React from 'react';
 import {
   TODO_DATE_TYPES,
+  TODO_KINDS,
   TODO_RECURRENCES,
   TodoDateType,
+  TodoKind,
   TodoPriority,
   TodoRecurrence,
   TodoSubtask,
@@ -27,6 +29,13 @@ const TODO_RECURRENCE_LABELS: Record<TodoRecurrence, string> = {
   [TODO_RECURRENCES.weekly]: 'Semanal',
   [TODO_RECURRENCES.monthly]: 'Mensual',
   [TODO_RECURRENCES.yearly]: 'Anual',
+};
+
+const TODO_KIND_LABELS: Record<TodoKind, string> = {
+  [TODO_KINDS.task]: 'Tarea',
+  [TODO_KINDS.event]: 'Evento',
+  [TODO_KINDS.schedule]: 'Horario',
+  [TODO_KINDS.period]: 'Periodo',
 };
 
 function formatDateValue(dateValue?: string | null) {
@@ -97,6 +106,7 @@ function getScheduleLabel(
 
 interface TodoItemProps {
   text: string;
+  kind?: TodoKind;
   description?: string | null;
   completed: boolean;
   priority?: TodoPriority;
@@ -130,6 +140,8 @@ interface TodoItemProps {
 }
 
 function TodoItem(props: TodoItemProps) {
+  const kind = props.kind || TODO_KINDS.task;
+  const isTaskKind = kind === TODO_KINDS.task;
   const scheduleLabel = getScheduleLabel(
     props.dateType,
     props.dueDate,
@@ -145,7 +157,7 @@ function TodoItem(props: TodoItemProps) {
   const tags = Array.isArray(props.tags) ? props.tags : [];
   const subtasks = Array.isArray(props.subtasks) ? props.subtasks : [];
   const completedSubtasks = subtasks.filter(subtask => subtask.completed).length;
-  const hasSubtasks = subtasks.length > 0;
+  const hasSubtasks = isTaskKind && subtasks.length > 0;
   const [isChecklistExpanded, setIsChecklistExpanded] = React.useState(() => subtasks.length <= 3);
   const checklistId = React.useId();
   const subtaskProgressLabel = `${completedSubtasks} de ${subtasks.length}`;
@@ -154,6 +166,7 @@ function TodoItem(props: TodoItemProps) {
     subtasks.every(subtask => subtask.completed);
   const itemClassName = [
     'TodoItem',
+    `TodoItem--${kind}`,
     props.completed ? 'TodoItem--complete' : '',
     props.isDragging ? 'TodoItem--dragging' : '',
     props.dropPosition === 'before' ? 'TodoItem--dropBefore' : '',
@@ -187,11 +200,13 @@ function TodoItem(props: TodoItemProps) {
           onMove={props.onMoveDown || (() => {})}
         />
       </div>
-      <CompleteIcon 
-        completed={props.completed}
-        disabled={isCompletedBySubtasks}
-        onComplete={props.onComplete}
-      />
+      {isTaskKind && (
+        <CompleteIcon
+          completed={props.completed}
+          disabled={isCompletedBySubtasks}
+          onComplete={props.onComplete}
+        />
+      )}
       <div className="TodoItem-main">
         <div className="TodoItem-content">
           <p className={`TodoItem-p ${props.completed ? 'TodoItem-p--complete' : ''}`}>
@@ -250,9 +265,16 @@ function TodoItem(props: TodoItemProps) {
           )}
         </div>
         <div className="TodoItem-meta" aria-label="Detalles de la tarea">
-          <span className={`TodoItem-priority TodoItem-priority--${props.priority || 'medium'}`}>
-            {priorityLabel}
-          </span>
+          {!isTaskKind && (
+            <span className={`TodoItem-kind TodoItem-kind--${kind}`}>
+              {TODO_KIND_LABELS[kind]}
+            </span>
+          )}
+          {isTaskKind && (
+            <span className={`TodoItem-priority TodoItem-priority--${props.priority || 'medium'}`}>
+              {priorityLabel}
+            </span>
+          )}
           {props.project && (
             <button
               type="button"

@@ -157,6 +157,8 @@ describe('App', () => {
 
     expect(screen.getByText('Inscripcion a finales')).toBeInTheDocument();
     expect(screen.getByText('Periodo 01/09/2026 - 15/09/2026 10:00 a 12:00')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Tu agenda no tiene tareas pendientes' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Marcar tarea como completada' })).not.toBeInTheDocument();
 
     const storedTodos = JSON.parse(localStorage.getItem('TODOS_V1'));
     expect(storedTodos).toEqual([

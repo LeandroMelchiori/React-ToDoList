@@ -202,6 +202,10 @@ function normalizeTodoKind(kind: unknown, dateType?: unknown): TodoKind {
     return TODO_KINDS.task;
 }
 
+function isTaskTodo(todo: { kind?: unknown; dateType?: unknown }): boolean {
+    return normalizeTodoKind(todo.kind, todo.dateType) === TODO_KINDS.task;
+}
+
 function normalizeDateTypeForTodoKind(kind: unknown, dateType?: unknown): TodoDateType {
     const normalizedKind = normalizeTodoKind(kind, dateType);
 
@@ -677,8 +681,8 @@ function getVisibleTodos(
         const matchesSearch = searchableText.includes(normalizedSearch);
         const dateStatus = getTodoDateStatus(todo, todayDate);
         const matchesFilter =
-            filter === TODO_FILTERS.completed ? todo.completed :
-            filter === TODO_FILTERS.active ? !todo.completed :
+            filter === TODO_FILTERS.completed ? isTaskTodo(todo) && todo.completed :
+            filter === TODO_FILTERS.active ? isTaskTodo(todo) && !todo.completed :
             filter === TODO_FILTERS.overdue ? dateStatus === TODO_FILTERS.overdue :
             filter === TODO_FILTERS.today ? dateStatus === TODO_FILTERS.today :
             filter === TODO_FILTERS.upcoming ? dateStatus === TODO_FILTERS.upcoming :
@@ -845,12 +849,13 @@ function getTodosDateCounts(
 
 function getTodoInsights(todos: Todo[], todayDate = getTodayDateValue()): TodoInsights {
     const normalizedTodos = normalizeTodos(todos);
-    const totalTodos = normalizedTodos.length;
-    const completedTodos = normalizedTodos.filter(todo => todo.completed).length;
+    const taskTodos = normalizedTodos.filter(isTaskTodo);
+    const totalTodos = taskTodos.length;
+    const completedTodos = taskTodos.filter(todo => todo.completed).length;
     const pendingTodos = totalTodos - completedTodos;
-    const dateCounts = getTodosDateCounts(normalizedTodos, todayDate);
+    const dateCounts = getTodosDateCounts(taskTodos, todayDate);
     const sevenDaysAgo = getDateValueOffset(todayDate, -6);
-    const completedLast7Days = normalizedTodos.filter(todo => {
+    const completedLast7Days = taskTodos.filter(todo => {
         const completedDate = todo.completedAt?.slice(0, 10);
 
         return completedDate && completedDate >= sevenDaysAgo && completedDate <= todayDate;
@@ -863,7 +868,7 @@ function getTodoInsights(todos: Todo[], todayDate = getTodayDateValue()): TodoIn
         completionRate: totalTodos ? Math.round((completedTodos / totalTodos) * 100) : 0,
         completedLast7Days,
         overdueTodos: dateCounts[TODO_FILTERS.overdue],
-        highPriorityPendingTodos: normalizedTodos.filter(todo =>
+        highPriorityPendingTodos: taskTodos.filter(todo =>
             !todo.completed && todo.priority === TODO_PRIORITIES.high
         ).length,
     };
@@ -1036,6 +1041,7 @@ export {
     getTodosDateCounts,
     getVisibleTodos,
     isTodoRecurringOnDate,
+    isTaskTodo,
     mergeSubtasks,
     moveTodoToPosition,
     normalizeDueDate,

@@ -18,7 +18,7 @@ interface TodoListProps {
 }
 
 function getTodoCountLabel(count: number) {
-  return count === 1 ? '1 tarea' : `${count} tareas`;
+  return count === 1 ? '1 elemento' : `${count} elementos`;
 }
 
 function TodoList(props: TodoListProps) {

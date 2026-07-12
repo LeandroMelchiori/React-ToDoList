@@ -11,6 +11,7 @@ import {
     getTodoInsights,
     getTodosDateCounts,
     getVisibleTodos,
+    isTaskTodo,
     mergeSubtasks,
     moveTodoToPosition as reorderTodoToPosition,
     normalizeDateTypeForTodoKind,
@@ -147,9 +148,11 @@ function useTodos() {
     const editingTodo = normalizedTodos.find(todo => todo.id === editingTodoId) || null;
     const deletingTodo = normalizedTodos.find(todo => todo.id === deletingTodoId) || null;
 
-    const completedTodos = normalizedTodos.filter(todo => todo.completed).length;
+    const taskTodos = normalizedTodos.filter(isTaskTodo);
+    const completedTodos = taskTodos.filter(todo => todo.completed).length;
+    const totalTasks = taskTodos.length;
     const totalTodos = normalizedTodos.length;
-    const pendingTodos = totalTodos - completedTodos;
+    const pendingTodos = totalTasks - completedTodos;
     const dateCounts = getTodosDateCounts(normalizedTodos);
     const insights = getTodoInsights(normalizedTodos);
     const facets = getTodoFacets(normalizedTodos);
@@ -356,6 +359,10 @@ function useTodos() {
                     return todo;
                 }
 
+                if (!isTaskTodo(todo)) {
+                    return todo;
+                }
+
                 const isCompletedBySubtasks = todo.completed &&
                     todo.subtasks.length > 0 &&
                     todo.subtasks.every(subtask => subtask.completed);
@@ -497,6 +504,10 @@ function useTodos() {
         const newTodos = normalizedTodos.map(todo =>
             {
                 if (todo.id !== todoId) {
+                    return todo;
+                }
+
+                if (!isTaskTodo(todo)) {
                     return todo;
                 }
 
@@ -720,6 +731,7 @@ function useTodos() {
         activeBoardName: activeBoard?.name || '',
         savedViews,
         totalTodos,
+        totalTasks,
         completedTodos,
         pendingTodos,
         overdueTodos: dateCounts[TODO_FILTERS.overdue],

@@ -236,6 +236,7 @@
 }
 
 .TodoItem-priority,
+.TodoItem-kind,
 .TodoItem-dueDate,
 .TodoItem-recurrence,
 .TodoItem-project,
@@ -276,6 +277,26 @@
 .TodoItem-priority--high {
   background-color: var(--color-badge-high-bg);
   color: var(--color-badge-high-text);
+}
+
+.TodoItem-kind--event {
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent-hover);
+}
+
+.TodoItem-kind--schedule {
+  background-color: #ccfbf1;
+  color: #0f766e;
+}
+
+.TodoItem-kind--period {
+  background-color: var(--color-badge-project-bg);
+  color: var(--color-badge-project-text);
+}
+
+[data-theme='dark'] .TodoItem-kind--schedule {
+  background-color: rgba(20, 184, 166, 0.16);
+  color: #99f6e4;
 }
 
 .TodoItem-dueDate {

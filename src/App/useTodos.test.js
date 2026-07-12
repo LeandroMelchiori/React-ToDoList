@@ -18,6 +18,7 @@ import {
   getTodoInsights,
   getTodosDateCounts,
   getVisibleTodos,
+  isTaskTodo,
   moveTodoToPosition,
   normalizeDueDate,
   normalizeTodoSchedule,
@@ -281,6 +282,47 @@ describe('todo helpers', () => {
     })).toEqual([
       todos[2],
     ]);
+  });
+
+  test('keeps agenda items out of task completion filters and metrics', () => {
+    const todos = normalizeTodos([
+      {
+        id: 'task-1',
+        text: 'Entregar TP',
+        kind: TODO_KINDS.task,
+        completed: false,
+        priority: TODO_PRIORITIES.high,
+        dueDate: '2026-08-10',
+      },
+      {
+        id: 'schedule-1',
+        text: 'Cursar programacion',
+        kind: TODO_KINDS.schedule,
+        completed: true,
+        dateType: TODO_DATE_TYPES.period,
+        startDate: '2026-08-10',
+        endDate: '2026-11-20',
+        recurrence: TODO_RECURRENCES.weekly,
+      },
+      {
+        id: 'event-1',
+        text: 'Rendir parcial',
+        kind: TODO_KINDS.event,
+        completed: true,
+        dateType: TODO_DATE_TYPES.event,
+        startDate: '2026-08-10',
+      },
+    ]);
+
+    expect(todos.filter(isTaskTodo).map(todo => todo.id)).toEqual(['task-1']);
+    expect(getVisibleTodos(todos, '', TODO_FILTERS.active, '2026-08-10').map(todo => todo.id)).toEqual(['task-1']);
+    expect(getVisibleTodos(todos, '', TODO_FILTERS.completed, '2026-08-10')).toEqual([]);
+    expect(getTodoInsights(todos, '2026-08-10')).toEqual(expect.objectContaining({
+      totalTodos: 1,
+      completedTodos: 0,
+      pendingTodos: 1,
+      highPriorityPendingTodos: 1,
+    }));
   });
 
   test('builds project and tag facet counts', () => {
