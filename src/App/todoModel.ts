@@ -3,6 +3,7 @@ type TodoDateStatus = 'overdue' | 'today' | 'upcoming';
 type TodoPriority = 'low' | 'medium' | 'high';
 type TodoDateType = 'due' | 'event' | 'period';
 type TodoRecurrence = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+type TodoKind = 'task' | 'event' | 'schedule' | 'period';
 type TodoGroup = 'overdue' | 'today' | 'upcoming' | 'unscheduled' | 'completed';
 type ImportMode = 'merge' | 'replace';
 
@@ -15,6 +16,7 @@ type TodoSubtask = {
 type Todo = {
     id: string;
     text: string;
+    kind: TodoKind;
     description: string | null;
     completed: boolean;
     order: number;
@@ -71,6 +73,7 @@ type SplitImportResult = {
 
 type TodoDetails = {
     order?: unknown;
+    kind?: unknown;
     description?: unknown;
     priority?: unknown;
     dateType?: unknown;
@@ -123,6 +126,13 @@ const TODO_RECURRENCES = {
     yearly: 'yearly',
 } as const satisfies Record<TodoRecurrence, TodoRecurrence>;
 
+const TODO_KINDS = {
+    task: 'task',
+    event: 'event',
+    schedule: 'schedule',
+    period: 'period',
+} as const satisfies Record<TodoKind, TodoKind>;
+
 const TODO_GROUPS = {
     overdue: 'overdue',
     today: 'today',
@@ -170,6 +180,12 @@ function normalizeDateType(dateType: unknown): TodoDateType {
     const validDateType = Object.values(TODO_DATE_TYPES).find(value => value === dateType);
 
     return validDateType || TODO_DATE_TYPES.due;
+}
+
+function normalizeTodoKind(kind: unknown): TodoKind {
+    const validKind = Object.values(TODO_KINDS).find(value => value === kind);
+
+    return validKind || TODO_KINDS.task;
 }
 
 function normalizeRecurrence(recurrence: unknown): TodoRecurrence {
@@ -444,6 +460,7 @@ function mergeSubtasks(existingSubtasks: unknown, nextSubtasks: unknown): TodoSu
 }
 
 function createTodo(text: string, details: TodoDetails = {}): Todo {
+    const kind = normalizeTodoKind('kind' in details ? details.kind : undefined);
     const schedule = normalizeTodoSchedule({
         dateType: 'dateType' in details ? details.dateType : undefined,
         dueDate: 'dueDate' in details ? details.dueDate : undefined,
@@ -459,6 +476,7 @@ function createTodo(text: string, details: TodoDetails = {}): Todo {
     return {
         id: createTodoId(),
         text: text.trim(),
+        kind,
         description: normalizeDescription('description' in details ? details.description : undefined),
         completed: false,
         order: normalizeOrder('order' in details ? details.order : undefined),
@@ -486,6 +504,7 @@ function normalizeTodos(todos: unknown): Todo[] {
     const normalizedTodos = todos
         .filter((todo): todo is TodoInputWithText => isRecord(todo) && typeof todo.text === 'string' && Boolean(todo.text.trim()))
         .map((todo, index) => {
+            const kind = normalizeTodoKind(todo.kind);
             const schedule = normalizeTodoSchedule({
                 dateType: todo.dateType,
                 dueDate: todo.dueDate,
@@ -501,6 +520,7 @@ function normalizeTodos(todos: unknown): Todo[] {
             return {
                 id: typeof todo.id === 'string' && todo.id ? todo.id : createLegacyTodoId(todo, index),
                 text: todo.text.trim(),
+                kind,
                 description: normalizeDescription(todo.description),
                 completed: Boolean(todo.completed),
                 order: normalizeOrder(todo.order, index),
@@ -927,6 +947,7 @@ export {
     TODO_FILTERS,
     TODO_BACKUP_VERSION,
     TODO_GROUPS,
+    TODO_KINDS,
     TODO_PRIORITIES,
     TODO_RECURRENCES,
     analyzeTodosImport,
@@ -952,6 +973,7 @@ export {
     normalizePriority,
     normalizeProject,
     normalizeRecurrence,
+    normalizeTodoKind,
     normalizeTodoRecurrence,
     normalizeSubtasks,
     normalizeTags,
@@ -972,6 +994,7 @@ export type {
     TodoFilter,
     TodoGroupView,
     TodoInsights,
+    TodoKind,
     TodoPriority,
     TodoRecurrence,
     TodoSubtask,

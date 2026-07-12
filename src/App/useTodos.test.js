@@ -3,6 +3,7 @@ import {
   TODO_FILTERS,
   TODO_BACKUP_VERSION,
   TODO_GROUPS,
+  TODO_KINDS,
   TODO_PRIORITIES,
   TODO_RECURRENCES,
   analyzeTodosImport,
@@ -25,6 +26,7 @@ import {
   normalizeSubtasks,
   normalizeTags,
   normalizeTimeValue,
+  normalizeTodoKind,
   normalizeTodoRecurrence,
   normalizeTodos,
   readTodosBackup,
@@ -62,6 +64,7 @@ describe('todo helpers', () => {
       {
         id: 'legacy-0-preparar-entrevista',
         text: 'Preparar entrevista',
+        kind: TODO_KINDS.task,
         description: null,
         completed: true,
         order: 0,
@@ -82,6 +85,7 @@ describe('todo helpers', () => {
       {
         id: 'todo-2',
         text: 'Actualizar CV',
+        kind: TODO_KINDS.task,
         description: null,
         completed: false,
         order: 1,
@@ -153,6 +157,7 @@ describe('todo helpers', () => {
 
     expect(todo).toMatchObject({
       text: 'Practicar React',
+      kind: TODO_KINDS.task,
       completed: false,
       order: 0,
       description: 'Caso tecnico para entrevista',
@@ -179,6 +184,8 @@ describe('todo helpers', () => {
   test('normalizes invalid priority and due date values', () => {
     expect(normalizePriority('urgent')).toBe(TODO_PRIORITIES.medium);
     expect(normalizePriority(TODO_PRIORITIES.low)).toBe(TODO_PRIORITIES.low);
+    expect(normalizeTodoKind('schedule')).toBe(TODO_KINDS.schedule);
+    expect(normalizeTodoKind('note')).toBe(TODO_KINDS.task);
     expect(normalizeRecurrence('quarterly')).toBe(TODO_RECURRENCES.none);
     expect(normalizeRecurrence(TODO_RECURRENCES.monthly)).toBe(TODO_RECURRENCES.monthly);
     expect(getAllowedRecurrencesForDateType(TODO_DATE_TYPES.event)).not.toContain(TODO_RECURRENCES.daily);
