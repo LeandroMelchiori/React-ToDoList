@@ -1361,6 +1361,28 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'Activar modo claro' })).toHaveAttribute('aria-pressed', 'true');
   });
 
+  test('applies and persists display preferences', async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    expect(await screen.findByText('Organiza tu dia con una primera tarea')).toBeInTheDocument();
+    await openTools(user);
+
+    await user.selectOptions(screen.getByLabelText('Densidad'), 'compact');
+    expect(screen.getByRole('main')).toHaveClass('App--compact');
+
+    await user.click(screen.getByLabelText('Mostrar captura rapida'));
+    expect(screen.queryByLabelText('Agregar rapido')).not.toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText('Vista inicial'), 'calendar');
+    expect(screen.getByRole('button', { name: 'Calendario' })).toHaveAttribute('aria-pressed', 'true');
+    expect(JSON.parse(localStorage.getItem('TODO_SETTINGS_V1'))).toEqual({
+      defaultView: 'calendar',
+      density: 'compact',
+      showQuickAdd: false,
+    });
+  });
+
   test('supports keyboard shortcuts for search and creating todos', async () => {
     const user = userEvent.setup();
     renderApp();

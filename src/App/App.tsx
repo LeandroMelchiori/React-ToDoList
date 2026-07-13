@@ -35,6 +35,8 @@ import { UndoToast } from '../components/UndoToast/UndoToast';
 import { usePwaStatus } from './usePwaStatus';
 import { useTheme } from './useTheme';
 import { useTodoReminders } from './useTodoReminders';
+import { TodoSettings as TodoSettingsPanel } from '../components/TodoHeader/TodoSettings/TodoSettings';
+import { TodoSettings, useTodoSettings } from './useTodoSettings';
 
 function isEditableTarget(target: EventTarget | null): boolean {
     if (!(target instanceof HTMLElement)) {
@@ -55,6 +57,7 @@ function App() {
 
     const { states, stateUpdaters } = useTodos();
     const { isDarkTheme, toggleTheme } = useTheme();
+    const { settings, updateSettings } = useTodoSettings();
     const {
         applyUpdate,
         hasUpdate,
@@ -62,7 +65,7 @@ function App() {
         isOnline,
     } = usePwaStatus();
     const searchInputRef = React.useRef<HTMLInputElement>(null);
-    const [todoViewMode, setTodoViewMode] = React.useState<TodoViewMode>('list');
+    const [todoViewMode, setTodoViewMode] = React.useState<TodoViewMode>(settings.defaultView);
     const [dragState, setDragState] = React.useState<{
         draggedTodoId: string | null;
         targetTodoId: string | null;
@@ -139,6 +142,13 @@ function App() {
         syncTodos
     } = stateUpdaters;
     const reminderStatus = useTodoReminders(reminderTodos);
+    const changeSettings = (nextSettings: Partial<TodoSettings>) => {
+        updateSettings(nextSettings);
+
+        if (nextSettings.defaultView) {
+            setTodoViewMode(nextSettings.defaultView);
+        }
+    };
 
     const formMode = editingTodo ? 'edit' : 'create';
     const modalLabel = deletingTodo
@@ -255,7 +265,10 @@ function App() {
     return (
         <>
             <a className="SkipLink" href="#todo-list">Saltar a la lista de tareas</a>
-            <main className="App" aria-labelledby="app-title">
+            <main
+                className={`App ${settings.density === 'compact' ? 'App--compact' : ''}`}
+                aria-labelledby="app-title"
+            >
                 <ThemeToggle
                     isDarkTheme={isDarkTheme}
                     onToggleTheme={toggleTheme}
@@ -281,7 +294,7 @@ function App() {
                     onSelectBoard={selectTodoBoard}
                     showCreateForm={false}
                 />
-                <TodoQuickAdd onAddTodo={addTodo} />
+                {settings.showQuickAdd && <TodoQuickAdd onAddTodo={addTodo} />}
                 <TodoSearch
                     ref={searchInputRef}
                     searchValue={searchValue}
@@ -333,6 +346,10 @@ function App() {
                         onPreviewCalendarImport={previewCalendarImport}
                         onImportTodos={importTodos}
                         onImportCalendar={importCalendar}
+                    />
+                    <TodoSettingsPanel
+                        settings={settings}
+                        onChange={changeSettings}
                     />
                 </TodoHeaderTools>
             </TodoHeader>

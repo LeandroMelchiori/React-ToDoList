@@ -1,0 +1,69 @@
+.TodoSettings {
+  border-top: 1px solid var(--color-border);
+  display: grid;
+  gap: 12px;
+  padding-top: 18px;
+}
+
+.TodoSettings-heading {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.TodoSettings-heading h3 {
+  color: var(--color-text-strong);
+  font-size: 14px;
+  margin: 0;
+}
+
+.TodoSettings-heading span {
+  color: var(--color-text-soft);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.TodoSettings-fields {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+}
+
+.TodoSettings-fields label {
+  color: var(--color-text-muted);
+  display: grid;
+  font-size: 12px;
+  font-weight: 800;
+  gap: 6px;
+}
+
+.TodoSettings-fields select {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text);
+  font: inherit;
+  min-height: 42px;
+  padding: 0 10px;
+}
+
+.TodoSettings-toggle {
+  align-items: center;
+  display: flex !important;
+  min-height: 42px;
+}
+
+.TodoSettings-toggle input {
+  accent-color: var(--color-accent);
+  height: 18px;
+  width: 18px;
+}
+
+@media (max-width: 720px) {
+  .TodoSettings-fields {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+}
