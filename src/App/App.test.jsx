@@ -280,6 +280,10 @@ describe('App', () => {
 
     await user.click(screen.getByRole('button', { name: /10:00 Evento Rendir parcial/ }));
 
+    const detailDialog = screen.getByRole('dialog', { name: 'Detalle del elemento' });
+    expect(within(detailDialog).getByText('Rendir parcial')).toBeInTheDocument();
+    await user.click(within(detailDialog).getByRole('button', { name: 'Editar' }));
+
     const editDialog = screen.getByRole('dialog', { name: 'Editar tarea' });
     expect(within(editDialog).getByLabelText('Editar tarea')).toHaveValue('Rendir parcial');
   });
@@ -356,6 +360,10 @@ describe('App', () => {
     expect(screen.queryByText('Evento de manana')).not.toBeInTheDocument();
 
     await user.click(within(screen.getByRole('region', { name: 'Eventos del dia' })).getByRole('button', { name: /Rendir parcial/ }));
+
+    const detailDialog = screen.getByRole('dialog', { name: 'Detalle del elemento' });
+    expect(within(detailDialog).getByText('Evento')).toBeInTheDocument();
+    await user.click(within(detailDialog).getByRole('button', { name: 'Editar' }));
 
     const editDialog = screen.getByRole('dialog', { name: 'Editar tarea' });
     expect(within(editDialog).getByLabelText('Editar tarea')).toHaveValue('Rendir parcial');
@@ -1428,7 +1436,13 @@ describe('App', () => {
 
     expect(await screen.findByText('Actualizar portfolio')).toBeInTheDocument();
 
-    await user.click(screen.getAllByRole('button', { name: 'Editar tarea' })[0]);
+    await user.click(screen.getAllByRole('button', { name: 'Ver detalle' })[0]);
+
+    const detailDialog = screen.getByRole('dialog', { name: 'Detalle del elemento' });
+    expect(within(detailDialog).getByText('Actualizar portfolio')).toBeInTheDocument();
+    expect(within(detailDialog).getByText('Limite 20/07/2026')).toBeInTheDocument();
+    expect(within(detailDialog).getByText('#portfolio')).toBeInTheDocument();
+    await user.click(within(detailDialog).getByRole('button', { name: 'Editar' }));
 
     const dialog = screen.getByRole('dialog', { name: 'Editar tarea' });
     const textarea = within(dialog).getByLabelText('Editar tarea');
@@ -1482,7 +1496,10 @@ describe('App', () => {
 
     expect(await screen.findByText('Publicar demo')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Eliminar tarea' }));
+    await user.click(screen.getByRole('button', { name: 'Ver detalle' }));
+
+    const detailDialog = screen.getByRole('dialog', { name: 'Detalle del elemento' });
+    await user.click(within(detailDialog).getByRole('button', { name: 'Eliminar' }));
 
     const dialog = screen.getByRole('dialog', { name: 'Eliminar tarea' });
     expect(within(dialog).getByText('Publicar demo')).toBeInTheDocument();

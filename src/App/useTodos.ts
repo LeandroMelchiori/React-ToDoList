@@ -136,6 +136,9 @@ function useTodos() {
     const [deletingTodoId, setDeletingTodoId] =
      React.useState<string | null>(null);
 
+    const [detailTodoId, setDetailTodoId] =
+     React.useState<string | null>(null);
+
     const [recentlyDeletedTodo, setRecentlyDeletedTodo] =
      React.useState<Todo | null>(null);
 
@@ -147,6 +150,7 @@ function useTodos() {
     const activeBoard = getActiveTodoBoard(todoBoards, activeBoardId);
     const editingTodo = normalizedTodos.find(todo => todo.id === editingTodoId) || null;
     const deletingTodo = normalizedTodos.find(todo => todo.id === deletingTodoId) || null;
+    const detailTodo = normalizedTodos.find(todo => todo.id === detailTodoId) || null;
 
     const taskTodos = normalizedTodos.filter(isTaskTodo);
     const completedTodos = taskTodos.filter(todo => todo.completed).length;
@@ -238,6 +242,7 @@ function useTodos() {
             clearFacetFilters();
         }
 
+        setDetailTodoId(null);
         setEditingTodoId(null);
         setDeletingTodoId(null);
         setRecentlyDeletedTodo(null);
@@ -568,6 +573,14 @@ function useTodos() {
     }
 
     const openCreateModal = () => {
+        setDetailTodoId(null);
+        setEditingTodoId(null);
+        setDeletingTodoId(null);
+        setOpenModal(true);
+    }
+
+    const startViewingTodo = (id: string) => {
+        setDetailTodoId(id);
         setEditingTodoId(null);
         setDeletingTodoId(null);
         setOpenModal(true);
@@ -575,12 +588,14 @@ function useTodos() {
 
     const startEditingTodo = (id: string) => {
         setEditingTodoId(id);
+        setDetailTodoId(null);
         setDeletingTodoId(null);
         setOpenModal(true);
     }
 
     const startDeletingTodo = (id: string) => {
         setDeletingTodoId(id);
+        setDetailTodoId(null);
         setEditingTodoId(null);
         setOpenModal(true);
     }
@@ -592,6 +607,7 @@ function useTodos() {
 
         deleteTodo(deletingTodoId);
         setDeletingTodoId(null);
+        setDetailTodoId(null);
         setOpenModal(false);
     }
 
@@ -618,6 +634,7 @@ function useTodos() {
 
     const closeModal = () => {
         setOpenModal(false);
+        setDetailTodoId(null);
         setEditingTodoId(null);
         setDeletingTodoId(null);
     }
@@ -745,6 +762,7 @@ function useTodos() {
         visibleTodos,
         visibleTodoGroups,
         openModal,
+        detailTodo,
         editingTodo,
         deletingTodo,
         recentlyDeletedTodo,
@@ -769,6 +787,7 @@ function useTodos() {
         moveTodo,
         moveTodoToPosition,
         openCreateModal,
+        startViewingTodo,
         startEditingTodo,
         startDeletingTodo,
         confirmDeleteTodo,

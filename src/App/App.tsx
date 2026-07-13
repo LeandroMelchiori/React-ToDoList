@@ -20,6 +20,7 @@ import { CreateTodoButton } from '../components/CreateTodoButton/CreateTodoButto
 import { Modal } from '../components/Modal/Modal';
 import { TodoForm } from '../components/TodoList/TodoForm/TodoForm';
 import { DeleteTodoDialog } from '../components/TodoList/DeleteTodoDialog/DeleteTodoDialog';
+import { TodoDetail } from '../components/TodoList/TodoDetail/TodoDetail';
 import { TodoHeader } from '../components/TodoHeader/TodoHeader';
 import { TodosLoading } from '../components/TodoList/TodosLoading/TodosLoading';
 import { TodosError } from '../components/TodoList/TodosError/TodosError';
@@ -91,6 +92,7 @@ function App() {
         visibleTodos,
         visibleTodoGroups,
         openModal,
+        detailTodo,
         editingTodo,
         deletingTodo,
         recentlyDeletedTodo,
@@ -114,6 +116,7 @@ function App() {
         moveTodo,
         moveTodoToPosition,
         openCreateModal,
+        startViewingTodo,
         startEditingTodo,
         startDeletingTodo,
         confirmDeleteTodo,
@@ -129,7 +132,13 @@ function App() {
     } = stateUpdaters;
 
     const formMode = editingTodo ? 'edit' : 'create';
-    const modalLabel = deletingTodo ? 'Eliminar tarea' : editingTodo ? 'Editar tarea' : 'Crear tarea';
+    const modalLabel = deletingTodo
+        ? 'Eliminar tarea'
+        : editingTodo
+            ? 'Editar tarea'
+            : detailTodo
+                ? 'Detalle del elemento'
+                : 'Crear tarea';
     const clearDragState = React.useCallback(() => {
         setDragState({
             draggedTodoId: null,
@@ -329,7 +338,7 @@ function App() {
                     loading={loading}
                     visibleTodos={visibleTodos}
                     totalTodos={totalTodos}
-                    onEditTodo={startEditingTodo}
+                    onEditTodo={startViewingTodo}
                     onError={() => <TodosError />}
                     onLoading={() => <TodosLoading />}
                     onEmptyTodos={() => (
@@ -351,7 +360,7 @@ function App() {
                     loading={loading}
                     visibleTodos={visibleTodos}
                     totalTodos={totalTodos}
-                    onEditTodo={startEditingTodo}
+                    onEditTodo={startViewingTodo}
                     onError={() => <TodosError />}
                     onLoading={() => <TodosLoading />}
                     onEmptyTodos={() => (
@@ -373,7 +382,7 @@ function App() {
                     loading={loading}
                     visibleTodos={visibleTodos}
                     totalTodos={totalTodos}
-                    onEditTodo={startEditingTodo}
+                    onEditTodo={startViewingTodo}
                     onError={() => <TodosError />}
                     onLoading={() => <TodosLoading />}
                     onEmptyTodos={() => (
@@ -444,7 +453,7 @@ function App() {
                                 onDragEnd={clearDragState}
                                 onFilterProject={() => selectProjectFilter(todo.project)}
                                 onFilterTag={selectTagFilter}
-                                onEdit={() => startEditingTodo(todo.id)}
+                                onEdit={() => startViewingTodo(todo.id)}
                                 onDelete={() => startDeletingTodo(todo.id)}
                         />
                     )}
@@ -459,6 +468,13 @@ function App() {
                             todoText={deletingTodo.text}
                             onCancel={closeModal}
                             onConfirm={confirmDeleteTodo}
+                        />
+                    ) : detailTodo ? (
+                        <TodoDetail
+                            todo={detailTodo}
+                            onClose={closeModal}
+                            onDelete={() => startDeletingTodo(detailTodo.id)}
+                            onEdit={() => startEditingTodo(detailTodo.id)}
                         />
                     ) : (
                         <TodoForm 

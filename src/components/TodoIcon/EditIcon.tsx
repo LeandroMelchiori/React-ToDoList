@@ -8,7 +8,7 @@ function EditIcon({ onEdit }: EditIconProps) {
     return <TodoIcon
      type="edit"
      color="var(--color-icon-muted)"
-     label="Editar tarea"
+     label="Ver detalle"
      onClick={onEdit}
     />;
 }
