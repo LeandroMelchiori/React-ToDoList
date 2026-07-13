@@ -1,4 +1,5 @@
 import {
+  getTodayReminder,
   getTodaySections,
   getTodaySummary,
   getTodoTodayMeta,
@@ -111,5 +112,50 @@ describe('TodoToday helpers', () => {
 
     expect(getTodoTodayMeta(overdueTask, '2026-07-12')).toBe('Vencida - 10/07/2026 - Facultad');
     expect(getTodaySummary(sections)).toBe('1 tarea - 1 elemento de agenda');
+  });
+
+  test('highlights current or next timed item for today', () => {
+    const sections = {
+      tasks: [],
+      events: [
+        {
+          id: 'exam',
+          text: 'Rendir parcial',
+          kind: 'event',
+          dateType: 'event',
+          startDate: '2026-07-12',
+          startTime: '10:00',
+          order: 1,
+        },
+      ],
+      schedules: [
+        {
+          id: 'course',
+          text: 'Cursar programacion',
+          kind: 'schedule',
+          dateType: 'period',
+          startDate: '2026-07-12',
+          startTime: '14:00',
+          endTime: '16:00',
+          order: 2,
+        },
+      ],
+      periods: [],
+    };
+
+    expect(getTodayReminder(sections, new Date('2026-07-12T10:30:00'))).toEqual({
+      id: 'exam',
+      kind: 'now',
+      label: 'Ahora',
+      meta: '10:00',
+      text: 'Rendir parcial',
+    });
+    expect(getTodayReminder(sections, new Date('2026-07-12T12:00:00'))).toEqual({
+      id: 'course',
+      kind: 'next',
+      label: 'Proximo',
+      meta: '14:00 a 16:00',
+      text: 'Cursar programacion',
+    });
   });
 });

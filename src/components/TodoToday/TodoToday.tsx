@@ -20,6 +20,14 @@ type TodoTodaySectionKey = 'tasks' | 'events' | 'schedules' | 'periods';
 
 type TodoTodaySections = Record<TodoTodaySectionKey, Todo[]>;
 
+type TodoTodayReminder = {
+  id: string;
+  kind: 'now' | 'next';
+  label: string;
+  meta: string;
+  text: string;
+};
+
 const TODO_RECURRENCE_LABELS: Record<TodoRecurrence, string> = {
   [TODO_RECURRENCES.none]: '',
   [TODO_RECURRENCES.daily]: 'Diaria',
@@ -129,6 +137,30 @@ function compareTodayTodos(firstTodo: Todo, secondTodo: Todo): number {
   return firstTime.localeCompare(secondTime) || firstTodo.order - secondTodo.order;
 }
 
+function getMinutesFromTime(timeValue?: string | null): number | null {
+  if (!timeValue) {
+    return null;
+  }
+
+  const [hour, minute] = timeValue.split(':').map(Number);
+
+  return Number.isFinite(hour) && Number.isFinite(minute)
+    ? hour * 60 + minute
+    : null;
+}
+
+function getNowMinutes(now = new Date()): number {
+  return now.getHours() * 60 + now.getMinutes();
+}
+
+function getTodoEndMinutes(todo: Todo, startMinutes: number): number {
+  const endMinutes = getMinutesFromTime(todo.endTime);
+
+  return endMinutes !== null && endMinutes > startMinutes
+    ? endMinutes
+    : startMinutes + 60;
+}
+
 function getTodaySections(todos: Todo[], dateValue = getTodayDateValue()): TodoTodaySections {
   const sections = createEmptyTodaySections();
 
@@ -195,6 +227,62 @@ function getTodaySummary(sections: TodoTodaySections): string {
   return `${taskLabel} - ${agendaLabel}`;
 }
 
+function getReminderCandidates(sections: TodoTodaySections): Todo[] {
+  return [
+    ...sections.tasks,
+    ...sections.events,
+    ...sections.schedules,
+  ].filter(todo => Boolean(todo.startTime));
+}
+
+function getTodayReminder(sections: TodoTodaySections, now = new Date()): TodoTodayReminder | null {
+  const nowMinutes = getNowMinutes(now);
+  const candidates = getReminderCandidates(sections)
+    .map(todo => {
+      const startMinutes = getMinutesFromTime(todo.startTime);
+
+      if (startMinutes === null) {
+        return null;
+      }
+
+      return {
+        todo,
+        startMinutes,
+        endMinutes: getTodoEndMinutes(todo, startMinutes),
+      };
+    })
+    .filter((candidate): candidate is { todo: Todo; startMinutes: number; endMinutes: number } => Boolean(candidate))
+    .sort((first, second) => first.startMinutes - second.startMinutes || first.todo.order - second.todo.order);
+
+  const current = candidates.find(candidate =>
+    candidate.startMinutes <= nowMinutes && nowMinutes < candidate.endMinutes
+  );
+
+  if (current) {
+    return {
+      id: current.todo.id,
+      kind: 'now',
+      label: 'Ahora',
+      meta: getTodoTimeLabel(current.todo) || getTodoTodayMeta(current.todo),
+      text: current.todo.text,
+    };
+  }
+
+  const next = candidates.find(candidate => candidate.startMinutes > nowMinutes);
+
+  if (!next) {
+    return null;
+  }
+
+  return {
+    id: next.todo.id,
+    kind: 'next',
+    label: 'Proximo',
+    meta: getTodoTimeLabel(next.todo) || getTodoTodayMeta(next.todo),
+    text: next.todo.text,
+  };
+}
+
 function TodoToday({
   error,
   loading,
@@ -208,6 +296,7 @@ function TodoToday({
 }: TodoTodayProps) {
   const todayDateValue = getTodayDateValue();
   const sections = getTodaySections(visibleTodos, todayDateValue);
+  const todayReminder = getTodayReminder(sections);
   const totalTodayItems = Object.values(sections).reduce((count, sectionTodos) => count + sectionTodos.length, 0);
 
   return (
@@ -234,6 +323,19 @@ function TodoToday({
             </div>
             <strong>{getTodaySummary(sections)}</strong>
           </header>
+
+          {todayReminder && (
+            <button
+              type="button"
+              className={`TodoToday-reminder TodoToday-reminder--${todayReminder.kind}`}
+              aria-label={`${todayReminder.label}: ${todayReminder.meta} ${todayReminder.text}`}
+              onClick={() => onEditTodo(todayReminder.id)}
+            >
+              <span>{todayReminder.label}</span>
+              <strong>{todayReminder.text}</strong>
+              <small>{todayReminder.meta}</small>
+            </button>
+          )}
 
           {!totalTodayItems && (
             <p className="TodoToday-empty">
@@ -295,6 +397,7 @@ function TodoToday({
 export { TodoToday };
 export {
   getTodaySections,
+  getTodayReminder,
   getTodaySummary,
   getTodoTodayMeta,
 };

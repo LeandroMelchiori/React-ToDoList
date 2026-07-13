@@ -35,6 +35,13 @@ function getRelativeDateInputValue(offsetDays) {
   return toDateInputValue(date);
 }
 
+function toTimeInputValue(date) {
+  const hour = String(date.getHours()).padStart(2, '0');
+  const minute = String(date.getMinutes()).padStart(2, '0');
+
+  return `${hour}:${minute}`;
+}
+
 describe('App', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -367,6 +374,40 @@ describe('App', () => {
 
     const editDialog = screen.getByRole('dialog', { name: 'Editar tarea' });
     expect(within(editDialog).getByLabelText('Editar tarea')).toHaveValue('Rendir parcial');
+  });
+
+  test('shows a time reminder in the today view', async () => {
+    const user = userEvent.setup();
+    const now = new Date();
+    const today = toDateInputValue(now);
+    const startTime = toTimeInputValue(now);
+
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      {
+        id: 'todo-event',
+        text: 'Rendir parcial',
+        kind: 'event',
+        completed: false,
+        dateType: 'event',
+        startDate: today,
+        startTime,
+        order: 0,
+      },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Rendir parcial')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Hoy' }));
+
+    const reminder = screen.getByRole('button', { name: `Ahora: ${startTime} Rendir parcial` });
+    expect(reminder).toBeInTheDocument();
+
+    await user.click(reminder);
+
+    const detailDialog = screen.getByRole('dialog', { name: 'Detalle del elemento' });
+    expect(within(detailDialog).getByText('Evento')).toBeInTheDocument();
+    expect(within(detailDialog).getByText('Rendir parcial')).toBeInTheDocument();
   });
 
   test('creates a starter todo from the empty onboarding templates', async () => {
