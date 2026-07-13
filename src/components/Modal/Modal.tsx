@@ -15,9 +15,10 @@ interface ModalProps {
     children: React.ReactNode;
     label?: string;
     onClose?: () => void;
+    variant?: 'center' | 'side';
 }
 
-function Modal({ children, label = 'Dialogo', onClose }: ModalProps) {
+function Modal({ children, label = 'Dialogo', onClose, variant = 'center' }: ModalProps) {
     const dialogRef = React.useRef<HTMLDivElement>(null);
     const onCloseRef = React.useRef(onClose);
     const previousFocusRef = React.useRef<Element | null>(null);
@@ -94,9 +95,12 @@ function Modal({ children, label = 'Dialogo', onClose }: ModalProps) {
     };
 
     return ReactDOM.createPortal(
-            <div className="ModalBackground" onClick={handleBackdropClick}>
+            <div
+              className={`ModalBackground ModalBackground--${variant}`}
+              onClick={handleBackdropClick}
+            >
               <div
-                className="ModalContent"
+                className={`ModalContent ModalContent--${variant}`}
                 role="dialog"
                 aria-modal="true"
                 aria-label={label}

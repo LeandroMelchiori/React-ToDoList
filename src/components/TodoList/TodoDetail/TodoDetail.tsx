@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   TODO_DATE_TYPES,
   TODO_KINDS,
@@ -155,6 +156,8 @@ function TodoDetail({
   const occurrenceDate = getTodoNextOccurrenceDate(todo);
   const occurrenceCompleted = isTodoOccurrenceCompleted(todo, occurrenceDate);
   const isRecurringTask = isTask && todo.recurrence !== TODO_RECURRENCES.none;
+  const completedOccurrences = [...todo.completedOccurrences].sort().reverse();
+  const [areSubtasksOpen, setAreSubtasksOpen] = React.useState(todo.subtasks.length <= 5);
   const completedSubtasks = todo.subtasks.filter(subtask => subtask.completed).length;
   const hasSubtasks = isTask && todo.subtasks.length > 0;
   const isCompletedBySubtasks = !isRecurringTask && todo.completed &&
@@ -164,6 +167,14 @@ function TodoDetail({
   return (
     <article className="TodoDetail">
       <header className="TodoDetail-header">
+        <button
+          type="button"
+          className="TodoDetail-close"
+          aria-label="Cerrar detalle"
+          onClick={onClose}
+        >
+          ×
+        </button>
         <span className={`TodoDetail-kind TodoDetail-kind--${todo.kind}`}>
           {TODO_KIND_LABELS[todo.kind]}
         </span>
@@ -222,6 +233,20 @@ function TodoDetail({
             <dd>{formatDateValue(todo.archivedAt.slice(0, 10))}</dd>
           </div>
         )}
+        {todo.createdAt && (
+          <div>
+            <dt>Creada</dt>
+            <dd>{formatDateValue(todo.createdAt.slice(0, 10))}</dd>
+          </div>
+        )}
+        {completedOccurrences.length > 0 && (
+          <div>
+            <dt>Realizaciones</dt>
+            <dd>
+              {completedOccurrences.length} · Ultima {formatDateValue(completedOccurrences[0])}
+            </dd>
+          </div>
+        )}
         {todo.tags.length > 0 && (
           <div>
             <dt>Etiquetas</dt>
@@ -231,24 +256,31 @@ function TodoDetail({
       </dl>
 
       {hasSubtasks && (
-        <section className="TodoDetail-subtasks" aria-label="Subtareas">
-          <div className="TodoDetail-subtasksHeader">
-            <h3>Subtareas</h3>
+        <details
+          className="TodoDetail-subtasks"
+          aria-label="Subtareas"
+          open={areSubtasksOpen}
+          onToggle={(event) => setAreSubtasksOpen(event.currentTarget.open)}
+        >
+          <summary className="TodoDetail-subtasksHeader">
+            <span>Subtareas</span>
             <span>{completedSubtasks} de {todo.subtasks.length}</span>
+          </summary>
+          <div className="TodoDetail-subtasksBody">
+            <progress
+              max={todo.subtasks.length}
+              value={completedSubtasks}
+              aria-label={`Progreso de subtareas: ${completedSubtasks} de ${todo.subtasks.length}`}
+            />
+            <ul>
+              {todo.subtasks.map(subtask => (
+                <li key={subtask.id} className={subtask.completed ? 'TodoDetail-subtask--complete' : ''}>
+                  {subtask.text}
+                </li>
+              ))}
+            </ul>
           </div>
-          <progress
-            max={todo.subtasks.length}
-            value={completedSubtasks}
-            aria-label={`Progreso de subtareas: ${completedSubtasks} de ${todo.subtasks.length}`}
-          />
-          <ul>
-            {todo.subtasks.map(subtask => (
-              <li key={subtask.id} className={subtask.completed ? 'TodoDetail-subtask--complete' : ''}>
-                {subtask.text}
-              </li>
-            ))}
-          </ul>
-        </section>
+        </details>
       )}
 
       <div className="TodoDetail-actions">
@@ -284,9 +316,6 @@ function TodoDetail({
         </button>
         <button type="button" className="TodoDetail-button TodoDetail-button--danger" onClick={onDelete}>
           Eliminar
-        </button>
-        <button type="button" className="TodoDetail-button" onClick={onClose}>
-          Cerrar
         </button>
       </div>
     </article>

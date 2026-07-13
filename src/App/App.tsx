@@ -636,7 +636,11 @@ function App() {
             )}
 
             {openModal && (
-                <Modal label={modalLabel} onClose={closeModal}>
+                <Modal
+                    label={modalLabel}
+                    onClose={closeModal}
+                    variant={detailTodo ? 'side' : 'center'}
+                >
                     {deletingTodo ? (
                         <DeleteTodoDialog
                             todoText={deletingTodo.text}

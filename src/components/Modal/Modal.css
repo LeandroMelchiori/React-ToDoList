@@ -30,6 +30,29 @@
   width: 100%;
 }
 
+.ModalBackground--side {
+  align-items: stretch;
+  justify-content: flex-end;
+  padding: 0;
+}
+
+.ModalContent--side {
+  animation: modalSideEnter var(--transition-fast) ease-out;
+  max-height: 100dvh;
+  width: min(100%, 460px);
+}
+
+@keyframes modalSideEnter {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 @keyframes modalBackdrop {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -60,5 +83,14 @@
   .ModalContent > * {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
+  }
+
+  .ModalBackground--side {
+    align-items: flex-end;
+  }
+
+  .ModalContent--side {
+    max-height: 94dvh;
+    width: 100%;
   }
 }

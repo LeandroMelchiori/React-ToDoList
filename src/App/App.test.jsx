@@ -322,6 +322,8 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: /10:00 Evento Rendir parcial/ }));
 
     const detailDialog = screen.getByRole('dialog', { name: 'Detalle del elemento' });
+    expect(detailDialog).toHaveClass('ModalContent--side');
+    expect(within(detailDialog).getByRole('button', { name: 'Cerrar detalle' })).toBeInTheDocument();
     expect(within(detailDialog).getByText('Rendir parcial')).toBeInTheDocument();
     await user.click(within(detailDialog).getByRole('button', { name: 'Editar' }));
 
