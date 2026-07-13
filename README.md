@@ -188,7 +188,7 @@ src/
     TodoViewToggle/
     TodoWeekCalendar/
     UndoToast/
-  serviceWorkerRegistration.js
+  serviceWorkerRegistration.ts
 public/
   manifest.json
   sw.js

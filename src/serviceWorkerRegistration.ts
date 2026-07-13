@@ -1,4 +1,10 @@
-function dispatchPwaEvent(name, detail) {
+type ServiceWorkerRegistrationOptions = {
+  enabled?: boolean;
+  onReady?: () => void;
+  onUpdate?: (worker: ServiceWorker) => void;
+};
+
+function dispatchPwaEvent(name: string, detail?: unknown) {
   window.dispatchEvent(new CustomEvent(name, { detail }));
 }
 
@@ -6,7 +12,7 @@ function registerServiceWorker({
   enabled = import.meta.env.PROD,
   onReady = () => dispatchPwaEvent('taskflow:pwa-ready'),
   onUpdate = (worker) => dispatchPwaEvent('taskflow:pwa-update', { worker }),
-} = {}) {
+}: ServiceWorkerRegistrationOptions = {}) {
   if (!enabled || !('serviceWorker' in navigator)) {
     return;
   }

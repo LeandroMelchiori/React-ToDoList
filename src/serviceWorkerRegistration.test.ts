@@ -1,8 +1,12 @@
+import { afterEach, describe, expect, test, vi } from 'vitest';
 import { registerServiceWorker } from './serviceWorkerRegistration';
 
 describe('service worker registration', () => {
   afterEach(() => {
-    delete window.navigator.serviceWorker;
+    Object.defineProperty(window.navigator, 'serviceWorker', {
+      configurable: true,
+      value: undefined,
+    });
     vi.restoreAllMocks();
   });
 

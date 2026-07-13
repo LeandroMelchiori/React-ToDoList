@@ -9,7 +9,7 @@ Actua siempre como un programador experto, con criterio senior, buen manejo de U
 Este repositorio es una aplicacion React local-first de tareas, agenda y horarios creada con Vite.
 
 - Entrada principal: `src/index.tsx`.
-- Registro PWA: `src/serviceWorkerRegistration.js`.
+- Registro PWA: `src/serviceWorkerRegistration.ts`.
 - Componente raiz: `src/App/App.tsx`.
 - Estado de todos: `src/App/useTodos.ts`.
 - Modelos puros: `src/App/todoModel.ts` (tareas, agenda, recurrencias avanzadas, recordatorios, export/import ICS), `src/App/todoBoards.ts` (tableros), `src/App/todoSavedViews.ts` (vistas guardadas), `src/App/todoWorkspaceBackup.ts` (backups).

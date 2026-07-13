@@ -6,13 +6,13 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'jsdom',
-    include: ['src/**/*.{test,spec}.{js,jsx}'],
+    include: ['src/**/*.{test,spec}.{js,jsx,ts,tsx}'],
     environmentOptions: {
       jsdom: {
         url: 'http://localhost:3000/React-ToDoList/',
       },
     },
     globals: true,
-    setupFiles: './src/setupTests.js',
+    setupFiles: './src/setupTests.ts',
   },
 });
