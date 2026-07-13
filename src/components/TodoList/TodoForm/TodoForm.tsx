@@ -281,7 +281,6 @@ function TodoForm({
     const [subtaskDraft, setSubtaskDraft] = React.useState('');
     const [formError, setFormError] = React.useState('');
     const inputId = mode === 'edit' ? 'editTodo' : 'newTodo';
-    const kindId = mode === 'edit' ? 'editTodoKind' : 'newTodoKind';
     const descriptionId = mode === 'edit' ? 'editTodoDescription' : 'newTodoDescription';
     const priorityId = mode === 'edit' ? 'editTodoPriority' : 'newTodoPriority';
     const recurrenceId = mode === 'edit' ? 'editTodoRecurrence' : 'newTodoRecurrence';
@@ -301,7 +300,6 @@ function TodoForm({
     const isEventKind = kindValue === TODO_KINDS.event;
     const isScheduleKind = kindValue === TODO_KINDS.schedule;
     const isPeriodKind = kindValue === TODO_KINDS.period;
-    const kindHint = TODO_KIND_OPTIONS.find(option => option.value === kindValue)?.hint || '';
     const dateTypeForKind = isEventKind
         ? TODO_DATE_TYPES.event
         : isScheduleKind || isPeriodKind
@@ -352,9 +350,7 @@ function TodoForm({
         setFormError('');
     }
 
-    const handleKindChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        const nextKind = event.target.value as TodoKind;
-
+    const handleKindChange = (nextKind: TodoKind) => {
         setKindValue(nextKind);
         setFormError('');
 
@@ -569,30 +565,34 @@ function TodoForm({
                     {formError}
                 </p>
             )}
-            <div className="TodoForm-field TodoForm-kindField">
-                <label htmlFor={kindId}>
-                    Tipo de elemento
-                </label>
-                <select
-                    id={kindId}
-                    value={kindValue}
-                    onChange={handleKindChange}
-                >
+            <fieldset className="TodoForm-kindField">
+                <legend>{mode === 'create' ? 'Que queres agregar?' : 'Tipo de elemento'}</legend>
+                <div className="TodoForm-kindOptions">
                     {TODO_KIND_OPTIONS.map(option => (
-                        <option key={option.value} value={option.value}>
-                            {option.label}
-                        </option>
+                        <label
+                            className={kindValue === option.value ? 'TodoForm-kindOption--selected' : ''}
+                            key={option.value}
+                        >
+                            <input
+                                checked={kindValue === option.value}
+                                name={`${inputId}-kind`}
+                                onChange={() => handleKindChange(option.value)}
+                                type="radio"
+                                value={option.value}
+                            />
+                            <span>
+                                <strong>{option.label}</strong>
+                                <small>{option.hint}</small>
+                            </span>
+                        </label>
                     ))}
-                </select>
-                <span className="TodoForm-fieldHint">
-                    {kindHint}
-                </span>
-                <span className="TodoForm-kindDecision">
+                </div>
+                <p className="TodoForm-kindDecision">
                     {isTaskKind
-                        ? 'Puede completarse y usar subtareas.'
-                        : 'Se agenda, pero no se marca como completado.'}
-                </span>
-            </div>
+                        ? 'Se completa y puede dividirse en subtareas.'
+                        : 'Se organiza en la agenda y no modifica el progreso de tareas.'}
+                </p>
+            </fieldset>
             <label className="TodoForm-description" htmlFor={descriptionId}>
                 Descripcion
                 <textarea

@@ -134,7 +134,7 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: 'Crear nueva tarea' }));
     expect(within(screen.getByRole('dialog')).getByText('Tarea completable')).toBeInTheDocument();
     await user.type(screen.getByLabelText('Nueva tarea'), 'Rendir parcial de algebra');
-    await user.selectOptions(screen.getByLabelText('Tipo de elemento'), 'event');
+    await user.click(screen.getByRole('radio', { name: /Evento/ }));
     expect(within(screen.getByRole('dialog')).getByText('Evento de agenda')).toBeInTheDocument();
     await user.type(screen.getByLabelText('Descripcion'), 'Aula 4, llevar DNI y calculadora');
     expect(within(screen.getByLabelText('Repeticion')).queryByRole('option', { name: 'Diaria' })).not.toBeInTheDocument();
@@ -152,7 +152,7 @@ describe('App', () => {
 
     await user.click(screen.getByRole('button', { name: 'Crear nueva tarea' }));
     await user.type(screen.getByLabelText('Nueva tarea'), 'Inscripcion a finales');
-    await user.selectOptions(screen.getByLabelText('Tipo de elemento'), 'period');
+    await user.click(screen.getByRole('radio', { name: /Periodo/ }));
     expect(within(screen.getByRole('dialog')).getByText('Rango activo')).toBeInTheDocument();
     expect(screen.getByLabelText('Repeticion')).toBeDisabled();
     await user.type(screen.getByLabelText('Inicio del periodo'), '2026-09-01');
@@ -215,7 +215,7 @@ describe('App', () => {
 
     await user.click(screen.getByRole('button', { name: 'Crear nueva tarea' }));
     await user.type(screen.getByLabelText('Nueva tarea'), 'Rendir final de redes');
-    await user.selectOptions(screen.getByLabelText('Tipo de elemento'), 'event');
+    await user.click(screen.getByRole('radio', { name: /Evento/ }));
     await user.type(screen.getByLabelText('Dia del evento'), '2026-08-15');
     fireEvent.change(screen.getByLabelText('Hora del evento'), { target: { value: '10:00' } });
     await user.selectOptions(screen.getByLabelText('Recordatorio'), '30-minutes');
@@ -2218,7 +2218,7 @@ describe('App', () => {
 
     const dialog = screen.getByRole('dialog', { name: 'Crear tarea' });
     const textarea = within(dialog).getByLabelText('Nueva tarea');
-    const kindSelect = within(dialog).getByLabelText('Tipo de elemento');
+    const kindSelect = within(dialog).getByRole('radio', { name: /Tarea/ });
     const descriptionInput = within(dialog).getByLabelText('Descripcion');
     const prioritySelect = within(dialog).getByLabelText('Prioridad');
     const recurrenceSelect = within(dialog).getByLabelText('Repeticion');
