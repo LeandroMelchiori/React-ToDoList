@@ -2282,6 +2282,36 @@ describe('App', () => {
     expect(createButton).toHaveFocus();
   });
 
+  test('creates and restores an automatic snapshot before deleting a todo', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      { id: 'todo-snapshot', text: 'Conservar antes de borrar', completed: false },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Conservar antes de borrar')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Eliminar tarea' }));
+    await user.click(within(screen.getByRole('dialog', { name: 'Eliminar tarea' })).getByRole('button', { name: 'Eliminar' }));
+
+    expect(screen.queryByText('Conservar antes de borrar')).not.toBeInTheDocument();
+
+    await waitFor(() => {
+      const snapshots = JSON.parse(localStorage.getItem('TODO_SNAPSHOTS_V1'));
+      expect(snapshots[0].backup.todos[0].text).toBe('Conservar antes de borrar');
+    });
+
+    await openTools(user);
+
+    expect(screen.getByRole('heading', { name: 'Copias automaticas' })).toBeInTheDocument();
+    expect(screen.getByText('Antes de eliminar una tarea')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Restaurar' }));
+
+    expect(await screen.findByText('Conservar antes de borrar')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Copia restaurada.');
+  });
+
   test('closes the modal when the backdrop is clicked', async () => {
     const user = userEvent.setup();
     renderApp();

@@ -1,0 +1,110 @@
+.TodoSnapshots {
+  border-top: 1px solid var(--color-border);
+  display: grid;
+  gap: 12px;
+  padding-top: 18px;
+}
+
+.TodoSnapshots-heading {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.TodoSnapshots-heading h3 {
+  color: var(--color-text-strong);
+  font-size: 14px;
+  margin: 0;
+}
+
+.TodoSnapshots-heading span,
+.TodoSnapshots-empty,
+.TodoSnapshots-status {
+  color: var(--color-text-soft);
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.TodoSnapshots-list {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.TodoSnapshots-list li {
+  align-items: center;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 0 0 8px;
+}
+
+.TodoSnapshots-list li > div:first-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.TodoSnapshots-list strong {
+  color: var(--color-text);
+  font-size: 13px;
+}
+
+.TodoSnapshots-list time {
+  color: var(--color-text-soft);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.TodoSnapshots-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 6px;
+}
+
+.TodoSnapshots-actions button {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  min-height: 34px;
+  padding: 0 10px;
+}
+
+.TodoSnapshots-actions button:hover,
+.TodoSnapshots-actions button:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-focus);
+  color: var(--color-text);
+  outline: none;
+}
+
+.TodoSnapshots-actions button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.TodoSnapshots-actions .TodoSnapshots-delete {
+  color: var(--color-danger);
+}
+
+@media (max-width: 560px) {
+  .TodoSnapshots-list li {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .TodoSnapshots-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}

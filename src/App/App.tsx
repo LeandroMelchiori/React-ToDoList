@@ -38,6 +38,7 @@ import { usePwaStatus } from './usePwaStatus';
 import { useTheme } from './useTheme';
 import { useTodoReminders } from './useTodoReminders';
 import { TodoSettings as TodoSettingsPanel } from '../components/TodoHeader/TodoSettings/TodoSettings';
+import { TodoSnapshots } from '../components/TodoHeader/TodoSnapshots/TodoSnapshots';
 import { TodoSettings, useTodoSettings } from './useTodoSettings';
 
 function isEditableTarget(target: EventTarget | null): boolean {
@@ -90,6 +91,7 @@ function App() {
         todoBoards,
         activeBoardId,
         savedViews,
+        todoSnapshots,
         totalTodos,
         totalTasks,
         completedTodos,
@@ -119,6 +121,8 @@ function App() {
         saveCurrentView,
         applySavedView,
         deleteSavedView,
+        deleteTodoSnapshot,
+        restoreTodoSnapshot,
         selectProjectFilter,
         selectTagFilter,
         clearFacetFilters,
@@ -428,6 +432,11 @@ function App() {
                         onPreviewCalendarImport={previewCalendarImport}
                         onImportTodos={importTodos}
                         onImportCalendar={importCalendar}
+                    />
+                    <TodoSnapshots
+                        snapshots={todoSnapshots}
+                        onDeleteSnapshot={deleteTodoSnapshot}
+                        onRestoreSnapshot={restoreTodoSnapshot}
                     />
                     <TodoSettingsPanel
                         settings={settings}

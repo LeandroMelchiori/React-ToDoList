@@ -23,7 +23,7 @@ function TodoHeaderTools({ children, loading }: TodoHeaderToolsProps) {
         type="button"
       >
         Herramientas
-        <span>Tableros, filtros, recordatorios y backups</span>
+        <span>Tableros, filtros, recordatorios y copias</span>
       </button>
       {isOpen && (
         <div className="TodoHeaderTools-panel" id={panelId}>

@@ -59,6 +59,12 @@ import {
     createTodoWorkspaceBackup,
     readTodoWorkspaceBackup,
 } from './todoWorkspaceBackup';
+import {
+    addTodoSnapshot,
+    hasWorkspaceContent,
+    normalizeTodoSnapshots,
+    removeTodoSnapshot,
+} from './todoSnapshotHistory';
 import type {
     ImportMode,
     Todo,
@@ -67,14 +73,17 @@ import type {
 } from './todoModel';
 import type { TodoBoard } from './todoBoards';
 import type { TodoSavedView } from './todoSavedViews';
+import type { TodoSnapshot } from './todoSnapshotHistory';
 
 const STORAGE_KEY = 'TODOS_V1';
 const BOARD_STORAGE_KEY = 'TODO_BOARDS_V1';
 const ACTIVE_BOARD_STORAGE_KEY = 'ACTIVE_TODO_BOARD_V1';
 const SAVED_VIEWS_STORAGE_KEY = 'TODO_SAVED_VIEWS_V1';
+const SNAPSHOTS_STORAGE_KEY = 'TODO_SNAPSHOTS_V1';
 const DEFAULT_TODOS: Todo[] = [];
 const DEFAULT_TODO_BOARDS: TodoBoard[] = [];
 const DEFAULT_TODO_SAVED_VIEWS: TodoSavedView[] = [];
+const DEFAULT_TODO_SNAPSHOTS: TodoSnapshot[] = [];
 
 type TodoActionResult = { ok: true } | { ok: false; error: string };
 type TodoImportOptions = { mode?: ImportMode; targetBoardId?: string };
@@ -114,6 +123,10 @@ function isSavedViewList(item: unknown): boolean {
     return Array.isArray(item);
 }
 
+function isTodoSnapshotList(item: unknown): boolean {
+    return Array.isArray(item);
+}
+
 function useTodos() {
     const { 
         item: todos,
@@ -143,6 +156,13 @@ function useTodos() {
         loading: savedViewsLoading,
         error: savedViewsError,
     } = useLocalStorage<TodoSavedView[]>(SAVED_VIEWS_STORAGE_KEY, DEFAULT_TODO_SAVED_VIEWS, isSavedViewList);
+
+    const {
+        item: storedSnapshots,
+        saveItem: saveSnapshots,
+        loading: snapshotsLoading,
+        error: snapshotsError,
+    } = useLocalStorage<TodoSnapshot[]>(SNAPSHOTS_STORAGE_KEY, DEFAULT_TODO_SNAPSHOTS, isTodoSnapshotList);
 
     const initializedBoardsRef = React.useRef(false);
     const hydratedActiveBoardRef = React.useRef(false);
@@ -177,6 +197,7 @@ function useTodos() {
     const normalizedTodos = normalizeTodos(todos);
     const normalizedStoredBoards = normalizeTodoBoards(storedBoards);
     const savedViews = normalizeTodoSavedViews(storedSavedViews);
+    const todoSnapshots = normalizeTodoSnapshots(storedSnapshots);
     const todoBoards = ensureDefaultTodoBoard(normalizedStoredBoards, normalizedTodos);
     const activeBoardId = getActiveTodoBoardId(todoBoards, storedActiveBoardId);
     const activeBoard = getActiveTodoBoard(todoBoards, activeBoardId);
@@ -266,6 +287,22 @@ function useTodos() {
         saveBoards(upsertTodoBoardTodos(todoBoards, activeBoardId, nextTodos));
     }, [activeBoardId, saveBoards, saveTodos, todoBoards]);
 
+    const createAutomaticSnapshot = (reason: string): boolean => {
+        const backup = createTodoWorkspaceBackup({
+            activeBoardId,
+            boards: todoBoards,
+            savedViews,
+            todos: normalizedTodos,
+        });
+
+        if (!hasWorkspaceContent(backup)) {
+            return false;
+        }
+
+        saveSnapshots(addTodoSnapshot(todoSnapshots, backup, reason));
+        return true;
+    };
+
     const resetTodoView = ({ preserveProject = false }: { preserveProject?: boolean } = {}) => {
         setSearchValue('');
         setFilter(TODO_FILTERS.all);
@@ -339,6 +376,9 @@ function useTodos() {
             return result;
         }
 
+        const boardName = todoBoards.find(board => board.id === boardId)?.name || 'un tablero';
+        createAutomaticSnapshot(`Antes de eliminar el tablero ${boardName}`);
+
         const nextActiveBoard = boardId === activeBoardId
             ? result.nextBoard
             : getActiveTodoBoard(result.boards, activeBoardId);
@@ -390,6 +430,44 @@ function useTodos() {
     const deleteSavedView = (viewId: string) => {
         saveSavedViews(removeTodoSavedView(savedViews, viewId));
     }
+
+    const deleteTodoSnapshot = (snapshotId: string): boolean => {
+        if (!todoSnapshots.some(snapshot => snapshot.id === snapshotId)) {
+            return false;
+        }
+
+        saveSnapshots(removeTodoSnapshot(todoSnapshots, snapshotId));
+        return true;
+    };
+
+    const restoreTodoSnapshot = (snapshotId: string): TodoActionResult => {
+        const snapshot = todoSnapshots.find(item => item.id === snapshotId);
+
+        if (!snapshot) {
+            return { ok: false, error: 'No encontramos esa copia local.' };
+        }
+
+        const workspaceResult = readTodoWorkspaceBackup(snapshot.backup);
+
+        if (!workspaceResult.ok) {
+            return { ok: false, error: workspaceResult.error };
+        }
+
+        createAutomaticSnapshot('Antes de restaurar una copia local');
+
+        const activeSnapshotBoard = getActiveTodoBoard(
+            workspaceResult.backup.boards,
+            workspaceResult.backup.activeBoardId
+        );
+
+        saveBoards(workspaceResult.backup.boards);
+        saveActiveBoardId(workspaceResult.backup.activeBoardId);
+        saveTodos(activeSnapshotBoard?.todos || workspaceResult.backup.todos);
+        saveSavedViews(workspaceResult.backup.savedViews);
+        resetTodoView();
+
+        return { ok: true };
+    };
 
     const completeTodo = (id: string) => {
         const newTodos = normalizedTodos.map(todo =>
@@ -489,6 +567,7 @@ function useTodos() {
             return;
         }
 
+        createAutomaticSnapshot('Antes de eliminar una tarea');
         const newTodos = reindexTodos(normalizedTodos.filter(todo => todo.id !== id));
         saveActiveTodos(newTodos);
         setRecentlyDeletedTodo(todoToDelete);
@@ -565,6 +644,7 @@ function useTodos() {
         const deletedCount = normalizedTodos.length - newTodos.length;
 
         if (deletedCount > 0) {
+            createAutomaticSnapshot(`Antes de eliminar ${deletedCount} tareas`);
             saveActiveTodos(newTodos);
         }
 
@@ -983,6 +1063,7 @@ function useTodos() {
                 workspaceResult.backup.activeBoardId
             );
 
+            createAutomaticSnapshot('Antes de restaurar un backup');
             saveBoards(workspaceResult.backup.boards);
             saveActiveBoardId(workspaceResult.backup.activeBoardId);
             saveTodos(activeImportedBoard?.todos || workspaceResult.backup.todos);
@@ -1040,6 +1121,10 @@ function useTodos() {
             return result;
         }
 
+        if (mode === 'replace') {
+            createAutomaticSnapshot('Antes de reemplazar las tareas');
+        }
+
         saveActiveTodos(result.todos);
         resetTodoView();
 
@@ -1080,8 +1165,8 @@ function useTodos() {
     }
 
     const states = {
-        loading: loading || boardsLoading || activeBoardLoading || savedViewsLoading,
-        error: error || boardsError || activeBoardError || savedViewsError,
+        loading: loading || boardsLoading || activeBoardLoading || savedViewsLoading || snapshotsLoading,
+        error: error || boardsError || activeBoardError || savedViewsError || snapshotsError,
         searchValue,
         filter,
         todoBoards: todoBoards.map(board => ({
@@ -1092,6 +1177,7 @@ function useTodos() {
         activeBoardId,
         activeBoardName: activeBoard?.name || '',
         savedViews,
+        todoSnapshots,
         totalTodos,
         totalTasks,
         completedTodos,
@@ -1128,6 +1214,8 @@ function useTodos() {
         saveCurrentView,
         applySavedView,
         deleteSavedView,
+        deleteTodoSnapshot,
+        restoreTodoSnapshot,
         completeTodo,
         completeTodos,
         deleteTodo,
