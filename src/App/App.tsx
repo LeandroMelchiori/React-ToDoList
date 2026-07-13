@@ -474,6 +474,7 @@ function App() {
                                 recurrenceDays={todo.recurrenceDays}
                                 recurrenceEndDate={todo.recurrenceEndDate}
                                 recurrenceCount={todo.recurrenceCount}
+                                completedOccurrences={todo.completedOccurrences}
                                 reminder={todo.reminder}
                                 archivedAt={todo.archivedAt}
                                 project={todo.project}

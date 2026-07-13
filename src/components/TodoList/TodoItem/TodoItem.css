@@ -245,6 +245,7 @@
 .TodoItem-kind,
 .TodoItem-dueDate,
 .TodoItem-recurrence,
+.TodoItem-occurrence,
 .TodoItem-reminder,
 .TodoItem-archive,
 .TodoItem-project,
@@ -320,6 +321,16 @@
 [data-theme='dark'] .TodoItem-recurrence {
   background-color: rgba(20, 184, 166, 0.16);
   color: #99f6e4;
+}
+
+.TodoItem-occurrence {
+  background-color: var(--color-badge-date-bg);
+  color: var(--color-badge-date-text);
+}
+
+.TodoItem-occurrence--complete {
+  background-color: rgba(16, 185, 129, 0.14);
+  color: var(--color-success);
 }
 
 .TodoItem-reminder {

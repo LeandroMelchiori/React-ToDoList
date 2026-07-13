@@ -12,9 +12,11 @@ import {
     getTodoFilterCounts,
     getTodoGroups,
     getTodoInsights,
+    getTodoNextOccurrenceDate,
     getTodosDateCounts,
     getVisibleTodos,
     isTodoArchived,
+    isTodoOccurrenceCompleted,
     isTaskTodo,
     mergeSubtasks,
     moveTodoToPosition as reorderTodoToPosition,
@@ -34,6 +36,8 @@ import {
     normalizeTodos,
     readTodosCalendarImport,
     reindexTodos,
+    setTodoOccurrenceCompletion,
+    toggleTodoOccurrence,
 } from './todoModel';
 import {
     DEFAULT_TODO_BOARD_ID,
@@ -398,6 +402,19 @@ function useTodos() {
                     return todo;
                 }
 
+                if (todo.recurrence !== TODO_RECURRENCES.none) {
+                    const occurrenceDate = getTodoNextOccurrenceDate(todo);
+                    const occurrenceCompleted = isTodoOccurrenceCompleted(todo, occurrenceDate);
+                    const nextTodo = toggleTodoOccurrence(todo, occurrenceDate);
+
+                    return {
+                        ...nextTodo,
+                        subtasks: occurrenceCompleted
+                            ? todo.subtasks
+                            : todo.subtasks.map(subtask => ({ ...subtask, completed: false })),
+                    };
+                }
+
                 const isCompletedBySubtasks = todo.completed &&
                     todo.subtasks.length > 0 &&
                     todo.subtasks.every(subtask => subtask.completed);
@@ -590,12 +607,20 @@ function useTodos() {
                     recurrenceCount: recurrence !== TODO_RECURRENCES.none
                         ? normalizeRecurrenceCount(details.recurrenceCount)
                         : null,
+                    completedOccurrences: recurrence !== TODO_RECURRENCES.none &&
+                        todo.recurrence !== TODO_RECURRENCES.none
+                        ? todo.completedOccurrences
+                        : [],
                     reminder: normalizeReminder(details.reminder),
                     project: normalizeProject(details.project),
                     tags: normalizeTags(details.tags),
                     subtasks: kind === TODO_KINDS.task ? mergeSubtasks(todo.subtasks, details.subtasks) : [],
-                    completed: kind === TODO_KINDS.task ? todo.completed : false,
-                    completedAt: kind === TODO_KINDS.task ? todo.completedAt : null,
+                    completed: kind === TODO_KINDS.task && recurrence === TODO_RECURRENCES.none
+                        ? todo.completed
+                        : false,
+                    completedAt: kind === TODO_KINDS.task && recurrence === TODO_RECURRENCES.none
+                        ? todo.completedAt
+                        : null,
                 }
                 : todo
         );
@@ -636,6 +661,21 @@ function useTodos() {
                 );
                 const allSubtasksCompleted = subtasks.length > 0 &&
                     subtasks.every(subtask => subtask.completed);
+
+                if (todo.recurrence !== TODO_RECURRENCES.none) {
+                    const occurrenceDate = getTodoNextOccurrenceDate(todo);
+                    const nextTodo = allSubtasksCompleted
+                        ? setTodoOccurrenceCompletion(todo, occurrenceDate, true)
+                        : todo;
+
+                    return {
+                        ...nextTodo,
+                        subtasks: allSubtasksCompleted
+                            ? subtasks.map(subtask => ({ ...subtask, completed: false }))
+                            : subtasks,
+                    };
+                }
+
                 const nextCompleted = allSubtasksCompleted
                     ? true
                     : todo.completed && subtasks.some(subtask => !subtask.completed)

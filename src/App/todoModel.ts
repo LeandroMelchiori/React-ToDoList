@@ -49,6 +49,7 @@ type Todo = {
     recurrenceDays: TodoWeekday[];
     recurrenceEndDate: string | null;
     recurrenceCount: number | null;
+    completedOccurrences: string[];
     reminder: TodoReminder;
     project: string | null;
     tags: string[];
@@ -136,6 +137,7 @@ type TodoDetails = {
     recurrenceDays?: unknown;
     recurrenceEndDate?: unknown;
     recurrenceCount?: unknown;
+    completedOccurrences?: unknown;
     reminder?: unknown;
     project?: unknown;
     tags?: unknown;
@@ -151,6 +153,18 @@ type TodoInput = TodoDetails & {
     archivedAt?: unknown;
 };
 type TodoInputWithText = TodoInput & { text: string };
+type TodoOccurrenceState = Pick<Todo,
+    'kind' |
+    'dateType' |
+    'dueDate' |
+    'startDate' |
+    'endDate' |
+    'recurrence' |
+    'recurrenceDays' |
+    'recurrenceEndDate' |
+    'recurrenceCount' |
+    'completedOccurrences'
+>;
 
 const TODO_FILTERS = {
     all: 'all',
@@ -356,6 +370,17 @@ function normalizeRecurrenceCount(recurrenceCount: unknown): number | null {
     return Number.isInteger(numericCount) && numericCount > 0
         ? Math.min(numericCount, 999)
         : null;
+}
+
+function normalizeCompletedOccurrences(completedOccurrences: unknown): string[] {
+    if (!Array.isArray(completedOccurrences)) {
+        return [];
+    }
+
+    return Array.from(new Set(completedOccurrences
+        .map(normalizeDueDate)
+        .filter((dateValue): dateValue is string => Boolean(dateValue))))
+        .sort();
 }
 
 function getAllowedRecurrencesForDateType(dateType: unknown): TodoRecurrence[] {
@@ -705,6 +730,7 @@ function createTodo(text: string, details: TodoDetails = {}): Todo {
         recurrenceCount: recurrence !== TODO_RECURRENCES.none
             ? normalizeRecurrenceCount('recurrenceCount' in details ? details.recurrenceCount : undefined)
             : null,
+        completedOccurrences: [],
         reminder: normalizeReminder('reminder' in details ? details.reminder : undefined),
         project: normalizeProject('project' in details ? details.project : undefined),
         tags: normalizeTags('tags' in details ? details.tags : undefined),
@@ -740,13 +766,22 @@ function normalizeTodos(todos: unknown): Todo[] {
                 endTime: todo.endTime,
             });
             const recurrence = normalizeTodoRecurrenceForKind(kind, schedule.dateType, todo.recurrence);
+            const completedAt = normalizeDateTime(todo.completedAt);
+            const legacyOccurrence = kind === TODO_KINDS.task &&
+                recurrence !== TODO_RECURRENCES.none &&
+                Boolean(todo.completed) &&
+                completedAt
+                ? completedAt.slice(0, 10)
+                : null;
 
             return {
                 id: typeof todo.id === 'string' && todo.id ? todo.id : createLegacyTodoId(todo, index),
                 text: todo.text.trim(),
                 kind,
                 description: normalizeDescription(todo.description),
-                completed: kind === TODO_KINDS.task ? Boolean(todo.completed) : false,
+                completed: kind === TODO_KINDS.task && recurrence === TODO_RECURRENCES.none
+                    ? Boolean(todo.completed)
+                    : false,
                 order: normalizeOrder(todo.order, index),
                 priority: normalizePriority(todo.priority),
                 dateType: schedule.dateType,
@@ -765,12 +800,20 @@ function normalizeTodos(todos: unknown): Todo[] {
                 recurrenceCount: recurrence !== TODO_RECURRENCES.none
                     ? normalizeRecurrenceCount(todo.recurrenceCount)
                     : null,
+                completedOccurrences: recurrence !== TODO_RECURRENCES.none && kind === TODO_KINDS.task
+                    ? normalizeCompletedOccurrences([
+                        ...(Array.isArray(todo.completedOccurrences) ? todo.completedOccurrences : []),
+                        legacyOccurrence,
+                    ])
+                    : [],
                 reminder: normalizeReminder(todo.reminder),
                 project: normalizeProject(todo.project),
                 tags: normalizeTags(todo.tags),
                 subtasks: kind === TODO_KINDS.task ? normalizeSubtasks(todo.subtasks) : [],
                 createdAt: normalizeDateTime(todo.createdAt),
-                completedAt: kind === TODO_KINDS.task ? normalizeDateTime(todo.completedAt) : null,
+                completedAt: kind === TODO_KINDS.task && recurrence === TODO_RECURRENCES.none
+                    ? completedAt
+                    : null,
                 archivedAt: normalizeDateTime(todo.archivedAt),
             };
         });
@@ -1650,6 +1693,10 @@ function getTodoReminderTarget(todo: Todo, now = new Date()): Date | null {
             continue;
         }
 
+        if (isTaskTodo(todo) && isTodoOccurrenceCompleted(todo, dateValue)) {
+            continue;
+        }
+
         const reminderTarget = getReminderTargetForDate(todo, dateValue);
 
         if (reminderTarget && reminderTarget.getTime() > now.getTime()) {
@@ -1695,6 +1742,53 @@ function isTodoRecurringOnDate(
     }
 
     return true;
+}
+
+function getTodoNextOccurrenceDate(todo: TodoOccurrenceState, fromDate = getTodayDateValue()): string | null {
+    if (todo.kind !== TODO_KINDS.task || normalizeRecurrence(todo.recurrence) === TODO_RECURRENCES.none) {
+        return null;
+    }
+
+    const normalizedFromDate = normalizeDueDate(fromDate) || getTodayDateValue();
+
+    for (let dayOffset = 0; dayOffset <= 3660; dayOffset += 1) {
+        const dateValue = getDateValueOffset(normalizedFromDate, dayOffset);
+
+        if (isTodoRecurringOnDate(todo, dateValue)) {
+            return dateValue;
+        }
+    }
+
+    return null;
+}
+
+function isTodoOccurrenceCompleted(todo: Pick<TodoOccurrenceState, 'completedOccurrences'>, dateValue: string | null): boolean {
+    return Boolean(dateValue) && normalizeCompletedOccurrences(todo.completedOccurrences).includes(dateValue as string);
+}
+
+function setTodoOccurrenceCompletion(todo: Todo, dateValue: string | null, completed: boolean): Todo {
+    if (!dateValue || !isTaskTodo(todo) || !isTodoRecurringOnDate(todo, dateValue)) {
+        return todo;
+    }
+
+    const completedOccurrences = normalizeCompletedOccurrences(todo.completedOccurrences);
+
+    return {
+        ...todo,
+        completed: false,
+        completedAt: null,
+        completedOccurrences: completed
+            ? normalizeCompletedOccurrences([...completedOccurrences, dateValue])
+            : completedOccurrences.filter(occurrence => occurrence !== dateValue),
+    };
+}
+
+function toggleTodoOccurrence(todo: Todo, dateValue = getTodoNextOccurrenceDate(todo)): Todo {
+    return setTodoOccurrenceCompletion(
+        todo,
+        dateValue,
+        !isTodoOccurrenceCompleted(todo, dateValue)
+    );
 }
 
 function getTodosDateCounts(
@@ -1914,10 +2008,12 @@ export {
     getTodoGroups,
     getTodoInsights,
     getTodoReminderTarget,
+    getTodoNextOccurrenceDate,
     getTodoRecurrenceAnchorDate,
     getTodosDateCounts,
     getVisibleTodos,
     isTodoArchived,
+    isTodoOccurrenceCompleted,
     isTodoRecurringOnDate,
     isTaskTodo,
     mergeSubtasks,
@@ -1932,6 +2028,7 @@ export {
     normalizeRecurrence,
     normalizeRecurrenceCount,
     normalizeRecurrenceDays,
+    normalizeCompletedOccurrences,
     normalizeReminder,
     normalizeTodoKind,
     normalizeTodoRecurrence,
@@ -1945,6 +2042,8 @@ export {
     readTodosCalendarImport,
     readTodosBackup,
     reindexTodos,
+    setTodoOccurrenceCompletion,
+    toggleTodoOccurrence,
 };
 
 export type {

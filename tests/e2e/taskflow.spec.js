@@ -90,8 +90,8 @@ test('manages a todo through the production flow', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Filtrar por etiqueta qa' })).toBeVisible();
   await expect(page.getByLabel('Buscar tareas')).toHaveValue('');
 
-  await page.getByRole('button', { name: 'Marcar tarea como completada' }).click();
-  await expect(page.getByText('Completaste todas tus tareas')).toBeVisible();
+  await page.getByRole('button', { name: /Completar ocurrencia del/ }).click();
+  await expect(page.getByText('Realizada 20/07/2026')).toBeVisible();
 
   await page.getByRole('button', { name: 'Eliminar tarea' }).click();
   const deleteDialog = page.getByRole('dialog', { name: 'Eliminar tarea' });

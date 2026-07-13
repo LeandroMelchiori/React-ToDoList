@@ -1197,6 +1197,40 @@ describe('App', () => {
     }));
   });
 
+  test('completes one recurring occurrence without closing the series', async () => {
+    const user = userEvent.setup();
+    const today = getRelativeDateInputValue(0);
+    const [year, month, day] = today.split('-');
+    const displayDate = `${day}/${month}/${year}`;
+
+    localStorage.setItem('TODOS_V1', JSON.stringify([{
+      id: 'todo-daily',
+      text: 'Repasar vocabulario',
+      completed: false,
+      dueDate: today,
+      recurrence: 'daily',
+      completedOccurrences: [],
+    }]));
+    renderApp();
+
+    expect(await screen.findByText('Repasar vocabulario')).toBeInTheDocument();
+    expect(screen.getByText(`Proxima ${displayDate}`)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', {
+      name: `Completar ocurrencia del ${displayDate}`,
+    }));
+
+    expect(screen.getByText(`Realizada ${displayDate}`)).toBeInTheDocument();
+    expect(screen.getByRole('button', {
+      name: `Marcar pendiente ocurrencia del ${displayDate}`,
+    })).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('TODOS_V1'))[0]).toEqual(expect.objectContaining({
+      completed: false,
+      completedAt: null,
+      completedOccurrences: [today],
+    }));
+  });
+
   test('collapses long subtasks lists behind progress summary', async () => {
     const user = userEvent.setup();
     localStorage.setItem('TODOS_V1', JSON.stringify([

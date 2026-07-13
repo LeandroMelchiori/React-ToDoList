@@ -9,6 +9,8 @@ import {
   TodoReminder,
   TodoRecurrence,
   TodoWeekday,
+  getTodoNextOccurrenceDate,
+  isTodoOccurrenceCompleted,
 } from '../../../App/todoModel';
 import './TodoDetail.css';
 
@@ -150,9 +152,12 @@ function TodoDetail({
     ? TODO_REMINDER_LABELS[todo.reminder]
     : null;
   const scheduleLabel = getScheduleLabel(todo);
+  const occurrenceDate = getTodoNextOccurrenceDate(todo);
+  const occurrenceCompleted = isTodoOccurrenceCompleted(todo, occurrenceDate);
+  const isRecurringTask = isTask && todo.recurrence !== TODO_RECURRENCES.none;
   const completedSubtasks = todo.subtasks.filter(subtask => subtask.completed).length;
   const hasSubtasks = isTask && todo.subtasks.length > 0;
-  const isCompletedBySubtasks = todo.completed &&
+  const isCompletedBySubtasks = !isRecurringTask && todo.completed &&
     todo.subtasks.length > 0 &&
     todo.subtasks.every(subtask => subtask.completed);
 
@@ -171,7 +176,7 @@ function TodoDetail({
           <>
             <div>
               <dt>Estado</dt>
-              <dd>{isArchived ? 'Archivada' : todo.completed ? 'Completada' : 'Pendiente'}</dd>
+              <dd>{isArchived ? 'Archivada' : isRecurringTask ? 'Serie activa' : todo.completed ? 'Completada' : 'Pendiente'}</dd>
             </div>
             <div>
               <dt>Prioridad</dt>
@@ -189,6 +194,14 @@ function TodoDetail({
           <div>
             <dt>Repeticion</dt>
             <dd>{recurrenceLabel}</dd>
+          </div>
+        )}
+        {occurrenceDate && (
+          <div>
+            <dt>Proxima ocurrencia</dt>
+            <dd>
+              {formatDateValue(occurrenceDate)} · {occurrenceCompleted ? 'Realizada' : 'Pendiente'}
+            </dd>
           </div>
         )}
         {reminderLabel && (
@@ -246,12 +259,14 @@ function TodoDetail({
             disabled={isCompletedBySubtasks}
             onClick={onToggleComplete}
           >
-            {isCompletedBySubtasks
+            {isRecurringTask && occurrenceDate
+              ? `${occurrenceCompleted ? 'Marcar pendiente' : 'Completar'} ${formatDateValue(occurrenceDate)}`
+              : isCompletedBySubtasks
               ? 'Completada por subtareas'
               : todo.completed ? 'Marcar pendiente' : 'Completar'}
           </button>
         )}
-        {isTask && todo.completed && !isArchived && (
+        {isTask && !isRecurringTask && todo.completed && !isArchived && (
           <button type="button" className="TodoDetail-button" onClick={onArchive}>
             Archivar
           </button>

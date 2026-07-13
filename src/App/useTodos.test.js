@@ -19,10 +19,12 @@ import {
   getTodoFilterCounts,
   getTodoGroups,
   getTodoInsights,
+  getTodoNextOccurrenceDate,
   getTodoReminderTarget,
   getTodosDateCounts,
   getVisibleTodos,
   isTodoArchived,
+  isTodoOccurrenceCompleted,
   isTodoRecurringOnDate,
   isTaskTodo,
   moveTodoToPosition,
@@ -42,6 +44,7 @@ import {
   normalizeTodos,
   readTodosCalendarImport,
   readTodosBackup,
+  toggleTodoOccurrence,
 } from './todoModel';
 import {
   DEFAULT_TODO_BOARD_ID,
@@ -91,6 +94,7 @@ describe('todo helpers', () => {
         recurrenceDays: [],
         recurrenceEndDate: null,
         recurrenceCount: null,
+        completedOccurrences: [],
         reminder: TODO_REMINDERS.none,
         project: null,
         tags: [],
@@ -117,6 +121,7 @@ describe('todo helpers', () => {
         recurrenceDays: [],
         recurrenceEndDate: null,
         recurrenceCount: null,
+        completedOccurrences: [],
         reminder: TODO_REMINDERS.none,
         project: null,
         tags: [],
@@ -171,6 +176,7 @@ describe('todo helpers', () => {
       dueDate: '2026-07-20',
       startTime: '10:30',
       recurrence: TODO_RECURRENCES.weekly,
+      completedOccurrences: [],
       description: 'Caso tecnico para entrevista',
       project: 'TaskFlow',
       tags: 'React, testing, React',
@@ -275,6 +281,40 @@ describe('todo helpers', () => {
     expect(isTodoRecurringOnDate(todo, '2026-08-12')).toBe(true);
     expect(isTodoRecurringOnDate(todo, '2026-08-17')).toBe(false);
     expect(isTodoRecurringOnDate(todo, '2026-08-04')).toBe(false);
+  });
+
+  test('tracks recurring task occurrences without completing the series', () => {
+    const dailyTask = createTodo('Practicar ingles', {
+      dueDate: '2026-07-10',
+      recurrence: TODO_RECURRENCES.daily,
+    });
+    const occurrenceDate = getTodoNextOccurrenceDate(dailyTask, '2026-07-13');
+
+    expect(occurrenceDate).toBe('2026-07-13');
+    expect(isTodoOccurrenceCompleted(dailyTask, occurrenceDate)).toBe(false);
+
+    const completedOccurrence = toggleTodoOccurrence(dailyTask, occurrenceDate);
+
+    expect(completedOccurrence.completed).toBe(false);
+    expect(completedOccurrence.completedAt).toBeNull();
+    expect(completedOccurrence.completedOccurrences).toEqual(['2026-07-13']);
+    expect(isTodoOccurrenceCompleted(completedOccurrence, occurrenceDate)).toBe(true);
+    expect(toggleTodoOccurrence(completedOccurrence, occurrenceDate).completedOccurrences).toEqual([]);
+  });
+
+  test('migrates a completed recurring task into a dated occurrence', () => {
+    const [todo] = normalizeTodos([{
+      id: 'legacy-recurring',
+      text: 'Rutina diaria',
+      completed: true,
+      completedAt: '2026-07-12T10:00:00.000Z',
+      dueDate: '2026-07-01',
+      recurrence: TODO_RECURRENCES.daily,
+    }]);
+
+    expect(todo.completed).toBe(false);
+    expect(todo.completedAt).toBeNull();
+    expect(todo.completedOccurrences).toEqual(['2026-07-12']);
   });
 
   test('normalizes event and period schedule dates', () => {

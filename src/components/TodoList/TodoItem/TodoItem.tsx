@@ -18,6 +18,8 @@ import {
   TodoRecurrence,
   TodoWeekday,
   TodoSubtask,
+  getTodoNextOccurrenceDate,
+  isTodoOccurrenceCompleted,
 } from '../../../App/todoModel';
 
 const TODO_PRIORITY_LABELS: Record<TodoPriority, string> = {
@@ -170,6 +172,7 @@ interface TodoItemProps {
   recurrenceDays?: TodoWeekday[];
   recurrenceEndDate?: string | null;
   recurrenceCount?: number | null;
+  completedOccurrences?: string[];
   reminder?: TodoReminder;
   archivedAt?: string | null;
   project?: string | null;
@@ -216,6 +219,26 @@ function TodoItem(props: TodoItemProps) {
     ? TODO_REMINDER_LABELS[props.reminder]
     : null;
   const isArchived = Boolean(props.archivedAt);
+  const isRecurringTask = isTaskKind && props.recurrence !== TODO_RECURRENCES.none;
+  const occurrenceTodo = {
+    kind,
+    dateType: props.dateType || TODO_DATE_TYPES.due,
+    dueDate: props.dueDate || null,
+    startDate: props.startDate || null,
+    endDate: props.endDate || null,
+    recurrence: props.recurrence || TODO_RECURRENCES.none,
+    recurrenceDays: props.recurrenceDays || [],
+    recurrenceEndDate: props.recurrenceEndDate || null,
+    recurrenceCount: props.recurrenceCount || null,
+    completedOccurrences: props.completedOccurrences || [],
+  };
+  const occurrenceDate = isRecurringTask
+    ? getTodoNextOccurrenceDate(occurrenceTodo)
+    : null;
+  const occurrenceCompleted = isRecurringTask
+    ? isTodoOccurrenceCompleted(occurrenceTodo, occurrenceDate)
+    : false;
+  const displayCompleted = isRecurringTask ? occurrenceCompleted : props.completed;
   const tags = Array.isArray(props.tags) ? props.tags : [];
   const subtasks = Array.isArray(props.subtasks) ? props.subtasks : [];
   const completedSubtasks = subtasks.filter(subtask => subtask.completed).length;
@@ -229,7 +252,7 @@ function TodoItem(props: TodoItemProps) {
   const itemClassName = [
     'TodoItem',
     `TodoItem--${kind}`,
-    props.completed ? 'TodoItem--complete' : '',
+    displayCompleted ? 'TodoItem--complete' : '',
     isArchived ? 'TodoItem--archived' : '',
     props.isDragging ? 'TodoItem--dragging' : '',
     props.dropPosition === 'before' ? 'TodoItem--dropBefore' : '',
@@ -265,14 +288,17 @@ function TodoItem(props: TodoItemProps) {
       </div>
       {isTaskKind && (
         <CompleteIcon
-          completed={props.completed}
+          completed={displayCompleted}
           disabled={isCompletedBySubtasks}
+          label={isRecurringTask && occurrenceDate
+            ? `${occurrenceCompleted ? 'Marcar pendiente' : 'Completar'} ocurrencia del ${formatDateValue(occurrenceDate)}`
+            : undefined}
           onComplete={props.onComplete}
         />
       )}
       <div className="TodoItem-main">
         <div className="TodoItem-content">
-          <p className={`TodoItem-p ${props.completed ? 'TodoItem-p--complete' : ''}`}>
+          <p className={`TodoItem-p ${displayCompleted ? 'TodoItem-p--complete' : ''}`}>
             {props.text}
           </p>
           {props.description && (
@@ -367,6 +393,11 @@ function TodoItem(props: TodoItemProps) {
           {recurrenceLabel && (
             <span className="TodoItem-recurrence">
               {recurrenceLabel}
+            </span>
+          )}
+          {occurrenceDate && (
+            <span className={`TodoItem-occurrence ${occurrenceCompleted ? 'TodoItem-occurrence--complete' : ''}`}>
+              {occurrenceCompleted ? 'Realizada' : 'Proxima'} {formatDateValue(occurrenceDate)}
             </span>
           )}
           {reminderLabel && (
