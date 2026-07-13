@@ -719,7 +719,7 @@ describe('App', () => {
     await user.selectOptions(screen.getByLabelText('Repeticion'), 'weekly');
     await user.click(screen.getByLabelText('Lun'));
     await user.click(screen.getByLabelText('Mie'));
-    await user.type(screen.getByLabelText('Fin de repeticion'), '2026-08-31');
+    await user.type(screen.getByLabelText('Finaliza el'), '2026-08-31');
     await user.type(screen.getByLabelText('Cantidad maxima'), '4');
     await user.click(screen.getByRole('button', { name: 'Agregar' }));
 

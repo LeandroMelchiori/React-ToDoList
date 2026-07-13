@@ -785,7 +785,7 @@ function TodoForm({
                 {hasRecurrence && (
                     <>
                         <label htmlFor={recurrenceEndDateId}>
-                            Fin de repeticion
+                            Finaliza el
                             <input
                                 id={recurrenceEndDateId}
                                 type="date"
