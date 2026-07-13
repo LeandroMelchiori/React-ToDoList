@@ -9,6 +9,7 @@ import {
     createTodo,
     createTodosCalendarExport,
     getTodoFacets,
+    getTodoFilterCounts,
     getTodoGroups,
     getTodoInsights,
     getTodosDateCounts,
@@ -184,6 +185,7 @@ function useTodos() {
     const totalTodos = normalizedTodos.length;
     const pendingTodos = totalTasks - completedTodos;
     const dateCounts = getTodosDateCounts(normalizedTodos);
+    const filterCounts = getTodoFilterCounts(normalizedTodos);
     const insights = getTodoInsights(normalizedTodos);
     const facets = getTodoFacets(normalizedTodos);
 
@@ -867,6 +869,7 @@ function useTodos() {
         overdueTodos: dateCounts[TODO_FILTERS.overdue],
         todayTodos: dateCounts[TODO_FILTERS.today],
         upcomingTodos: dateCounts[TODO_FILTERS.upcoming],
+        filterCounts,
         insights,
         projectOptions: facets.projects,
         tagOptions: facets.tags,

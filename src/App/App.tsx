@@ -83,10 +83,7 @@ function App() {
         totalTodos,
         totalTasks,
         completedTodos,
-        pendingTodos,
-        overdueTodos,
-        todayTodos,
-        upcomingTodos,
+        filterCounts,
         insights,
         projectOptions,
         tagOptions,
@@ -289,12 +286,7 @@ function App() {
                 <TodoFilters
                     filter={filter}
                     setFilter={setFilter}
-                    totalTodos={totalTodos}
-                    completedTodos={completedTodos}
-                    pendingTodos={pendingTodos}
-                    overdueTodos={overdueTodos}
-                    todayTodos={todayTodos}
-                    upcomingTodos={upcomingTodos}
+                    filterCounts={filterCounts}
                 />
                 <TodoInsights insights={insights} />
                 <TodoFacetFilters

@@ -57,6 +57,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - Buscar tareas por texto, proyecto o etiqueta.
 - Filtrar rapidamente por proyecto o etiqueta.
 - Filtrar por todas, pendientes, completadas, vencidas, de hoy o proximas.
+- Filtrar por sin fecha, prioridad alta, subtareas pendientes, recurrentes, recordatorios y tipo de elemento.
 - Guardar combinaciones de filtros para reutilizarlas.
 - Separar el trabajo en tableros locales.
 - Reordenar tareas con drag and drop o con controles subir/bajar.
@@ -267,6 +268,7 @@ La suite actual cubre:
 - Creacion de tareas con ids y texto limpio.
 - Filtros por busqueda y estado.
 - Filtros temporales por tareas vencidas, de hoy y proximas.
+- Filtros avanzados por atributos, tipo de elemento y agenda.
 - Creacion, marcado y completado automatico de tareas con subtareas.
 - Tareas, eventos, horarios recurrentes y periodos como tipos separados.
 - Vista Hoy con tareas, agenda y recordatorio visual del horario actual/proximo.

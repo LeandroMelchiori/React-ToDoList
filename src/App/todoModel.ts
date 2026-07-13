@@ -1,4 +1,19 @@
-type TodoFilter = 'all' | 'active' | 'completed' | 'overdue' | 'today' | 'upcoming';
+type TodoFilter =
+    | 'all'
+    | 'active'
+    | 'completed'
+    | 'overdue'
+    | 'today'
+    | 'upcoming'
+    | 'unscheduled'
+    | 'highPriority'
+    | 'pendingSubtasks'
+    | 'recurring'
+    | 'withReminder'
+    | 'tasks'
+    | 'events'
+    | 'schedules'
+    | 'periods';
 type TodoDateStatus = 'overdue' | 'today' | 'upcoming';
 type TodoPriority = 'low' | 'medium' | 'high';
 type TodoDateType = 'due' | 'event' | 'period';
@@ -67,6 +82,8 @@ type TodoCalendarExport = {
     content: string;
     count: number;
 };
+
+type TodoFilterCounts = Record<TodoFilter, number>;
 
 type BackupReadResult = { ok: true; todos: Todo[] } | { ok: false; error: string };
 type CalendarImportReadResult = { ok: true; todos: Todo[]; totalCount: number } | { ok: false; error: string };
@@ -139,6 +156,15 @@ const TODO_FILTERS = {
     overdue: 'overdue',
     today: 'today',
     upcoming: 'upcoming',
+    unscheduled: 'unscheduled',
+    highPriority: 'highPriority',
+    pendingSubtasks: 'pendingSubtasks',
+    recurring: 'recurring',
+    withReminder: 'withReminder',
+    tasks: 'tasks',
+    events: 'events',
+    schedules: 'schedules',
+    periods: 'periods',
 } as const satisfies Record<TodoFilter, TodoFilter>;
 
 const TODO_PRIORITIES = {
@@ -800,14 +826,7 @@ function getVisibleTodos(
             .join(' ')
             .toLowerCase();
         const matchesSearch = searchableText.includes(normalizedSearch);
-        const dateStatus = getTodoDateStatus(todo, todayDate);
-        const matchesFilter =
-            filter === TODO_FILTERS.completed ? isTaskTodo(todo) && todo.completed :
-            filter === TODO_FILTERS.active ? isTaskTodo(todo) && !todo.completed :
-            filter === TODO_FILTERS.overdue ? dateStatus === TODO_FILTERS.overdue :
-            filter === TODO_FILTERS.today ? dateStatus === TODO_FILTERS.today :
-            filter === TODO_FILTERS.upcoming ? dateStatus === TODO_FILTERS.upcoming :
-            true;
+        const matchesFilter = doesTodoMatchFilter(todo, filter, todayDate);
         const matchesProject = !projectFilter ||
             todo.project?.toLowerCase() === projectFilter.toLowerCase();
         const matchesTag = !tagFilter ||
@@ -815,6 +834,80 @@ function getVisibleTodos(
 
         return matchesSearch && matchesFilter && matchesProject && matchesTag;
     });
+}
+
+function doesTodoMatchFilter(todo: Todo, filter: TodoFilter, todayDate = getTodayDateValue()): boolean {
+    const dateStatus = getTodoDateStatus(todo, todayDate);
+
+    if (filter === TODO_FILTERS.completed) {
+        return isTaskTodo(todo) && todo.completed;
+    }
+
+    if (filter === TODO_FILTERS.active) {
+        return isTaskTodo(todo) && !todo.completed;
+    }
+
+    if (filter === TODO_FILTERS.overdue) {
+        return dateStatus === TODO_FILTERS.overdue;
+    }
+
+    if (filter === TODO_FILTERS.today) {
+        return dateStatus === TODO_FILTERS.today;
+    }
+
+    if (filter === TODO_FILTERS.upcoming) {
+        return dateStatus === TODO_FILTERS.upcoming;
+    }
+
+    if (filter === TODO_FILTERS.unscheduled) {
+        return !todo.completed && !dateStatus;
+    }
+
+    if (filter === TODO_FILTERS.highPriority) {
+        return isTaskTodo(todo) && !todo.completed && todo.priority === TODO_PRIORITIES.high;
+    }
+
+    if (filter === TODO_FILTERS.pendingSubtasks) {
+        return isTaskTodo(todo) &&
+            !todo.completed &&
+            todo.subtasks.some(subtask => !subtask.completed);
+    }
+
+    if (filter === TODO_FILTERS.recurring) {
+        return normalizeRecurrence(todo.recurrence) !== TODO_RECURRENCES.none;
+    }
+
+    if (filter === TODO_FILTERS.withReminder) {
+        return normalizeReminder(todo.reminder) !== TODO_REMINDERS.none;
+    }
+
+    if (filter === TODO_FILTERS.tasks) {
+        return todo.kind === TODO_KINDS.task;
+    }
+
+    if (filter === TODO_FILTERS.events) {
+        return todo.kind === TODO_KINDS.event;
+    }
+
+    if (filter === TODO_FILTERS.schedules) {
+        return todo.kind === TODO_KINDS.schedule;
+    }
+
+    if (filter === TODO_FILTERS.periods) {
+        return todo.kind === TODO_KINDS.period;
+    }
+
+    return true;
+}
+
+function getTodoFilterCounts(todos: Todo[], todayDate = getTodayDateValue()): TodoFilterCounts {
+    const normalizedTodos = normalizeTodos(todos);
+
+    return Object.values(TODO_FILTERS).reduce<TodoFilterCounts>((counts, filter) => {
+        counts[filter] = normalizedTodos.filter(todo => doesTodoMatchFilter(todo, filter, todayDate)).length;
+
+        return counts;
+    }, {} as TodoFilterCounts);
 }
 
 function mapFacetCounts(values: Array<string | null>): Array<{ name: string; count: number }> {
@@ -1792,6 +1885,7 @@ export {
     getTodayDateValue,
     getTodoFacets,
     getTodoDateStatus,
+    getTodoFilterCounts,
     getTodoGroups,
     getTodoInsights,
     getTodoReminderTarget,
@@ -1835,6 +1929,7 @@ export type {
     TodoDateType,
     TodoDetails,
     TodoFilter,
+    TodoFilterCounts,
     TodoGroupView,
     TodoInsights,
     TodoKind,

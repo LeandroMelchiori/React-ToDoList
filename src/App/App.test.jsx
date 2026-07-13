@@ -766,6 +766,55 @@ describe('App', () => {
     expect(screen.queryByText('Enviar avance de hoy')).not.toBeInTheDocument();
   });
 
+  test('filters todos by advanced attributes from the filters menu', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      {
+        id: 'todo-high',
+        text: 'Preparar demo',
+        completed: false,
+        priority: 'high',
+        subtasks: [{ id: 'subtask-1', text: 'Revisar flujo', completed: false }],
+        order: 0,
+      },
+      {
+        id: 'todo-reminder',
+        text: 'Enviar recordatorio',
+        completed: false,
+        dueDate: '2026-07-20',
+        reminder: '1-day',
+        order: 1,
+      },
+      {
+        id: 'event-exam',
+        text: 'Rendir final',
+        kind: 'event',
+        dateType: 'event',
+        startDate: '2026-07-22',
+        order: 2,
+      },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Preparar demo')).toBeInTheDocument();
+
+    let filtersGroup = await openFilters(user);
+    expect(within(filtersGroup).getByText('Atributos')).toBeInTheDocument();
+    expect(within(filtersGroup).getByText('Tipo')).toBeInTheDocument();
+
+    await user.click(within(filtersGroup).getByRole('button', { name: 'Alta prioridad 1' }));
+
+    expect(screen.getByText('Preparar demo')).toBeInTheDocument();
+    expect(screen.queryByText('Enviar recordatorio')).not.toBeInTheDocument();
+    expect(screen.queryByText('Rendir final')).not.toBeInTheDocument();
+
+    filtersGroup = await openFilters(user);
+    await user.click(within(filtersGroup).getByRole('button', { name: 'Eventos 1' }));
+
+    expect(screen.getByText('Rendir final')).toBeInTheDocument();
+    expect(screen.queryByText('Preparar demo')).not.toBeInTheDocument();
+  });
+
   test('groups visible todos by due date and completion', async () => {
     const yesterday = getRelativeDateInputValue(-1);
     const today = getRelativeDateInputValue(0);
@@ -1028,18 +1077,18 @@ describe('App', () => {
     const filtersGroup = await openFilters(user);
     const allFilter = within(filtersGroup).getByRole('button', { name: /Todas/ });
     const pendingFilter = within(filtersGroup).getByRole('button', { name: /Pendientes/ });
-    const todayFilter = within(filtersGroup).getByRole('button', { name: /Hoy/ });
-    const upcomingFilter = within(filtersGroup).getByRole('button', { name: /Proximas/ });
+    const scheduleFilter = within(filtersGroup).getByRole('button', { name: /Horarios/ });
+    const periodFilter = within(filtersGroup).getByRole('button', { name: /Periodos/ });
 
     allFilter.focus();
     await user.keyboard('{ArrowRight}');
     expect(pendingFilter).toHaveFocus();
 
     await user.keyboard('{End}');
-    expect(upcomingFilter).toHaveFocus();
+    expect(periodFilter).toHaveFocus();
 
     await user.keyboard('{ArrowLeft}');
-    expect(todayFilter).toHaveFocus();
+    expect(scheduleFilter).toHaveFocus();
 
     const projectsGroup = screen.getByRole('group', { name: 'Proyectos' });
     const docsProject = within(projectsGroup).getByRole('button', { name: /Docs/ });

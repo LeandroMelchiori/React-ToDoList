@@ -16,6 +16,7 @@ import {
   getAllowedRecurrencesForTodoKind,
   getTodoFacets,
   getTodoDateStatus,
+  getTodoFilterCounts,
   getTodoGroups,
   getTodoInsights,
   getTodoReminderTarget,
@@ -478,6 +479,57 @@ describe('todo helpers', () => {
     })).toEqual([
       todos[2],
     ]);
+  });
+
+  test('filters visible todos by advanced attributes and type', () => {
+    const todos = normalizeTodos([
+      {
+        id: 'task-high',
+        text: 'Preparar entrega',
+        completed: false,
+        priority: TODO_PRIORITIES.high,
+        subtasks: [{ id: 'subtask-1', text: 'Revisar consigna', completed: false }],
+      },
+      {
+        id: 'task-reminder',
+        text: 'Pagar servicio',
+        completed: false,
+        dueDate: '2026-07-20',
+        reminder: TODO_REMINDERS.oneDay,
+      },
+      {
+        id: 'event-1',
+        text: 'Examen final',
+        kind: TODO_KINDS.event,
+        dateType: TODO_DATE_TYPES.event,
+        startDate: '2026-07-21',
+      },
+      {
+        id: 'schedule-1',
+        text: 'Cursar redes',
+        kind: TODO_KINDS.schedule,
+        dateType: TODO_DATE_TYPES.period,
+        startDate: '2026-07-01',
+        recurrence: TODO_RECURRENCES.weekly,
+      },
+    ]);
+
+    expect(getVisibleTodos(todos, '', TODO_FILTERS.unscheduled).map(todo => todo.id)).toEqual(['task-high']);
+    expect(getVisibleTodos(todos, '', TODO_FILTERS.highPriority).map(todo => todo.id)).toEqual(['task-high']);
+    expect(getVisibleTodos(todos, '', TODO_FILTERS.pendingSubtasks).map(todo => todo.id)).toEqual(['task-high']);
+    expect(getVisibleTodos(todos, '', TODO_FILTERS.withReminder).map(todo => todo.id)).toEqual(['task-reminder']);
+    expect(getVisibleTodos(todos, '', TODO_FILTERS.events).map(todo => todo.id)).toEqual(['event-1']);
+    expect(getVisibleTodos(todos, '', TODO_FILTERS.schedules).map(todo => todo.id)).toEqual(['schedule-1']);
+    expect(getVisibleTodos(todos, '', TODO_FILTERS.recurring).map(todo => todo.id)).toEqual(['schedule-1']);
+    expect(getTodoFilterCounts(todos)).toEqual(expect.objectContaining({
+      [TODO_FILTERS.unscheduled]: 1,
+      [TODO_FILTERS.highPriority]: 1,
+      [TODO_FILTERS.pendingSubtasks]: 1,
+      [TODO_FILTERS.withReminder]: 1,
+      [TODO_FILTERS.events]: 1,
+      [TODO_FILTERS.schedules]: 1,
+      [TODO_FILTERS.recurring]: 1,
+    }));
   });
 
   test('keeps agenda items out of task completion filters and metrics', () => {
