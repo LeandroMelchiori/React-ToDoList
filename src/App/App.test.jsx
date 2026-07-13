@@ -199,6 +199,40 @@ describe('App', () => {
     ]);
   });
 
+  test('creates an agenda item with a browser reminder', async () => {
+    const requestPermission = vi.fn().mockResolvedValue('granted');
+    const MockNotification = vi.fn();
+    MockNotification.permission = 'default';
+    MockNotification.requestPermission = requestPermission;
+    Object.defineProperty(window, 'Notification', {
+      configurable: true,
+      value: MockNotification,
+    });
+    const user = userEvent.setup();
+    renderApp();
+
+    expect(await screen.findByText('Organiza tu dia con una primera tarea')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Crear nueva tarea' }));
+    await user.type(screen.getByLabelText('Nueva tarea'), 'Rendir final de redes');
+    await user.selectOptions(screen.getByLabelText('Tipo de elemento'), 'event');
+    await user.type(screen.getByLabelText('Dia del evento'), '2026-08-15');
+    fireEvent.change(screen.getByLabelText('Hora del evento'), { target: { value: '10:00' } });
+    await user.selectOptions(screen.getByLabelText('Recordatorio'), '30-minutes');
+    await user.click(screen.getByRole('button', { name: 'Agregar' }));
+
+    expect(screen.getByText('Recordatorio 30 min antes')).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('TODOS_V1'))[0]).toEqual(expect.objectContaining({
+      text: 'Rendir final de redes',
+      reminder: '30-minutes',
+    }));
+
+    await openTools(user);
+    await user.click(within(screen.getByLabelText('Recordatorios')).getByRole('button', { name: 'Activar' }));
+
+    await waitFor(() => expect(requestPermission).toHaveBeenCalledTimes(1));
+  });
+
   test('shows scheduled todos in the calendar view and opens editing from it', async () => {
     const user = userEvent.setup();
     const today = getRelativeDateInputValue(0);
@@ -1868,6 +1902,7 @@ describe('App', () => {
     const recurrenceSelect = within(dialog).getByLabelText('Repeticion');
     const dueDateInput = within(dialog).getByLabelText('Fecha limite');
     const dueTimeInput = within(dialog).getByLabelText('Hora limite');
+    const reminderSelect = within(dialog).getByLabelText('Recordatorio');
     const projectInput = within(dialog).getByLabelText('Proyecto');
     const tagsInput = within(dialog).getByLabelText('Etiquetas');
     const subtasksInput = within(dialog).getByLabelText('Subtareas');
@@ -1894,6 +1929,9 @@ describe('App', () => {
 
     await user.tab();
     expect(recurrenceSelect).toHaveFocus();
+
+    await user.tab();
+    expect(reminderSelect).toHaveFocus();
 
     await user.tab();
     expect(projectInput).toHaveFocus();

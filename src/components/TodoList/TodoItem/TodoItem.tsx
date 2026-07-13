@@ -9,10 +9,12 @@ import React from 'react';
 import {
   TODO_DATE_TYPES,
   TODO_KINDS,
+  TODO_REMINDERS,
   TODO_RECURRENCES,
   TodoDateType,
   TodoKind,
   TodoPriority,
+  TodoReminder,
   TodoRecurrence,
   TodoSubtask,
 } from '../../../App/todoModel';
@@ -29,6 +31,14 @@ const TODO_RECURRENCE_LABELS: Record<TodoRecurrence, string> = {
   [TODO_RECURRENCES.weekly]: 'Semanal',
   [TODO_RECURRENCES.monthly]: 'Mensual',
   [TODO_RECURRENCES.yearly]: 'Anual',
+};
+
+const TODO_REMINDER_LABELS: Record<TodoReminder, string> = {
+  [TODO_REMINDERS.none]: '',
+  [TODO_REMINDERS.atTime]: 'Recordatorio al momento',
+  [TODO_REMINDERS.tenMinutes]: 'Recordatorio 10 min antes',
+  [TODO_REMINDERS.thirtyMinutes]: 'Recordatorio 30 min antes',
+  [TODO_REMINDERS.oneDay]: 'Recordatorio 1 dia antes',
 };
 
 const TODO_KIND_LABELS: Record<TodoKind, string> = {
@@ -117,6 +127,7 @@ interface TodoItemProps {
   startTime?: string | null;
   endTime?: string | null;
   recurrence?: TodoRecurrence;
+  reminder?: TodoReminder;
   project?: string | null;
   tags?: string[];
   subtasks?: TodoSubtask[];
@@ -153,6 +164,9 @@ function TodoItem(props: TodoItemProps) {
   const priorityLabel = props.priority ? TODO_PRIORITY_LABELS[props.priority] : TODO_PRIORITY_LABELS.medium;
   const recurrenceLabel = props.recurrence && props.recurrence !== TODO_RECURRENCES.none
     ? TODO_RECURRENCE_LABELS[props.recurrence]
+    : null;
+  const reminderLabel = props.reminder && props.reminder !== TODO_REMINDERS.none
+    ? TODO_REMINDER_LABELS[props.reminder]
     : null;
   const tags = Array.isArray(props.tags) ? props.tags : [];
   const subtasks = Array.isArray(props.subtasks) ? props.subtasks : [];
@@ -304,6 +318,11 @@ function TodoItem(props: TodoItemProps) {
           {recurrenceLabel && (
             <span className="TodoItem-recurrence">
               {recurrenceLabel}
+            </span>
+          )}
+          {reminderLabel && (
+            <span className="TodoItem-reminder">
+              {reminderLabel}
             </span>
           )}
         </div>

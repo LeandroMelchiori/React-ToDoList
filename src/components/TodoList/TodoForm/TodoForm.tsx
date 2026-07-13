@@ -2,10 +2,12 @@ import React, { ChangeEvent, FormEvent } from 'react';
 import {
     TODO_DATE_TYPES,
     TODO_KINDS,
+    TODO_REMINDERS,
     TODO_RECURRENCES,
     getAllowedRecurrencesForTodoKind,
     TodoKind,
     TodoPriority,
+    TodoReminder,
     TodoRecurrence,
     TodoSubtask,
     TodoDetails,
@@ -49,6 +51,14 @@ const TODO_RECURRENCE_OPTIONS: Array<{ value: TodoRecurrence; label: string }> =
     { value: TODO_RECURRENCES.yearly, label: 'Anual' },
 ];
 
+const TODO_REMINDER_OPTIONS: Array<{ value: TodoReminder; label: string }> = [
+    { value: TODO_REMINDERS.none, label: 'Sin recordatorio' },
+    { value: TODO_REMINDERS.atTime, label: 'Al momento' },
+    { value: TODO_REMINDERS.tenMinutes, label: '10 minutos antes' },
+    { value: TODO_REMINDERS.thirtyMinutes, label: '30 minutos antes' },
+    { value: TODO_REMINDERS.oneDay, label: '1 dia antes' },
+];
+
 const TODO_RECURRENCE_HINTS: Record<TodoKind, string> = {
     [TODO_KINDS.task]: 'Se calcula desde la fecha limite.',
     [TODO_KINDS.event]: 'Util para eventos que vuelven semanal, mensual o anualmente.',
@@ -74,6 +84,7 @@ interface TodoFormProps {
     initialStartTime?: string | null;
     initialEndTime?: string | null;
     initialRecurrence?: TodoRecurrence;
+    initialReminder?: TodoReminder;
     initialProject?: string | null;
     initialTags?: string[];
     initialSubtasks?: TodoSubtask[];
@@ -103,11 +114,16 @@ function getRecurrenceLabel(recurrence: TodoRecurrence): string {
     return TODO_RECURRENCE_OPTIONS.find(option => option.value === recurrence)?.label || 'No se repite';
 }
 
+function getReminderLabel(reminder: TodoReminder): string {
+    return TODO_REMINDER_OPTIONS.find(option => option.value === reminder)?.label || 'Sin recordatorio';
+}
+
 function getFormPreviewDetails({
     dueDate,
     endDate,
     endTime,
     kind,
+    reminder,
     recurrence,
     startDate,
     startTime,
@@ -116,6 +132,7 @@ function getFormPreviewDetails({
     endDate: string;
     endTime: string;
     kind: TodoKind;
+    reminder: TodoReminder;
     recurrence: TodoRecurrence;
     startDate: string;
     startTime: string;
@@ -125,6 +142,7 @@ function getFormPreviewDetails({
             dueDate ? `Limite ${formatDateValue(dueDate)}` : 'Sin fecha limite',
             startTime ? `Hora limite ${startTime}` : 'Sin hora limite',
             getRecurrenceLabel(recurrence),
+            getReminderLabel(reminder),
         ];
     }
 
@@ -133,6 +151,7 @@ function getFormPreviewDetails({
             startDate ? `Dia ${formatDateValue(startDate)}` : 'Sin dia definido',
             startTime ? `Hora ${startTime}` : 'Sin horario definido',
             getRecurrenceLabel(recurrence),
+            getReminderLabel(reminder),
         ];
     }
 
@@ -142,6 +161,7 @@ function getFormPreviewDetails({
             endDate ? `Hasta ${formatDateValue(endDate)}` : 'Sin ultimo dia',
             formatTimeRange(startTime, endTime),
             getRecurrenceLabel(recurrence),
+            getReminderLabel(reminder),
         ];
     }
 
@@ -150,6 +170,7 @@ function getFormPreviewDetails({
         endDate ? `Hasta ${formatDateValue(endDate)}` : 'Sin fin',
         formatTimeRange(startTime, endTime),
         'No se repite',
+        getReminderLabel(reminder),
     ];
 }
 
@@ -164,6 +185,7 @@ function TodoForm({
     initialStartTime = '',
     initialEndTime = '',
     initialRecurrence = TODO_RECURRENCES.none,
+    initialReminder = TODO_REMINDERS.none,
     initialProject = '',
     initialTags = [],
     initialSubtasks = [],
@@ -184,6 +206,7 @@ function TodoForm({
     const [startTimeValue, setStartTimeValue] = React.useState(initialStartTime || '');
     const [endTimeValue, setEndTimeValue] = React.useState(initialEndTime || '');
     const [recurrenceValue, setRecurrenceValue] = React.useState<TodoRecurrence>(initialRecurrence || TODO_RECURRENCES.none);
+    const [reminderValue, setReminderValue] = React.useState<TodoReminder>(initialReminder || TODO_REMINDERS.none);
     const [projectValue, setProjectValue] = React.useState(lockedProject || initialProject || '');
     const [tagsValue, setTagsValue] = React.useState(Array.isArray(initialTags) ? initialTags.join(', ') : '');
     const [subtasksValue, setSubtasksValue] = React.useState<string[]>(
@@ -198,6 +221,7 @@ function TodoForm({
     const descriptionId = mode === 'edit' ? 'editTodoDescription' : 'newTodoDescription';
     const priorityId = mode === 'edit' ? 'editTodoPriority' : 'newTodoPriority';
     const recurrenceId = mode === 'edit' ? 'editTodoRecurrence' : 'newTodoRecurrence';
+    const reminderId = mode === 'edit' ? 'editTodoReminder' : 'newTodoReminder';
     const dueDateId = mode === 'edit' ? 'editTodoDueDate' : 'newTodoDueDate';
     const startDateId = mode === 'edit' ? 'editTodoStartDate' : 'newTodoStartDate';
     const endDateId = mode === 'edit' ? 'editTodoEndDate' : 'newTodoEndDate';
@@ -229,6 +253,7 @@ function TodoForm({
         endDate: endDateValue,
         endTime: endTimeValue,
         kind: kindValue,
+        reminder: reminderValue,
         recurrence: recurrenceValue,
         startDate: startDateValue,
         startTime: startTimeValue,
@@ -374,6 +399,11 @@ function TodoForm({
             return;
         }
 
+        if (reminderValue !== TODO_REMINDERS.none && !recurrenceAnchorDate) {
+            setFormError('Agrega una fecha para poder usar recordatorios.');
+            return;
+        }
+
         if (!recurrenceOptions.some(option => option.value === recurrenceValue)) {
             setFormError('Esa repeticion no corresponde al tipo de fecha elegido.');
             return;
@@ -396,6 +426,7 @@ function TodoForm({
             startTime: startTimeValue,
             endTime: isScheduleKind || isPeriodKind ? endTimeValue : '',
             recurrence: recurrenceValue,
+            reminder: reminderValue,
             project: isProjectLocked ? lockedProject : projectValue,
             tags: tagsValue,
             subtasks: submittedSubtasks,
@@ -617,6 +648,25 @@ function TodoForm({
                     </select>
                     <span className="TodoForm-fieldHint" id={recurrenceHintId}>
                         {TODO_RECURRENCE_HINTS[kindValue]}
+                    </span>
+                </div>
+                <div className="TodoForm-field">
+                    <label htmlFor={reminderId}>
+                        Recordatorio
+                    </label>
+                    <select
+                        id={reminderId}
+                        value={reminderValue}
+                        onChange={event => setReminderValue(event.target.value as TodoReminder)}
+                    >
+                        {TODO_REMINDER_OPTIONS.map(option => (
+                            <option key={option.value} value={option.value}>
+                                {option.label}
+                            </option>
+                        ))}
+                    </select>
+                    <span className="TodoForm-fieldHint">
+                        Usa la hora indicada o 09:00 si solo hay fecha.
                     </span>
                 </div>
                 <div className="TodoForm-field">

@@ -12,7 +12,7 @@ Este repositorio es una aplicacion React local-first de tareas, agenda y horario
 - Registro PWA: `src/serviceWorkerRegistration.js`.
 - Componente raiz: `src/App/App.tsx`.
 - Estado de todos: `src/App/useTodos.ts`.
-- Modelos puros: `src/App/todoModel.ts` (tareas, agenda, recurrencias, export/import ICS), `src/App/todoBoards.ts` (tableros), `src/App/todoSavedViews.ts` (vistas guardadas), `src/App/todoWorkspaceBackup.ts` (backups).
+- Modelos puros: `src/App/todoModel.ts` (tareas, agenda, recurrencias, recordatorios, export/import ICS), `src/App/todoBoards.ts` (tableros), `src/App/todoSavedViews.ts` (vistas guardadas), `src/App/todoWorkspaceBackup.ts` (backups).
 - Persistencia: `src/App/useLocalStorage.ts` + `src/App/todoStorage.ts`.
 - Base local principal: IndexedDB (`taskflow-db`), con migracion/espejo desde `localStorage`.
 - Claves locales: tareas `TODOS_V1`, tema `THEME_V1`.
@@ -35,7 +35,7 @@ Los tests unitarios e integracion corren con `npm test`, usando Vitest, jsdom y 
 - Evita refactors amplios si no son necesarios para la tarea.
 - Mantente dentro de la arquitectura actual salvo que exista una razon tecnica clara para cambiarla.
 - Lee los componentes y hooks afectados antes de editar.
-- Protege el comportamiento existente, especialmente carga, error, busqueda, filtros, vistas guardadas, tableros locales, vista tablero, creacion, edicion, detalle, duplicado, completado, subtareas, borrado, calendario, vista semanal, vista de hoy, modal, tema, export/import, export/import ICS, PWA y sincronizacion por `storage`.
+- Protege el comportamiento existente, especialmente carga, error, busqueda, filtros, vistas guardadas, tableros locales, vista tablero, creacion, edicion, detalle, duplicado, completado, subtareas, borrado, calendario, vista semanal, vista de hoy, recordatorios locales, modal, tema, export/import, export/import ICS, PWA y sincronizacion por `storage`.
 - Cuando el usuario pida varias mejoras, separalas en commits y pushes atomicos si asi lo solicita. No mezcles features, refactors y fixes en el mismo commit.
 - No elimines cambios ajenos ni archivos generados sin confirmarlo.
 
@@ -46,6 +46,7 @@ Los tests unitarios e integracion corren con `npm test`, usando Vitest, jsdom y 
 - Toda tarea debe normalizarse con los helpers de `todoModel.ts` antes de persistirse o importarse.
 - Conserva compatibilidad con tareas antiguas sin `id`, `priority` o `dueDate`.
 - Export/import usa JSON versionado; valida y normaliza cualquier archivo importado antes de guardarlo. Soporta backups completos del workspace (`todoWorkspaceBackup.ts`) y export/import local de calendario ICS desde `todoModel.ts`.
+- Los recordatorios son locales y opcionales; dependen del permiso del navegador y no deben requerir backend.
 - No rompas el service worker ni el manifest al cambiar rutas, assets o comportamiento de build.
 - Evita introducir dependencias de backend, autenticacion o servicios externos salvo pedido explicito.
 
@@ -80,7 +81,7 @@ Los tests unitarios e integracion corren con `npm test`, usando Vitest, jsdom y 
 ## Tests
 
 - Genera tests unitarios para hooks, helpers y componentes con logica propia.
-- Genera tests de integracion para flujos de usuario importantes: buscar, agregar, editar, detalle, duplicar, completar, subtareas, borrar, abrir/cerrar modal, vista tablero, calendario, vista semanal, vista de hoy, tema, export/import, export/import ICS y sincronizar cambios externos.
+- Genera tests de integracion para flujos de usuario importantes: buscar, agregar, editar, detalle, duplicar, completar, subtareas, borrar, abrir/cerrar modal, vista tablero, calendario, vista semanal, vista de hoy, recordatorios locales, tema, export/import, export/import ICS y sincronizar cambios externos.
 - Genera tests E2E cuando el cambio afecte un flujo principal de usuario.
 - Usa React Testing Library para validar comportamiento visible por el usuario.
 - Mockea `localStorage`, IndexedDB, eventos `storage`, archivos, URLs de descarga y timers cuando sea necesario.

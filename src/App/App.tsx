@@ -10,6 +10,7 @@ import { TodoBoards } from '../components/TodoHeader/TodoBoards/TodoBoards';
 import { TodoSavedViews } from '../components/TodoHeader/TodoSavedViews/TodoSavedViews';
 import { TodoBackupActions } from '../components/TodoHeader/TodoBackupActions/TodoBackupActions';
 import { TodoHeaderTools } from '../components/TodoHeader/TodoHeaderTools/TodoHeaderTools';
+import { TodoReminderStatus } from '../components/TodoHeader/TodoReminderStatus/TodoReminderStatus';
 import { TodoList } from '../components/TodoList/TodoList';
 import { TodoItem } from '../components/TodoList/TodoItem/TodoItem';
 import { TodoBoardView } from '../components/TodoBoardView/TodoBoardView';
@@ -32,6 +33,7 @@ import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle';
 import { UndoToast } from '../components/UndoToast/UndoToast';
 import { usePwaStatus } from './usePwaStatus';
 import { useTheme } from './useTheme';
+import { useTodoReminders } from './useTodoReminders';
 
 function isEditableTarget(target: EventTarget | null): boolean {
     if (!(target instanceof HTMLElement)) {
@@ -90,6 +92,7 @@ function App() {
         tagOptions,
         activeProject,
         activeTag,
+        reminderTodos,
         visibleTodos,
         visibleTodoGroups,
         openModal,
@@ -135,6 +138,7 @@ function App() {
         importCalendar,
         syncTodos
     } = stateUpdaters;
+    const reminderStatus = useTodoReminders(reminderTodos);
 
     const formMode = editingTodo ? 'edit' : 'create';
     const modalLabel = deletingTodo
@@ -303,6 +307,12 @@ function App() {
                     onClearFacetFilters={clearFacetFilters}
                 />
                 <TodoHeaderTools>
+                    <TodoReminderStatus
+                        isSupported={reminderStatus.isSupported}
+                        permission={reminderStatus.permission}
+                        scheduledCount={reminderStatus.scheduledCount}
+                        onRequestPermission={reminderStatus.requestPermission}
+                    />
                     <TodoBoards
                         activeBoardId={activeBoardId}
                         boards={todoBoards}
@@ -466,6 +476,7 @@ function App() {
                                 startTime={todo.startTime}
                                 endTime={todo.endTime}
                                 recurrence={todo.recurrence}
+                                reminder={todo.reminder}
                                 project={todo.project}
                                 tags={todo.tags}
                                 subtasks={todo.subtasks}
@@ -521,6 +532,7 @@ function App() {
                             initialStartTime={editingTodo?.startTime}
                             initialEndTime={editingTodo?.endTime}
                             initialRecurrence={editingTodo?.recurrence}
+                            initialReminder={editingTodo?.reminder}
                             initialProject={editingTodo?.project}
                             initialTags={editingTodo?.tags}
                             initialSubtasks={editingTodo?.subtasks}

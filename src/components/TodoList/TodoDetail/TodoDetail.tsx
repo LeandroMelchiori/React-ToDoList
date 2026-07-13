@@ -1,10 +1,12 @@
 import {
   TODO_DATE_TYPES,
   TODO_KINDS,
+  TODO_REMINDERS,
   TODO_RECURRENCES,
   Todo,
   TodoKind,
   TodoPriority,
+  TodoReminder,
   TodoRecurrence,
 } from '../../../App/todoModel';
 import './TodoDetail.css';
@@ -28,6 +30,14 @@ const TODO_RECURRENCE_LABELS: Record<TodoRecurrence, string> = {
   [TODO_RECURRENCES.weekly]: 'Semanal',
   [TODO_RECURRENCES.monthly]: 'Mensual',
   [TODO_RECURRENCES.yearly]: 'Anual',
+};
+
+const TODO_REMINDER_LABELS: Record<TodoReminder, string> = {
+  [TODO_REMINDERS.none]: '',
+  [TODO_REMINDERS.atTime]: 'Al momento',
+  [TODO_REMINDERS.tenMinutes]: '10 minutos antes',
+  [TODO_REMINDERS.thirtyMinutes]: '30 minutos antes',
+  [TODO_REMINDERS.oneDay]: '1 dia antes',
 };
 
 interface TodoDetailProps {
@@ -91,6 +101,9 @@ function TodoDetail({ onClose, onDelete, onDuplicate, onEdit, onToggleComplete, 
   const recurrenceLabel = todo.recurrence !== TODO_RECURRENCES.none
     ? TODO_RECURRENCE_LABELS[todo.recurrence]
     : null;
+  const reminderLabel = todo.reminder !== TODO_REMINDERS.none
+    ? TODO_REMINDER_LABELS[todo.reminder]
+    : null;
   const scheduleLabel = getScheduleLabel(todo);
   const completedSubtasks = todo.subtasks.filter(subtask => subtask.completed).length;
   const hasSubtasks = isTask && todo.subtasks.length > 0;
@@ -131,6 +144,12 @@ function TodoDetail({ onClose, onDelete, onDuplicate, onEdit, onToggleComplete, 
           <div>
             <dt>Repeticion</dt>
             <dd>{recurrenceLabel}</dd>
+          </div>
+        )}
+        {reminderLabel && (
+          <div>
+            <dt>Recordatorio</dt>
+            <dd>{reminderLabel}</dd>
           </div>
         )}
         {todo.project && (

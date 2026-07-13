@@ -239,6 +239,7 @@
 .TodoItem-kind,
 .TodoItem-dueDate,
 .TodoItem-recurrence,
+.TodoItem-reminder,
 .TodoItem-project,
 .TodoItem-tag {
   border-radius: 999px;
@@ -312,6 +313,15 @@
 [data-theme='dark'] .TodoItem-recurrence {
   background-color: rgba(20, 184, 166, 0.16);
   color: #99f6e4;
+}
+
+.TodoItem-reminder {
+  background-color: rgba(245, 158, 11, 0.16);
+  color: #92400e;
+}
+
+[data-theme='dark'] .TodoItem-reminder {
+  color: #fbbf24;
 }
 
 .TodoItem-project {

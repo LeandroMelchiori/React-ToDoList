@@ -5,6 +5,7 @@ import {
   TODO_GROUPS,
   TODO_KINDS,
   TODO_PRIORITIES,
+  TODO_REMINDERS,
   TODO_RECURRENCES,
   analyzeTodosImport,
   applyTodosImport,
@@ -17,6 +18,7 @@ import {
   getTodoDateStatus,
   getTodoGroups,
   getTodoInsights,
+  getTodoReminderTarget,
   getTodosDateCounts,
   getVisibleTodos,
   isTaskTodo,
@@ -26,6 +28,7 @@ import {
   normalizePriority,
   normalizeProject,
   normalizeRecurrence,
+  normalizeReminder,
   normalizeSubtasks,
   normalizeTags,
   normalizeTimeValue,
@@ -80,6 +83,7 @@ describe('todo helpers', () => {
         startTime: null,
         endTime: null,
         recurrence: TODO_RECURRENCES.none,
+        reminder: TODO_REMINDERS.none,
         project: null,
         tags: [],
         subtasks: [],
@@ -101,6 +105,7 @@ describe('todo helpers', () => {
         startTime: null,
         endTime: null,
         recurrence: TODO_RECURRENCES.none,
+        reminder: TODO_REMINDERS.none,
         project: null,
         tags: [],
         subtasks: [],
@@ -200,10 +205,39 @@ describe('todo helpers', () => {
     expect(normalizeTodoRecurrence(TODO_DATE_TYPES.event, TODO_RECURRENCES.daily)).toBe(TODO_RECURRENCES.none);
     expect(normalizeTodoRecurrence(TODO_DATE_TYPES.event, TODO_RECURRENCES.yearly)).toBe(TODO_RECURRENCES.yearly);
     expect(normalizeTodoRecurrence(TODO_DATE_TYPES.period, TODO_RECURRENCES.yearly)).toBe(TODO_RECURRENCES.none);
+    expect(normalizeReminder('30-minutes')).toBe(TODO_REMINDERS.thirtyMinutes);
+    expect(normalizeReminder('tomorrow')).toBe(TODO_REMINDERS.none);
     expect(normalizeDueDate('2026-07-20')).toBe('2026-07-20');
     expect(normalizeDueDate(null)).toBeNull();
     expect(normalizeTimeValue('10:30')).toBe('10:30');
     expect(normalizeTimeValue('25:00')).toBeNull();
+  });
+
+  test('calculates the next browser reminder target', () => {
+    const exam = createTodo('Examen final', {
+      kind: TODO_KINDS.event,
+      dateType: TODO_DATE_TYPES.event,
+      startDate: '2026-08-08',
+      startTime: '10:00',
+      reminder: TODO_REMINDERS.thirtyMinutes,
+    });
+
+    expect(getTodoReminderTarget(exam, new Date(2026, 7, 8, 8, 0))?.getTime())
+      .toBe(new Date(2026, 7, 8, 9, 30).getTime());
+
+    const dailyTask = createTodo('Repasar ingles', {
+      dueDate: '2026-08-01',
+      recurrence: TODO_RECURRENCES.daily,
+      reminder: TODO_REMINDERS.oneDay,
+    });
+
+    expect(getTodoReminderTarget(dailyTask, new Date(2026, 7, 8, 10, 0))?.getTime())
+      .toBe(new Date(2026, 7, 9, 9, 0).getTime());
+
+    expect(getTodoReminderTarget({
+      ...dailyTask,
+      completed: true,
+    }, new Date(2026, 7, 8, 10, 0))).toBeNull();
   });
 
   test('normalizes event and period schedule dates', () => {

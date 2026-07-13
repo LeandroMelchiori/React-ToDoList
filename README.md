@@ -33,6 +33,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - Sincronizacion cuando el almacenamiento cambia desde otra pestana.
 - Soporte PWA con shell offline para abrir la app sin conexion luego de la primera visita.
 - Exportacion e importacion de backups completos en JSON, mas exportacion e importacion de agenda en formato ICS.
+- Recordatorios locales opcionales con notificaciones del navegador.
 - Pruebas automatizadas y validacion continua antes de publicar cambios.
 
 ## Funcionalidades
@@ -42,6 +43,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - Crear tareas completables, eventos de agenda, horarios/bloques recurrentes y periodos.
 - Agregar descripcion, prioridad, fecha limite, fecha puntual, rango de fechas y horarios opcionales.
 - Configurar repeticion diaria, semanal, mensual o anual segun el tipo de elemento.
+- Configurar recordatorios locales al momento, minutos antes o un dia antes.
 - Organizar tareas por proyecto y etiquetas opcionales.
 - Dividir tareas en subtareas tipo checklist con progreso visual y plegado.
 - Completar automaticamente una tarea cuando todas sus subtareas estan listas.
@@ -112,6 +114,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - Las tareas completables se tratan distinto de eventos, horarios y periodos para que la agenda no contamine metricas de completado.
 - El calendario mensual compacta tareas diarias recurrentes y la agenda semanal prioriza bloques con horario.
 - La UI usa labels, botones accesibles, skip link, foco visible y estados claros para mejorar navegacion y feedback.
+- Los recordatorios usan la Notification API del navegador y se programan localmente mientras la app esta abierta.
 - El build usa base `/` para publicar correctamente en Vercel desde `taskflow.sachadev.me`.
 - El toolchain usa Vite para reducir dependencias vulnerables y acelerar desarrollo/build.
 
@@ -267,6 +270,7 @@ La suite actual cubre:
 - Vista Hoy con tareas, agenda y recordatorio visual del horario actual/proximo.
 - Vista Tablero con columnas por estado y apertura de detalle.
 - Calendario mensual y agenda semanal con recurrencias.
+- Recordatorios locales con permiso del navegador.
 - Exportacion ICS de elementos fechados.
 - Importacion ICS con preview y fusion sin duplicados.
 - Tableros, filtros guardados y backups completos del workspace.
@@ -289,7 +293,6 @@ La suite actual cubre:
 - Mas plantillas locales para flujos recurrentes de estudio, talleres o proyectos.
 - Migrar componentes y hooks restantes a TypeScript.
 - Arrastre entre columnas del tablero para cambiar estado o fecha con reglas seguras.
-- Recordatorios locales opcionales con permisos del navegador.
 - Reglas avanzadas de recurrencia, excepciones y finalizacion por cantidad de repeticiones.
 
 ## Autor

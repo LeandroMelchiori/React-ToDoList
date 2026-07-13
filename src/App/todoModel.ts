@@ -3,6 +3,7 @@ type TodoDateStatus = 'overdue' | 'today' | 'upcoming';
 type TodoPriority = 'low' | 'medium' | 'high';
 type TodoDateType = 'due' | 'event' | 'period';
 type TodoRecurrence = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+type TodoReminder = 'none' | 'at-time' | '10-minutes' | '30-minutes' | '1-day';
 type TodoKind = 'task' | 'event' | 'schedule' | 'period';
 type TodoGroup = 'overdue' | 'today' | 'upcoming' | 'unscheduled' | 'completed';
 type ImportMode = 'merge' | 'replace';
@@ -28,6 +29,7 @@ type Todo = {
     startTime: string | null;
     endTime: string | null;
     recurrence: TodoRecurrence;
+    reminder: TodoReminder;
     project: string | null;
     tags: string[];
     subtasks: TodoSubtask[];
@@ -106,6 +108,7 @@ type TodoDetails = {
     startTime?: unknown;
     endTime?: unknown;
     recurrence?: unknown;
+    reminder?: unknown;
     project?: unknown;
     tags?: unknown;
     subtasks?: unknown;
@@ -148,6 +151,21 @@ const TODO_RECURRENCES = {
     monthly: 'monthly',
     yearly: 'yearly',
 } as const satisfies Record<TodoRecurrence, TodoRecurrence>;
+
+const TODO_REMINDERS = {
+    none: 'none',
+    atTime: 'at-time',
+    tenMinutes: '10-minutes',
+    thirtyMinutes: '30-minutes',
+    oneDay: '1-day',
+} as const satisfies Record<string, TodoReminder>;
+
+const TODO_REMINDER_OFFSETS_MINUTES: Record<Exclude<TodoReminder, 'none'>, number> = {
+    [TODO_REMINDERS.atTime]: 0,
+    [TODO_REMINDERS.tenMinutes]: 10,
+    [TODO_REMINDERS.thirtyMinutes]: 30,
+    [TODO_REMINDERS.oneDay]: 1440,
+};
 
 const TODO_KINDS = {
     task: 'task',
@@ -247,6 +265,12 @@ function normalizeRecurrence(recurrence: unknown): TodoRecurrence {
     const validRecurrence = Object.values(TODO_RECURRENCES).find(value => value === recurrence);
 
     return validRecurrence || TODO_RECURRENCES.none;
+}
+
+function normalizeReminder(reminder: unknown): TodoReminder {
+    const validReminder = Object.values(TODO_REMINDERS).find(value => value === reminder);
+
+    return validReminder || TODO_REMINDERS.none;
 }
 
 function getAllowedRecurrencesForDateType(dateType: unknown): TodoRecurrence[] {
@@ -582,6 +606,7 @@ function createTodo(text: string, details: TodoDetails = {}): Todo {
         startTime: times.startTime,
         endTime: times.endTime,
         recurrence: normalizeTodoRecurrenceForKind(kind, schedule.dateType, 'recurrence' in details ? details.recurrence : undefined),
+        reminder: normalizeReminder('reminder' in details ? details.reminder : undefined),
         project: normalizeProject('project' in details ? details.project : undefined),
         tags: normalizeTags('tags' in details ? details.tags : undefined),
         subtasks: kind === TODO_KINDS.task
@@ -630,6 +655,7 @@ function normalizeTodos(todos: unknown): Todo[] {
                 startTime: times.startTime,
                 endTime: times.endTime,
                 recurrence: normalizeTodoRecurrenceForKind(kind, schedule.dateType, todo.recurrence),
+                reminder: normalizeReminder(todo.reminder),
                 project: normalizeProject(todo.project),
                 tags: normalizeTags(todo.tags),
                 subtasks: kind === TODO_KINDS.task ? normalizeSubtasks(todo.subtasks) : [],
@@ -1260,6 +1286,76 @@ function getTodoRecurrenceAnchorDate(todo: Pick<Todo, 'dateType' | 'dueDate' | '
         : todo.dueDate;
 }
 
+function getLocalDateTime(dateValue: string, timeValue: string): Date | null {
+    const dateParts = getDateParts(dateValue);
+    const [hour = Number.NaN, minute = Number.NaN] = timeValue.split(':').map(Number);
+
+    if (!dateParts || !Number.isFinite(hour) || !Number.isFinite(minute)) {
+        return null;
+    }
+
+    return new Date(dateParts.year, dateParts.month - 1, dateParts.day, hour, minute, 0, 0);
+}
+
+function getTodoReminderBaseTime(todo: Pick<Todo, 'startTime'>): string {
+    return todo.startTime || '09:00';
+}
+
+function getReminderTargetForDate(
+    todo: Pick<Todo, 'reminder' | 'startTime'>,
+    dateValue: string
+): Date | null {
+    const reminder = normalizeReminder(todo.reminder);
+
+    if (reminder === TODO_REMINDERS.none) {
+        return null;
+    }
+
+    const dateTime = getLocalDateTime(dateValue, getTodoReminderBaseTime(todo));
+
+    if (!dateTime) {
+        return null;
+    }
+
+    const offsetMinutes = TODO_REMINDER_OFFSETS_MINUTES[reminder];
+
+    return new Date(dateTime.getTime() - offsetMinutes * 60_000);
+}
+
+function getTodoReminderTarget(todo: Todo, now = new Date()): Date | null {
+    if (normalizeReminder(todo.reminder) === TODO_REMINDERS.none || (isTaskTodo(todo) && todo.completed)) {
+        return null;
+    }
+
+    const todayDate = getTodayDateValue(now);
+    const recurrence = normalizeRecurrence(todo.recurrence);
+
+    if (recurrence === TODO_RECURRENCES.none) {
+        const anchorDate = getTodoRecurrenceAnchorDate(todo);
+        const reminderTarget = anchorDate ? getReminderTargetForDate(todo, anchorDate) : null;
+
+        return reminderTarget && reminderTarget.getTime() > now.getTime()
+            ? reminderTarget
+            : null;
+    }
+
+    for (let dayOffset = 0; dayOffset <= 370; dayOffset += 1) {
+        const dateValue = getDateValueOffset(todayDate, dayOffset);
+
+        if (!isTodoRecurringOnDate(todo, dateValue)) {
+            continue;
+        }
+
+        const reminderTarget = getReminderTargetForDate(todo, dateValue);
+
+        if (reminderTarget && reminderTarget.getTime() > now.getTime()) {
+            return reminderTarget;
+        }
+    }
+
+    return null;
+}
+
 function isTodoRecurringOnDate(
     todo: Pick<Todo, 'dateType' | 'dueDate' | 'startDate' | 'recurrence'> & { endDate?: string | null },
     dateValue: string
@@ -1501,6 +1597,7 @@ export {
     TODO_GROUPS,
     TODO_KINDS,
     TODO_PRIORITIES,
+    TODO_REMINDERS,
     TODO_RECURRENCES,
     analyzeTodosImport,
     applyTodosImport,
@@ -1514,6 +1611,7 @@ export {
     getTodoDateStatus,
     getTodoGroups,
     getTodoInsights,
+    getTodoReminderTarget,
     getTodoRecurrenceAnchorDate,
     getTodosDateCounts,
     getVisibleTodos,
@@ -1529,6 +1627,7 @@ export {
     normalizePriority,
     normalizeProject,
     normalizeRecurrence,
+    normalizeReminder,
     normalizeTodoKind,
     normalizeTodoRecurrence,
     normalizeTodoRecurrenceForKind,
@@ -1555,6 +1654,7 @@ export type {
     TodoInsights,
     TodoKind,
     TodoPriority,
+    TodoReminder,
     TodoRecurrence,
     TodoSubtask,
 };
