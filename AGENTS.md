@@ -18,7 +18,7 @@ Este repositorio es una aplicacion React local-first de tareas, agenda y horario
 - Claves locales: tareas `TODOS_V1`, tema `THEME_V1`.
 - Tema visual: `src/App/useTheme.ts`, con modo claro/oscuro persistido.
 - Estado PWA: `src/App/usePwaStatus.ts`.
-- Componentes UI: `src/components/`, organizados por dominio visual. Las vistas principales incluyen `TodoList`, `TodoToday`, `TodoCalendar` y `TodoWeekCalendar`.
+- Componentes UI: `src/components/`, organizados por dominio visual. Las vistas principales incluyen `TodoList`, `TodoBoardView`, `TodoToday`, `TodoCalendar` y `TodoWeekCalendar`.
 - Estilos: archivos `.css` junto a cada componente.
 - PWA/offline shell: `public/sw.js` y `public/manifest.json`.
 - Configuracion de Vite/Vitest: `vite.config.mjs`.
@@ -35,7 +35,7 @@ Los tests unitarios e integracion corren con `npm test`, usando Vitest, jsdom y 
 - Evita refactors amplios si no son necesarios para la tarea.
 - Mantente dentro de la arquitectura actual salvo que exista una razon tecnica clara para cambiarla.
 - Lee los componentes y hooks afectados antes de editar.
-- Protege el comportamiento existente, especialmente carga, error, busqueda, filtros, vistas guardadas, tableros, creacion, edicion, detalle, duplicado, completado, subtareas, borrado, calendario, vista semanal, vista de hoy, modal, tema, export/import, export ICS, PWA y sincronizacion por `storage`.
+- Protege el comportamiento existente, especialmente carga, error, busqueda, filtros, vistas guardadas, tableros locales, vista tablero, creacion, edicion, detalle, duplicado, completado, subtareas, borrado, calendario, vista semanal, vista de hoy, modal, tema, export/import, export ICS, PWA y sincronizacion por `storage`.
 - Cuando el usuario pida varias mejoras, separalas en commits y pushes atomicos si asi lo solicita. No mezcles features, refactors y fixes en el mismo commit.
 - No elimines cambios ajenos ni archivos generados sin confirmarlo.
 
@@ -80,7 +80,7 @@ Los tests unitarios e integracion corren con `npm test`, usando Vitest, jsdom y 
 ## Tests
 
 - Genera tests unitarios para hooks, helpers y componentes con logica propia.
-- Genera tests de integracion para flujos de usuario importantes: buscar, agregar, editar, detalle, duplicar, completar, subtareas, borrar, abrir/cerrar modal, calendario, vista semanal, vista de hoy, tema, export/import, export ICS y sincronizar cambios externos.
+- Genera tests de integracion para flujos de usuario importantes: buscar, agregar, editar, detalle, duplicar, completar, subtareas, borrar, abrir/cerrar modal, vista tablero, calendario, vista semanal, vista de hoy, tema, export/import, export ICS y sincronizar cambios externos.
 - Genera tests E2E cuando el cambio afecte un flujo principal de usuario.
 - Usa React Testing Library para validar comportamiento visible por el usuario.
 - Mockea `localStorage`, IndexedDB, eventos `storage`, archivos, URLs de descarga y timers cuando sea necesario.

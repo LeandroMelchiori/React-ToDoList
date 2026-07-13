@@ -12,6 +12,7 @@ import { TodoBackupActions } from '../components/TodoHeader/TodoBackupActions/To
 import { TodoHeaderTools } from '../components/TodoHeader/TodoHeaderTools/TodoHeaderTools';
 import { TodoList } from '../components/TodoList/TodoList';
 import { TodoItem } from '../components/TodoList/TodoItem/TodoItem';
+import { TodoBoardView } from '../components/TodoBoardView/TodoBoardView';
 import { TodoCalendar } from '../components/TodoCalendar/TodoCalendar';
 import { TodoToday } from '../components/TodoToday/TodoToday';
 import { TodoWeekCalendar } from '../components/TodoWeekCalendar/TodoWeekCalendar';
@@ -354,6 +355,29 @@ function App() {
                             {searchValue
                                 ? 'No hay elementos que coincidan con tu busqueda.'
                                 : 'No hay elementos para este filtro.'}
+                        </p>
+                    )}
+                />
+            ) : todoViewMode === 'board' ? (
+                <TodoBoardView
+                    error={error}
+                    loading={loading}
+                    visibleTodos={visibleTodos}
+                    visibleTodoGroups={visibleTodoGroups}
+                    totalTodos={totalTodos}
+                    onOpenTodo={startViewingTodo}
+                    onError={() => <TodosError />}
+                    onLoading={() => <TodosLoading />}
+                    onEmptyTodos={() => (
+                        <EmptyTodos
+                            onCreateTemplate={(template) => addTodo(template.todo.text, template.todo)}
+                        />
+                    )}
+                    onEmptySearchResults={() => (
+                        <p className="TodoList-emptySearch">
+                            {searchValue
+                                ? 'No hay tareas que coincidan con tu busqueda.'
+                                : 'No hay tareas para este filtro.'}
                         </p>
                     )}
                 />

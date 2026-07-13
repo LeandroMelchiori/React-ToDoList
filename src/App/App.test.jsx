@@ -295,6 +295,80 @@ describe('App', () => {
     expect(within(editDialog).getByLabelText('Editar tarea')).toHaveValue('Rendir parcial');
   });
 
+  test('shows a planning board grouped by status', async () => {
+    const user = userEvent.setup();
+    const yesterday = getRelativeDateInputValue(-1);
+    const today = getRelativeDateInputValue(0);
+    const tomorrow = getRelativeDateInputValue(1);
+
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      {
+        id: 'todo-overdue',
+        text: 'Enviar tramite vencido',
+        kind: 'task',
+        completed: false,
+        dateType: 'due',
+        dueDate: yesterday,
+        priority: 'high',
+        order: 0,
+      },
+      {
+        id: 'todo-today',
+        text: 'Preparar clase de hoy',
+        kind: 'event',
+        completed: false,
+        dateType: 'event',
+        startDate: today,
+        startTime: '10:00',
+        order: 1,
+      },
+      {
+        id: 'todo-upcoming',
+        text: 'Comprar materiales',
+        kind: 'task',
+        completed: false,
+        dateType: 'due',
+        dueDate: tomorrow,
+        priority: 'medium',
+        order: 2,
+      },
+      {
+        id: 'todo-unscheduled',
+        text: 'Idea sin fecha',
+        kind: 'task',
+        completed: false,
+        priority: 'low',
+        order: 3,
+      },
+      {
+        id: 'todo-completed',
+        text: 'Cerrar tarea lista',
+        kind: 'task',
+        completed: true,
+        priority: 'medium',
+        order: 4,
+      },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Enviar tramite vencido')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Tablero' }));
+
+    expect(screen.getByRole('heading', { name: 'Planificacion por estado' })).toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: 'Columna Vencidas' })).getByText('Enviar tramite vencido')).toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: 'Columna Hoy' })).getByText('Preparar clase de hoy')).toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: 'Columna Proximas' })).getByText('Comprar materiales')).toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: 'Columna Sin fecha' })).getByText('Idea sin fecha')).toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: 'Columna Completadas' })).getByText('Cerrar tarea lista')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Abrir detalle Preparar clase de hoy' }));
+
+    const detailDialog = screen.getByRole('dialog', { name: 'Detalle del elemento' });
+    expect(within(detailDialog).getByText('Evento')).toBeInTheDocument();
+    expect(within(detailDialog).getByText('Preparar clase de hoy')).toBeInTheDocument();
+  });
+
   test('shows a focused today view separated by tasks and agenda items', async () => {
     const user = userEvent.setup();
     const yesterday = getRelativeDateInputValue(-1);

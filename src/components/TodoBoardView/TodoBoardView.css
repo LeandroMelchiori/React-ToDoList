@@ -1,0 +1,228 @@
+.TodoBoardView {
+  margin: 30px auto 0;
+  max-width: 1180px;
+  padding-bottom: 96px;
+}
+
+.TodoBoardView:focus {
+  outline: none;
+}
+
+.TodoBoardView:focus-visible {
+  border-radius: 8px;
+  box-shadow: var(--shadow-focus);
+}
+
+.TodoBoardView-header {
+  align-items: flex-end;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.TodoBoardView-header p {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0;
+  margin: 0 0 4px;
+  text-transform: uppercase;
+}
+
+.TodoBoardView-header h2 {
+  color: var(--color-text-strong);
+  font-size: 24px;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.TodoBoardView-header strong {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.TodoBoardView-columns {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(5, minmax(210px, 1fr));
+}
+
+.TodoBoardView-column {
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  min-height: 320px;
+  padding: 12px;
+}
+
+.TodoBoardView-column--overdue {
+  border-top: 4px solid var(--color-danger);
+}
+
+.TodoBoardView-column--today {
+  border-top: 4px solid var(--color-active);
+}
+
+.TodoBoardView-column--upcoming {
+  border-top: 4px solid var(--color-accent-hover);
+}
+
+.TodoBoardView-column--unscheduled {
+  border-top: 4px solid var(--color-text-muted);
+}
+
+.TodoBoardView-column--completed {
+  border-top: 4px solid var(--color-success);
+}
+
+.TodoBoardView-columnHeader {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.TodoBoardView-columnHeader h3 {
+  color: var(--color-text-strong);
+  font-size: 14px;
+  font-weight: 900;
+  margin: 0;
+}
+
+.TodoBoardView-columnHeader span {
+  background: var(--color-surface);
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  padding: 7px 9px;
+}
+
+.TodoBoardView-emptyColumn {
+  border: 1px dashed var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 0;
+  padding: 14px;
+  text-align: center;
+}
+
+.TodoBoardView-cards {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.TodoBoardView-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+  color: var(--color-text);
+  cursor: pointer;
+  display: grid;
+  font-family: inherit;
+  gap: 8px;
+  padding: 12px;
+  text-align: left;
+  width: 100%;
+}
+
+.TodoBoardView-card:hover,
+.TodoBoardView-card:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-focus);
+  outline: none;
+}
+
+.TodoBoardView-card strong {
+  color: var(--color-text-strong);
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.TodoBoardView-card small {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.TodoBoardView-card--event {
+  background: var(--color-accent-soft);
+}
+
+.TodoBoardView-card--schedule {
+  background: #ccfbf1;
+}
+
+[data-theme='dark'] .TodoBoardView-card--schedule {
+  background: rgba(20, 184, 166, 0.16);
+}
+
+.TodoBoardView-card--period {
+  background: var(--color-badge-project-bg);
+}
+
+.TodoBoardView-cardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.TodoBoardView-cardMeta mark {
+  background: var(--color-surface-muted);
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+  padding: 6px 8px;
+}
+
+.TodoBoardView-priority--high {
+  background: var(--color-badge-high-bg) !important;
+  color: var(--color-badge-high-text) !important;
+}
+
+.TodoBoardView-priority--medium {
+  background: var(--color-badge-medium-bg) !important;
+  color: var(--color-badge-medium-text) !important;
+}
+
+.TodoBoardView-priority--low {
+  background: var(--color-badge-low-bg) !important;
+  color: var(--color-badge-low-text) !important;
+}
+
+@media (max-width: 1180px) {
+  .TodoBoardView {
+    max-width: 960px;
+  }
+
+  .TodoBoardView-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .TodoBoardView-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .TodoBoardView-columns {
+    grid-template-columns: 1fr;
+  }
+}

@@ -58,6 +58,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - Separar el trabajo en tableros locales.
 - Reordenar tareas con drag and drop o con controles subir/bajar.
 - Alternar entre lista, vista de hoy, calendario mensual y agenda semanal.
+- Usar una vista tipo tablero por estado para planificar visualmente.
 - Visualizar eventos, horarios, tareas con fecha y periodos en calendario.
 - Compactar tareas diarias repetidas para no saturar el calendario.
 - Mostrar en Hoy el elemento actual o el proximo elemento con horario.
@@ -119,6 +120,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 flowchart TD
   App["App.tsx"] --> Header["TodoHeader"]
   App --> List["TodoList"]
+  App --> Board["TodoBoardView"]
   App --> Today["TodoToday"]
   App --> Calendar["TodoCalendar"]
   App --> Week["TodoWeekCalendar"]
@@ -139,6 +141,7 @@ flowchart TD
   Todos --> Actions["create / edit / detail / duplicate / complete / delete / reorder"]
   List --> Item["TodoItem"]
   Item --> Order["drag and drop + subir/bajar"]
+  Board --> Columns["columnas por estado/fecha"]
   Today --> Focus["recordatorio visual actual/proximo"]
   Calendar --> Agenda["mes + recurrencias compactas"]
   Week --> Schedule["grilla semanal por horario"]
@@ -170,6 +173,7 @@ src/
     Modal/
     PwaStatus/
     ThemeToggle/
+    TodoBoardView/
     TodoCalendar/
     TodoHeader/
     TodoIcon/
@@ -260,6 +264,7 @@ La suite actual cubre:
 - Creacion, marcado y completado automatico de tareas con subtareas.
 - Tareas, eventos, horarios recurrentes y periodos como tipos separados.
 - Vista Hoy con tareas, agenda y recordatorio visual del horario actual/proximo.
+- Vista Tablero con columnas por estado y apertura de detalle.
 - Calendario mensual y agenda semanal con recurrencias.
 - Exportacion ICS de elementos fechados.
 - Tableros, filtros guardados y backups completos del workspace.
@@ -281,7 +286,7 @@ La suite actual cubre:
 
 - Mas plantillas locales para flujos recurrentes de estudio, talleres o proyectos.
 - Migrar componentes y hooks restantes a TypeScript.
-- Vista tipo tablero por fecha o estado, inspirada en Trello, para planificar tareas sin backend.
+- Arrastre entre columnas del tablero para cambiar estado o fecha con reglas seguras.
 - Recordatorios locales opcionales con permisos del navegador.
 - Importacion de archivos `.ics` para cargar calendarios existentes.
 - Reglas avanzadas de recurrencia, excepciones y finalizacion por cantidad de repeticiones.
