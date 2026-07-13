@@ -5,6 +5,10 @@ function createBackupFilename() {
   return `taskflow-backup-${new Date().toISOString().slice(0, 10)}.json`;
 }
 
+function createCalendarFilename() {
+  return `taskflow-calendar-${new Date().toISOString().slice(0, 10)}.ics`;
+}
+
 function getFoundTaskLabel(count: number) {
   return count === 1 ? '1 tarea encontrada' : `${count} tareas encontradas`;
 }
@@ -55,11 +59,12 @@ function getImportStatusMessage(result: any) {
 interface TodoBackupActionsProps {
   loading?: boolean;
   onExportTodos: () => any;
+  onExportCalendar: () => { content: string; count: number };
   onPreviewImport: (backup: any) => any;
   onImportTodos: (backup: any, options: { mode: any }) => any;
 }
 
-function TodoBackupActions({ loading, onExportTodos, onPreviewImport, onImportTodos }: TodoBackupActionsProps) {
+function TodoBackupActions({ loading, onExportTodos, onExportCalendar, onPreviewImport, onImportTodos }: TodoBackupActionsProps) {
   const [statusMessage, setStatusMessage] = React.useState('');
   const [importPreview, setImportPreview] = React.useState<any>(null);
 
@@ -76,6 +81,29 @@ function TodoBackupActions({ loading, onExportTodos, onPreviewImport, onImportTo
     downloadLink.click();
     URL.revokeObjectURL(backupUrl);
     setStatusMessage('Backup exportado.');
+  };
+
+  const handleCalendarExport = () => {
+    const calendarExport = onExportCalendar();
+
+    if (!calendarExport.count) {
+      setStatusMessage('No hay elementos con fecha para exportar al calendario.');
+      return;
+    }
+
+    const calendarBlob = new Blob([calendarExport.content], {
+      type: 'text/calendar;charset=utf-8',
+    });
+    const calendarUrl = URL.createObjectURL(calendarBlob);
+    const downloadLink = document.createElement('a');
+
+    downloadLink.href = calendarUrl;
+    downloadLink.download = createCalendarFilename();
+    downloadLink.click();
+    URL.revokeObjectURL(calendarUrl);
+    setStatusMessage(calendarExport.count === 1
+      ? '1 elemento exportado al calendario.'
+      : `${calendarExport.count} elementos exportados al calendario.`);
   };
 
   const handleImport = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -140,6 +168,15 @@ function TodoBackupActions({ loading, onExportTodos, onPreviewImport, onImportTo
         onClick={handleExport}
       >
         Exportar backup
+      </button>
+      <button
+        type="button"
+        className="TodoBackupActions-button"
+        disabled={loading}
+        aria-label="Exportar calendario ICS"
+        onClick={handleCalendarExport}
+      >
+        Exportar calendario
       </button>
       <label className="TodoBackupActions-button">
         Importar backup
@@ -211,4 +248,4 @@ function TodoBackupActions({ loading, onExportTodos, onPreviewImport, onImportTo
   );
 }
 
-export { TodoBackupActions, createBackupFilename };
+export { TodoBackupActions, createBackupFilename, createCalendarFilename };

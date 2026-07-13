@@ -127,6 +127,7 @@ function App() {
         duplicateTodo,
         updateTodo,
         exportTodos,
+        exportCalendar,
         previewTodosImport,
         importTodos,
         syncTodos
@@ -317,6 +318,7 @@ function App() {
                     />
                     <TodoBackupActions
                         onExportTodos={exportTodos}
+                        onExportCalendar={exportCalendar}
                         onPreviewImport={previewTodosImport}
                         onImportTodos={importTodos}
                     />

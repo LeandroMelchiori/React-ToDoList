@@ -6,6 +6,7 @@ import {
     analyzeTodosImport,
     applyTodosImport,
     createTodo,
+    createTodosCalendarExport,
     getTodoFacets,
     getTodoGroups,
     getTodoInsights,
@@ -696,6 +697,8 @@ function useTodos() {
         todos: normalizedTodos,
     });
 
+    const exportCalendar = () => createTodosCalendarExport(normalizedTodos);
+
     const previewTodosImport = (backup: unknown) => {
         const workspaceResult = readTodoWorkspaceBackup(backup);
 
@@ -848,6 +851,7 @@ function useTodos() {
         addTodo,
         updateTodo,
         exportTodos,
+        exportCalendar,
         previewTodosImport,
         importTodos,
         syncTodos

@@ -57,6 +57,11 @@ type TodoBackup = {
     todos: Todo[];
 };
 
+type TodoCalendarExport = {
+    content: string;
+    count: number;
+};
+
 type BackupReadResult = { ok: true; todos: Todo[] } | { ok: false; error: string };
 type ImportPreviewResult = (
     { ok: true; todos: Todo[]; totalCount: number; newCount: number; duplicateCount: number } |
@@ -778,6 +783,194 @@ function getTodoDateStatus(todo: Todo, todayDate = getTodayDateValue()): TodoDat
     return TODO_FILTERS.upcoming;
 }
 
+function escapeIcsText(value: string): string {
+    return value
+        .replace(/\\/g, '\\\\')
+        .replace(/\r?\n/g, '\\n')
+        .replace(/;/g, '\\;')
+        .replace(/,/g, '\\,');
+}
+
+function foldIcsLine(line: string): string {
+    if (line.length <= 75) {
+        return line;
+    }
+
+    const chunks: string[] = [];
+    let currentLine = line;
+
+    while (currentLine.length > 75) {
+        chunks.push(currentLine.slice(0, 75));
+        currentLine = ` ${currentLine.slice(75)}`;
+    }
+
+    chunks.push(currentLine);
+
+    return chunks.join('\r\n');
+}
+
+function formatIcsDate(dateValue: string): string {
+    return dateValue.replace(/-/g, '');
+}
+
+function formatIcsDateTime(dateValue: string, timeValue: string): string {
+    return `${formatIcsDate(dateValue)}T${timeValue.replace(':', '')}00`;
+}
+
+function formatIcsUtcDateTime(date: Date): string {
+    return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+}
+
+function getDateValueFromDate(date: Date): string {
+    return date.toISOString().slice(0, 10);
+}
+
+function getNextDateValue(dateValue: string): string {
+    return getDateValueOffset(dateValue, 1);
+}
+
+function getTodoCalendarStartDate(todo: Todo): string | null {
+    return todo.dateType === TODO_DATE_TYPES.event || todo.dateType === TODO_DATE_TYPES.period
+        ? todo.startDate
+        : todo.dueDate;
+}
+
+function getTodoCalendarEndDate(todo: Todo, startDate: string): string {
+    if (todo.dateType === TODO_DATE_TYPES.period && todo.endDate) {
+        return todo.endDate;
+    }
+
+    return startDate;
+}
+
+function getTodoIcsDescription(todo: Todo): string {
+    const details = [
+        todo.description,
+        todo.project ? `Proyecto: ${todo.project}` : null,
+        todo.tags.length ? `Etiquetas: ${todo.tags.join(', ')}` : null,
+        todo.subtasks.length
+            ? `Subtareas: ${todo.subtasks.map(subtask => `${subtask.completed ? '[x]' : '[ ]'} ${subtask.text}`).join('; ')}`
+            : null,
+    ].filter((detail): detail is string => Boolean(detail));
+
+    return details.join('\n');
+}
+
+function getDefaultTodoEndDateTime(startDate: string, startTime: string): { date: string; time: string } {
+    const [hour = 0, minute = 0] = startTime.split(':').map(Number);
+    const totalMinutes = hour * 60 + minute + 60;
+    const nextHour = Math.floor((totalMinutes % 1440) / 60);
+    const nextMinute = totalMinutes % 60;
+
+    return {
+        date: totalMinutes >= 1440 ? getNextDateValue(startDate) : startDate,
+        time: `${String(nextHour).padStart(2, '0')}:${String(nextMinute).padStart(2, '0')}`,
+    };
+}
+
+function getTodoIcsEndDateTime(todo: Todo, startDate: string): { date: string; time: string } | null {
+    if (!todo.startTime) {
+        return null;
+    }
+
+    if (todo.endTime) {
+        return {
+            date: getTodoCalendarEndDate(todo, startDate),
+            time: todo.endTime,
+        };
+    }
+
+    return getDefaultTodoEndDateTime(startDate, todo.startTime);
+}
+
+function getTodoIcsRrule(todo: Todo): string | null {
+    const recurrence = normalizeRecurrence(todo.recurrence);
+
+    if (recurrence === TODO_RECURRENCES.none) {
+        return null;
+    }
+
+    const frequencyByRecurrence: Record<Exclude<TodoRecurrence, 'none'>, string> = {
+        [TODO_RECURRENCES.daily]: 'DAILY',
+        [TODO_RECURRENCES.weekly]: 'WEEKLY',
+        [TODO_RECURRENCES.monthly]: 'MONTHLY',
+        [TODO_RECURRENCES.yearly]: 'YEARLY',
+    };
+    const frequency = frequencyByRecurrence[recurrence];
+    const until = todo.endDate ? `;UNTIL=${formatIcsDate(todo.endDate)}T235959` : '';
+
+    return `RRULE:FREQ=${frequency}${until}`;
+}
+
+function getTodoIcsLines(todo: Todo, dtstamp: string): string[] | null {
+    if (isTaskTodo(todo) && todo.completed) {
+        return null;
+    }
+
+    const startDate = getTodoCalendarStartDate(todo);
+
+    if (!startDate) {
+        return null;
+    }
+
+    const endDate = getTodoCalendarEndDate(todo, startDate);
+    const hasTime = Boolean(todo.startTime);
+    const summaryPrefix = todo.kind === TODO_KINDS.task ? 'Tarea: ' : '';
+    const description = getTodoIcsDescription(todo);
+    const lines = [
+        'BEGIN:VEVENT',
+        `UID:taskflow-${escapeIcsText(todo.id)}@sachadev.me`,
+        `DTSTAMP:${dtstamp}`,
+        `SUMMARY:${escapeIcsText(`${summaryPrefix}${todo.text}`)}`,
+    ];
+
+    if (description) {
+        lines.push(`DESCRIPTION:${escapeIcsText(description)}`);
+    }
+
+    if (hasTime && todo.startTime) {
+        const endDateTime = getTodoIcsEndDateTime(todo, startDate);
+
+        lines.push(`DTSTART:${formatIcsDateTime(startDate, todo.startTime)}`);
+        lines.push(`DTEND:${formatIcsDateTime(endDateTime?.date || endDate, endDateTime?.time || todo.startTime)}`);
+    } else {
+        lines.push(`DTSTART;VALUE=DATE:${formatIcsDate(startDate)}`);
+        lines.push(`DTEND;VALUE=DATE:${formatIcsDate(getNextDateValue(endDate))}`);
+    }
+
+    const rrule = getTodoIcsRrule(todo);
+
+    if (rrule) {
+        lines.push(rrule);
+    }
+
+    lines.push('END:VEVENT');
+
+    return lines;
+}
+
+function createTodosCalendarExport(todos: Todo[], now = new Date()): TodoCalendarExport {
+    const dtstamp = formatIcsUtcDateTime(now);
+    const eventLines = normalizeTodos(todos)
+        .map(todo => getTodoIcsLines(todo, dtstamp))
+        .filter((lines): lines is string[] => Boolean(lines));
+    const lines = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//TaskFlow//TaskFlow Local Calendar//ES',
+        'CALSCALE:GREGORIAN',
+        'METHOD:PUBLISH',
+        `X-WR-CALNAME:TaskFlow ${getDateValueFromDate(now)}`,
+        ...eventLines.flat(),
+        'END:VCALENDAR',
+    ];
+
+    return {
+        content: `${lines.map(foldIcsLine).join('\r\n')}\r\n`,
+        count: eventLines.length,
+    };
+}
+
 function getTodoRecurrenceAnchorDate(todo: Pick<Todo, 'dateType' | 'dueDate' | 'startDate'>): string | null {
     return todo.dateType === TODO_DATE_TYPES.event || todo.dateType === TODO_DATE_TYPES.period
         ? todo.startDate
@@ -1029,6 +1222,7 @@ export {
     analyzeTodosImport,
     applyTodosImport,
     createTodosBackup,
+    createTodosCalendarExport,
     createTodo,
     getAllowedRecurrencesForDateType,
     getAllowedRecurrencesForTodoKind,
@@ -1069,6 +1263,7 @@ export type {
     ImportMode,
     Todo,
     TodoBackup,
+    TodoCalendarExport,
     TodoDateType,
     TodoDetails,
     TodoFilter,

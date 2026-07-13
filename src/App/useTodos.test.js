@@ -9,6 +9,7 @@ import {
   analyzeTodosImport,
   applyTodosImport,
   createTodosBackup,
+  createTodosCalendarExport,
   createTodo,
   getAllowedRecurrencesForDateType,
   getAllowedRecurrencesForTodoKind,
@@ -224,6 +225,50 @@ describe('todo helpers', () => {
       startDate: '2026-08-10',
       endDate: '2026-08-10',
     });
+  });
+
+  test('exports dated todos as an ICS calendar', () => {
+    const calendar = createTodosCalendarExport([
+      {
+        id: 'exam-1',
+        text: 'Examen final',
+        kind: TODO_KINDS.event,
+        dateType: TODO_DATE_TYPES.event,
+        startDate: '2026-08-08',
+        startTime: '10:00',
+        description: 'Aula 3',
+      },
+      {
+        id: 'course-1',
+        text: 'Cursada de programacion',
+        kind: TODO_KINDS.schedule,
+        dateType: TODO_DATE_TYPES.period,
+        startDate: '2026-08-04',
+        endDate: '2026-12-01',
+        startTime: '10:00',
+        endTime: '12:00',
+        recurrence: TODO_RECURRENCES.weekly,
+        project: 'Facultad',
+      },
+      {
+        id: 'done-1',
+        text: 'Tarea resuelta',
+        completed: true,
+        dueDate: '2026-08-01',
+      },
+    ], new Date('2026-07-13T12:00:00.000Z'));
+
+    expect(calendar.count).toBe(2);
+    expect(calendar.content).toContain('BEGIN:VCALENDAR');
+    expect(calendar.content).toContain('SUMMARY:Examen final');
+    expect(calendar.content).toContain('DESCRIPTION:Aula 3');
+    expect(calendar.content).toContain('DTSTART:20260808T100000');
+    expect(calendar.content).toContain('DTEND:20260808T110000');
+    expect(calendar.content).toContain('SUMMARY:Cursada de programacion');
+    expect(calendar.content).toContain('DTSTART:20260804T100000');
+    expect(calendar.content).toContain('DTEND:20261201T120000');
+    expect(calendar.content).toContain('RRULE:FREQ=WEEKLY;UNTIL=20261201T235959');
+    expect(calendar.content).not.toContain('Tarea resuelta');
   });
 
   test('normalizes project and tags values', () => {

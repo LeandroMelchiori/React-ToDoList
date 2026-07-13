@@ -1208,6 +1208,60 @@ describe('App', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Backup exportado.');
   });
 
+  test('exports dated items to an ICS calendar', async () => {
+    const user = userEvent.setup();
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    const revokeObjectURL = vi.fn();
+    const createObjectURL = vi.fn(() => 'blob:taskflow-calendar');
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      value: createObjectURL,
+    });
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      value: revokeObjectURL,
+    });
+
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      {
+        id: 'todo-event',
+        text: 'Examen de algebra',
+        kind: 'event',
+        dateType: 'event',
+        startDate: '2026-08-08',
+        startTime: '10:00',
+      },
+      {
+        id: 'todo-course',
+        text: 'Cursada de redes',
+        kind: 'schedule',
+        dateType: 'period',
+        startDate: '2026-08-04',
+        endDate: '2026-12-01',
+        startTime: '10:00',
+        endTime: '12:00',
+        recurrence: 'weekly',
+      },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Examen de algebra')).toBeInTheDocument();
+
+    await openTools(user);
+    await user.click(screen.getByRole('button', { name: 'Exportar calendario ICS' }));
+
+    const [calendarBlob] = createObjectURL.mock.calls[0];
+    const calendarText = await calendarBlob.text();
+
+    expect(calendarText).toContain('BEGIN:VCALENDAR');
+    expect(calendarText).toContain('SUMMARY:Examen de algebra');
+    expect(calendarText).toContain('SUMMARY:Cursada de redes');
+    expect(calendarText).toContain('RRULE:FREQ=WEEKLY;UNTIL=20261201T235959');
+    expect(clickSpy).toHaveBeenCalled();
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:taskflow-calendar');
+    expect(screen.getByRole('status')).toHaveTextContent('2 elementos exportados al calendario.');
+  });
+
   test('imports todos from a JSON backup', async () => {
     const user = userEvent.setup();
     const backupFile = new File([
