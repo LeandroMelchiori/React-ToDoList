@@ -52,11 +52,13 @@ const TODO_WEEKDAY_LABELS: Record<TodoWeekday, string> = {
 };
 
 interface TodoDetailProps {
+  onArchive: () => void;
   onClose: () => void;
   onDelete: () => void;
   onDuplicate: () => void;
   onEdit: () => void;
   onToggleComplete: () => void;
+  onUnarchive: () => void;
   todo: Todo;
 }
 
@@ -131,8 +133,18 @@ function getRecurrenceLabel(todo: Todo): string | null {
   return details.length ? `${baseLabel}: ${details.join(' - ')}` : baseLabel;
 }
 
-function TodoDetail({ onClose, onDelete, onDuplicate, onEdit, onToggleComplete, todo }: TodoDetailProps) {
+function TodoDetail({
+  onArchive,
+  onClose,
+  onDelete,
+  onDuplicate,
+  onEdit,
+  onToggleComplete,
+  onUnarchive,
+  todo,
+}: TodoDetailProps) {
   const isTask = todo.kind === TODO_KINDS.task;
+  const isArchived = Boolean(todo.archivedAt);
   const recurrenceLabel = getRecurrenceLabel(todo);
   const reminderLabel = todo.reminder !== TODO_REMINDERS.none
     ? TODO_REMINDER_LABELS[todo.reminder]
@@ -159,7 +171,7 @@ function TodoDetail({ onClose, onDelete, onDuplicate, onEdit, onToggleComplete, 
           <>
             <div>
               <dt>Estado</dt>
-              <dd>{todo.completed ? 'Completada' : 'Pendiente'}</dd>
+              <dd>{isArchived ? 'Archivada' : todo.completed ? 'Completada' : 'Pendiente'}</dd>
             </div>
             <div>
               <dt>Prioridad</dt>
@@ -189,6 +201,12 @@ function TodoDetail({ onClose, onDelete, onDuplicate, onEdit, onToggleComplete, 
           <div>
             <dt>Proyecto</dt>
             <dd>{todo.project}</dd>
+          </div>
+        )}
+        {todo.archivedAt && (
+          <div>
+            <dt>Archivada</dt>
+            <dd>{formatDateValue(todo.archivedAt.slice(0, 10))}</dd>
           </div>
         )}
         {todo.tags.length > 0 && (
@@ -221,7 +239,7 @@ function TodoDetail({ onClose, onDelete, onDuplicate, onEdit, onToggleComplete, 
       )}
 
       <div className="TodoDetail-actions">
-        {isTask && (
+        {isTask && !isArchived && (
           <button
             type="button"
             className="TodoDetail-button TodoDetail-button--success"
@@ -231,6 +249,16 @@ function TodoDetail({ onClose, onDelete, onDuplicate, onEdit, onToggleComplete, 
             {isCompletedBySubtasks
               ? 'Completada por subtareas'
               : todo.completed ? 'Marcar pendiente' : 'Completar'}
+          </button>
+        )}
+        {isTask && todo.completed && !isArchived && (
+          <button type="button" className="TodoDetail-button" onClick={onArchive}>
+            Archivar
+          </button>
+        )}
+        {isArchived && (
+          <button type="button" className="TodoDetail-button TodoDetail-button--primary" onClick={onUnarchive}>
+            Restaurar
           </button>
         )}
         <button type="button" className="TodoDetail-button TodoDetail-button--primary" onClick={onEdit}>

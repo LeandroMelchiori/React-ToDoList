@@ -1908,6 +1908,48 @@ describe('App', () => {
     }));
   });
 
+  test('archives completed todos and restores them from history', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      {
+        id: 'todo-1',
+        text: 'Cerrar entrega',
+        completed: false,
+        priority: 'medium',
+        order: 0,
+      },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Cerrar entrega')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Ver detalle' }));
+
+    let detailDialog = screen.getByRole('dialog', { name: 'Detalle del elemento' });
+    await user.click(within(detailDialog).getByRole('button', { name: 'Completar' }));
+    await user.click(within(detailDialog).getByRole('button', { name: 'Archivar' }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByText('Cerrar entrega')).not.toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('TODOS_V1'))[0]).toEqual(expect.objectContaining({
+      archivedAt: expect.any(String),
+    }));
+
+    await user.click(within(await openFilters(user)).getByRole('button', { name: 'Archivadas 1' }));
+
+    expect(screen.getByText('Cerrar entrega')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Ver detalle' }));
+
+    detailDialog = screen.getByRole('dialog', { name: 'Detalle del elemento' });
+    expect(within(detailDialog).getAllByText('Archivada')).toHaveLength(2);
+    await user.click(within(detailDialog).getByRole('button', { name: 'Restaurar' }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('TODOS_V1'))[0]).toEqual(expect.objectContaining({
+      archivedAt: null,
+    }));
+  });
+
   test('keeps a todo when delete confirmation is cancelled', async () => {
     const user = userEvent.setup();
     localStorage.setItem('TODOS_V1', JSON.stringify([

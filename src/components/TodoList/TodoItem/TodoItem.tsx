@@ -171,6 +171,7 @@ interface TodoItemProps {
   recurrenceEndDate?: string | null;
   recurrenceCount?: number | null;
   reminder?: TodoReminder;
+  archivedAt?: string | null;
   project?: string | null;
   tags?: string[];
   subtasks?: TodoSubtask[];
@@ -214,6 +215,7 @@ function TodoItem(props: TodoItemProps) {
   const reminderLabel = props.reminder && props.reminder !== TODO_REMINDERS.none
     ? TODO_REMINDER_LABELS[props.reminder]
     : null;
+  const isArchived = Boolean(props.archivedAt);
   const tags = Array.isArray(props.tags) ? props.tags : [];
   const subtasks = Array.isArray(props.subtasks) ? props.subtasks : [];
   const completedSubtasks = subtasks.filter(subtask => subtask.completed).length;
@@ -228,6 +230,7 @@ function TodoItem(props: TodoItemProps) {
     'TodoItem',
     `TodoItem--${kind}`,
     props.completed ? 'TodoItem--complete' : '',
+    isArchived ? 'TodoItem--archived' : '',
     props.isDragging ? 'TodoItem--dragging' : '',
     props.dropPosition === 'before' ? 'TodoItem--dropBefore' : '',
     props.dropPosition === 'after' ? 'TodoItem--dropAfter' : '',
@@ -369,6 +372,11 @@ function TodoItem(props: TodoItemProps) {
           {reminderLabel && (
             <span className="TodoItem-reminder">
               {reminderLabel}
+            </span>
+          )}
+          {isArchived && (
+            <span className="TodoItem-archive">
+              Archivada
             </span>
           )}
         </div>

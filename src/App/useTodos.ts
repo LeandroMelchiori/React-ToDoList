@@ -14,6 +14,7 @@ import {
     getTodoInsights,
     getTodosDateCounts,
     getVisibleTodos,
+    isTodoArchived,
     isTaskTodo,
     mergeSubtasks,
     moveTodoToPosition as reorderTodoToPosition,
@@ -179,15 +180,16 @@ function useTodos() {
     const deletingTodo = normalizedTodos.find(todo => todo.id === deletingTodoId) || null;
     const detailTodo = normalizedTodos.find(todo => todo.id === detailTodoId) || null;
 
-    const taskTodos = normalizedTodos.filter(isTaskTodo);
+    const activeTodos = normalizedTodos.filter(todo => !isTodoArchived(todo));
+    const taskTodos = activeTodos.filter(isTaskTodo);
     const completedTodos = taskTodos.filter(todo => todo.completed).length;
     const totalTasks = taskTodos.length;
-    const totalTodos = normalizedTodos.length;
+    const totalTodos = activeTodos.length;
     const pendingTodos = totalTasks - completedTodos;
-    const dateCounts = getTodosDateCounts(normalizedTodos);
+    const dateCounts = getTodosDateCounts(activeTodos);
     const filterCounts = getTodoFilterCounts(normalizedTodos);
-    const insights = getTodoInsights(normalizedTodos);
-    const facets = getTodoFacets(normalizedTodos);
+    const insights = getTodoInsights(activeTodos);
+    const facets = getTodoFacets(activeTodos);
 
     const visibleTodos = getVisibleTodos(normalizedTodos, searchValue, filter, undefined, {
         project: activeProject,
@@ -429,6 +431,43 @@ function useTodos() {
         const newTodos = reindexTodos(normalizedTodos.filter(todo => todo.id !== id));
         saveActiveTodos(newTodos);
         setRecentlyDeletedTodo(todoToDelete);
+    }
+
+    const archiveTodo = (id: string): TodoActionResult => {
+        const todoToArchive = normalizedTodos.find(todo => todo.id === id);
+
+        if (!todoToArchive || !isTaskTodo(todoToArchive)) {
+            return { ok: false, error: 'Solo se pueden archivar tareas.' };
+        }
+
+        if (!todoToArchive.completed) {
+            return { ok: false, error: 'Completa la tarea antes de archivarla.' };
+        }
+
+        saveActiveTodos(normalizedTodos.map(todo =>
+            todo.id === id
+                ? { ...todo, archivedAt: todo.archivedAt || new Date().toISOString() }
+                : todo
+        ));
+        resetTodoView();
+
+        return { ok: true };
+    }
+
+    const unarchiveTodo = (id: string): TodoActionResult => {
+        const todoToUnarchive = normalizedTodos.find(todo => todo.id === id);
+
+        if (!todoToUnarchive) {
+            return { ok: false, error: 'No encontramos esa tarea archivada.' };
+        }
+
+        saveActiveTodos(normalizedTodos.map(todo =>
+            todo.id === id
+                ? { ...todo, archivedAt: null }
+                : todo
+        ));
+
+        return { ok: true };
     }
 
     const addTodo = (text: string, details: TodoDetails = {}): TodoActionResult => {
@@ -875,7 +914,7 @@ function useTodos() {
         tagOptions: facets.tags,
         activeProject,
         activeTag,
-        reminderTodos: normalizedTodos,
+        reminderTodos: activeTodos,
         visibleTodos,
         visibleTodoGroups,
         openModal,
@@ -900,6 +939,8 @@ function useTodos() {
         deleteSavedView,
         completeTodo,
         deleteTodo,
+        archiveTodo,
+        unarchiveTodo,
         duplicateTodo,
         toggleSubtask,
         moveTodo,

@@ -22,6 +22,7 @@ import {
   getTodoReminderTarget,
   getTodosDateCounts,
   getVisibleTodos,
+  isTodoArchived,
   isTodoRecurringOnDate,
   isTaskTodo,
   moveTodoToPosition,
@@ -96,6 +97,7 @@ describe('todo helpers', () => {
         subtasks: [],
         createdAt: null,
         completedAt: null,
+        archivedAt: null,
       },
       {
         id: 'todo-2',
@@ -121,6 +123,7 @@ describe('todo helpers', () => {
         subtasks: [],
         createdAt: null,
         completedAt: null,
+        archivedAt: null,
       },
     ]);
   });
@@ -529,6 +532,31 @@ describe('todo helpers', () => {
       [TODO_FILTERS.events]: 1,
       [TODO_FILTERS.schedules]: 1,
       [TODO_FILTERS.recurring]: 1,
+    }));
+  });
+
+  test('keeps archived todos out of normal filters and exposes archive history', () => {
+    const todos = normalizeTodos([
+      { id: 'active', text: 'Activa', completed: false },
+      { id: 'done', text: 'Completada', completed: true },
+      { id: 'archived', text: 'Archivada', completed: true, archivedAt: '2026-07-13T10:00:00.000Z' },
+    ]);
+
+    expect(isTodoArchived(todos[2])).toBe(true);
+    expect(getVisibleTodos(todos, '', TODO_FILTERS.all).map(todo => todo.id)).toEqual(['active', 'done']);
+    expect(getVisibleTodos(todos, '', TODO_FILTERS.completed).map(todo => todo.id)).toEqual(['done']);
+    expect(getVisibleTodos(todos, '', TODO_FILTERS.archived).map(todo => todo.id)).toEqual(['archived']);
+    expect(getTodoGroups(getVisibleTodos(todos, '', TODO_FILTERS.archived))).toEqual([
+      expect.objectContaining({
+        id: TODO_GROUPS.archived,
+        title: 'Archivadas',
+        todos: [expect.objectContaining({ id: 'archived' })],
+      }),
+    ]);
+    expect(getTodoFilterCounts(todos)).toEqual(expect.objectContaining({
+      [TODO_FILTERS.all]: 2,
+      [TODO_FILTERS.completed]: 1,
+      [TODO_FILTERS.archived]: 1,
     }));
   });
 

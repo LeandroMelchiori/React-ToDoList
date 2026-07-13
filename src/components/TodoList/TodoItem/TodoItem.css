@@ -29,6 +29,10 @@
   opacity: 0.88;
 }
 
+.TodoItem--archived {
+  border-style: dashed;
+}
+
 .TodoItem--dragging {
   cursor: grabbing;
   opacity: 0.56;
@@ -242,6 +246,7 @@
 .TodoItem-dueDate,
 .TodoItem-recurrence,
 .TodoItem-reminder,
+.TodoItem-archive,
 .TodoItem-project,
 .TodoItem-tag {
   border-radius: 999px;
@@ -324,6 +329,11 @@
 
 [data-theme='dark'] .TodoItem-reminder {
   color: #fbbf24;
+}
+
+.TodoItem-archive {
+  background-color: rgba(100, 116, 139, 0.14);
+  color: var(--color-text-muted);
 }
 
 .TodoItem-project {

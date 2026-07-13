@@ -113,6 +113,8 @@ function App() {
         selectTagFilter,
         clearFacetFilters,
         completeTodo,
+        archiveTodo,
+        unarchiveTodo,
         toggleSubtask,
         moveTodo,
         moveTodoToPosition,
@@ -472,6 +474,7 @@ function App() {
                                 recurrenceEndDate={todo.recurrenceEndDate}
                                 recurrenceCount={todo.recurrenceCount}
                                 reminder={todo.reminder}
+                                archivedAt={todo.archivedAt}
                                 project={todo.project}
                                 tags={todo.tags}
                                 subtasks={todo.subtasks}
@@ -513,6 +516,20 @@ function App() {
                             onDelete={() => startDeletingTodo(detailTodo.id)}
                             onDuplicate={() => duplicateTodo(detailTodo.id)}
                             onEdit={() => startEditingTodo(detailTodo.id)}
+                            onArchive={() => {
+                                const result = archiveTodo(detailTodo.id);
+
+                                if (result.ok) {
+                                    closeModal();
+                                }
+                            }}
+                            onUnarchive={() => {
+                                const result = unarchiveTodo(detailTodo.id);
+
+                                if (result.ok) {
+                                    closeModal();
+                                }
+                            }}
                             onToggleComplete={() => completeTodo(detailTodo.id)}
                         />
                     ) : (

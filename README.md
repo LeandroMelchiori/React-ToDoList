@@ -52,6 +52,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - Duplicar tareas o elementos de agenda como copias limpias.
 - Cargar plantillas iniciales desde el estado vacio.
 - Marcar tareas como completadas o pendientes.
+- Archivar tareas completadas para sacarlas de la vista principal y consultarlas luego.
 - Eliminar tareas con confirmacion previa.
 - Deshacer una eliminacion reciente desde un aviso temporal.
 - Buscar tareas por texto, proyecto o etiqueta.
@@ -269,6 +270,7 @@ La suite actual cubre:
 - Filtros por busqueda y estado.
 - Filtros temporales por tareas vencidas, de hoy y proximas.
 - Filtros avanzados por atributos, tipo de elemento y agenda.
+- Archivo/historial de tareas completadas.
 - Creacion, marcado y completado automatico de tareas con subtareas.
 - Tareas, eventos, horarios recurrentes y periodos como tipos separados.
 - Vista Hoy con tareas, agenda y recordatorio visual del horario actual/proximo.

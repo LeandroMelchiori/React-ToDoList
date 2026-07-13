@@ -13,7 +13,8 @@ type TodoFilter =
     | 'tasks'
     | 'events'
     | 'schedules'
-    | 'periods';
+    | 'periods'
+    | 'archived';
 type TodoDateStatus = 'overdue' | 'today' | 'upcoming';
 type TodoPriority = 'low' | 'medium' | 'high';
 type TodoDateType = 'due' | 'event' | 'period';
@@ -21,7 +22,7 @@ type TodoRecurrence = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 type TodoReminder = 'none' | 'at-time' | '10-minutes' | '30-minutes' | '1-day';
 type TodoWeekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 type TodoKind = 'task' | 'event' | 'schedule' | 'period';
-type TodoGroup = 'overdue' | 'today' | 'upcoming' | 'unscheduled' | 'completed';
+type TodoGroup = 'overdue' | 'today' | 'upcoming' | 'unscheduled' | 'completed' | 'archived';
 type ImportMode = 'merge' | 'replace';
 
 type TodoSubtask = {
@@ -54,6 +55,7 @@ type Todo = {
     subtasks: TodoSubtask[];
     createdAt: string | null;
     completedAt: string | null;
+    archivedAt: string | null;
 };
 
 type TodoGroupView = {
@@ -146,6 +148,7 @@ type TodoInput = TodoDetails & {
     completed?: unknown;
     createdAt?: unknown;
     completedAt?: unknown;
+    archivedAt?: unknown;
 };
 type TodoInputWithText = TodoInput & { text: string };
 
@@ -165,6 +168,7 @@ const TODO_FILTERS = {
     events: 'events',
     schedules: 'schedules',
     periods: 'periods',
+    archived: 'archived',
 } as const satisfies Record<TodoFilter, TodoFilter>;
 
 const TODO_PRIORITIES = {
@@ -215,6 +219,7 @@ const TODO_GROUPS = {
     upcoming: 'upcoming',
     unscheduled: 'unscheduled',
     completed: 'completed',
+    archived: 'archived',
 } as const satisfies Record<TodoGroup, TodoGroup>;
 
 const TODO_GROUP_LABELS: Record<TodoGroup, string> = {
@@ -223,6 +228,7 @@ const TODO_GROUP_LABELS: Record<TodoGroup, string> = {
     [TODO_GROUPS.upcoming]: 'Proximas',
     [TODO_GROUPS.unscheduled]: 'Sin fecha',
     [TODO_GROUPS.completed]: 'Completadas',
+    [TODO_GROUPS.archived]: 'Archivadas',
 };
 
 const TODO_GROUP_ORDER: TodoGroup[] = [
@@ -231,6 +237,7 @@ const TODO_GROUP_ORDER: TodoGroup[] = [
     TODO_GROUPS.upcoming,
     TODO_GROUPS.unscheduled,
     TODO_GROUPS.completed,
+    TODO_GROUPS.archived,
 ];
 
 const TODO_BACKUP_VERSION = 1;
@@ -280,6 +287,10 @@ function normalizeTodoKind(kind: unknown, dateType?: unknown): TodoKind {
 
 function isTaskTodo(todo: { kind?: unknown; dateType?: unknown }): boolean {
     return normalizeTodoKind(todo.kind, todo.dateType) === TODO_KINDS.task;
+}
+
+function isTodoArchived(todo: { archivedAt?: unknown }): boolean {
+    return Boolean(normalizeDateTime(todo.archivedAt));
 }
 
 function normalizeDateTypeForTodoKind(kind: unknown, dateType?: unknown): TodoDateType {
@@ -702,6 +713,7 @@ function createTodo(text: string, details: TodoDetails = {}): Todo {
             : [],
         createdAt: new Date().toISOString(),
         completedAt: null,
+        archivedAt: null,
     };
 }
 
@@ -759,6 +771,7 @@ function normalizeTodos(todos: unknown): Todo[] {
                 subtasks: kind === TODO_KINDS.task ? normalizeSubtasks(todo.subtasks) : [],
                 createdAt: normalizeDateTime(todo.createdAt),
                 completedAt: kind === TODO_KINDS.task ? normalizeDateTime(todo.completedAt) : null,
+                archivedAt: normalizeDateTime(todo.archivedAt),
             };
         });
 
@@ -837,6 +850,14 @@ function getVisibleTodos(
 }
 
 function doesTodoMatchFilter(todo: Todo, filter: TodoFilter, todayDate = getTodayDateValue()): boolean {
+    if (filter === TODO_FILTERS.archived) {
+        return isTodoArchived(todo);
+    }
+
+    if (isTodoArchived(todo)) {
+        return false;
+    }
+
     const dateStatus = getTodoDateStatus(todo, todayDate);
 
     if (filter === TODO_FILTERS.completed) {
@@ -941,7 +962,7 @@ function getTodoFacets(todos: Todo[]): {
 }
 
 function getTodoDateStatus(todo: Todo, todayDate = getTodayDateValue()): TodoDateStatus | null {
-    if (todo.completed) {
+    if (todo.completed || isTodoArchived(todo)) {
         return null;
     }
 
@@ -1696,7 +1717,7 @@ function getTodosDateCounts(
 }
 
 function getTodoInsights(todos: Todo[], todayDate = getTodayDateValue()): TodoInsights {
-    const normalizedTodos = normalizeTodos(todos);
+    const normalizedTodos = normalizeTodos(todos).filter(todo => !isTodoArchived(todo));
     const taskTodos = normalizedTodos.filter(isTaskTodo);
     const totalTodos = taskTodos.length;
     const completedTodos = taskTodos.filter(todo => todo.completed).length;
@@ -1723,6 +1744,10 @@ function getTodoInsights(todos: Todo[], todayDate = getTodayDateValue()): TodoIn
 }
 
 function getTodoGroupId(todo: Todo, todayDate: string): TodoGroup {
+    if (isTodoArchived(todo)) {
+        return TODO_GROUPS.archived;
+    }
+
     if (todo.completed) {
         return TODO_GROUPS.completed;
     }
@@ -1892,6 +1917,7 @@ export {
     getTodoRecurrenceAnchorDate,
     getTodosDateCounts,
     getVisibleTodos,
+    isTodoArchived,
     isTodoRecurringOnDate,
     isTaskTodo,
     mergeSubtasks,

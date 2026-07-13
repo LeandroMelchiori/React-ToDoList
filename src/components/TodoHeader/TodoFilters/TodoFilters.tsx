@@ -13,6 +13,7 @@ const filterGroups: Array<{
       { value: TODO_FILTERS.all, label: 'Todas' },
       { value: TODO_FILTERS.active, label: 'Pendientes' },
       { value: TODO_FILTERS.completed, label: 'Completadas' },
+      { value: TODO_FILTERS.archived, label: 'Archivadas' },
     ],
   },
   {
