@@ -272,6 +272,8 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: 'Semana' }));
 
     expect(screen.getByRole('grid', { name: /Agenda semanal/ })).toBeInTheDocument();
+    expect(within(screen.getByRole('group', { name: 'Elementos sin horario por dia' })).getAllByRole('button', { name: /Limite Semanal Pagar cuota/ }).length).toBeGreaterThan(0);
+    expect(within(screen.getByRole('group', { name: 'Elementos sin horario por dia' })).getAllByText('2 diarias').length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: /10:00 Evento Rendir parcial/ })).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /10:00 a 12:00 Periodo Inscripcion a finales/ }).length).toBeGreaterThan(0);
     expect(within(screen.getByRole('complementary', { name: 'Elementos sin fecha' })).getByRole('button', { name: 'Leer bibliografia' })).toBeInTheDocument();

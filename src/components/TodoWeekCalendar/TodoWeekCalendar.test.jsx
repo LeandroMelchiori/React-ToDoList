@@ -2,6 +2,7 @@ import {
   formatHourSlot,
   getHourSlots,
   getTimedTodosForSlot,
+  getUntimedTodosByDay,
   getUntimedWeekTodos,
   getWeekDays,
   getWeekStart,
@@ -86,12 +87,17 @@ describe('TodoWeekCalendar helpers', () => {
       'exam',
       'course',
     ]);
-    expect(getUntimedWeekTodos(todos, weekDays)).toEqual([
+    const untimedTodos = getUntimedWeekTodos(todos, weekDays);
+
+    expect(untimedTodos).toEqual([
       expect.objectContaining({
         dateValue: '2026-08-11',
         dayLabel: 'Mar 11/08',
         todo: expect.objectContaining({ id: 'reading' }),
       }),
+    ]);
+    expect(getUntimedTodosByDay(untimedTodos, weekDays).find(day => day.dateValue === '2026-08-11').todos).toEqual([
+      expect.objectContaining({ id: 'reading' }),
     ]);
   });
 });

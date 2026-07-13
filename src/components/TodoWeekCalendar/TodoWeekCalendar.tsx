@@ -11,6 +11,7 @@ import {
 import {
   getTodoScheduleRange,
   getTodoTimeLabel,
+  isCompactRecurringTodo,
   isTodoVisibleOnDay,
 } from '../TodoCalendar/TodoCalendar';
 import './TodoWeekCalendar.css';
@@ -52,6 +53,13 @@ type UntimedWeekTodo = {
   dateValue: string;
   dayLabel: string;
   todo: Todo;
+};
+
+type UntimedWeekDayGroup = {
+  dateValue: string;
+  dayLabel: string;
+  isToday: boolean;
+  todos: Todo[];
 };
 
 interface TodoWeekCalendarProps {
@@ -199,6 +207,17 @@ function getUntimedWeekTodos(todos: Todo[], weekDays: WeekDay[]): UntimedWeekTod
   ));
 }
 
+function getUntimedTodosByDay(untimedTodos: UntimedWeekTodo[], weekDays: WeekDay[]): UntimedWeekDayGroup[] {
+  return weekDays.map(day => ({
+    dateValue: day.dateValue,
+    dayLabel: `${day.dayName} ${formatShortDate(day.dateValue)}`,
+    isToday: day.isToday,
+    todos: untimedTodos
+      .filter(item => item.dateValue === day.dateValue)
+      .map(item => item.todo),
+  }));
+}
+
 function getUnscheduledTodos(todos: Todo[]): Todo[] {
   return todos.filter(todo => !getTodoScheduleRange(todo));
 }
@@ -248,6 +267,7 @@ function TodoWeekCalendar({
   const hourSlots = React.useMemo(() => getHourSlots(visibleTodos, weekDays), [visibleTodos, weekDays]);
   const timedTodos = React.useMemo(() => getWeekTimedTodos(visibleTodos, weekDays), [visibleTodos, weekDays]);
   const untimedTodos = React.useMemo(() => getUntimedWeekTodos(visibleTodos, weekDays), [visibleTodos, weekDays]);
+  const untimedTodosByDay = React.useMemo(() => getUntimedTodosByDay(untimedTodos, weekDays), [untimedTodos, weekDays]);
   const unscheduledTodos = React.useMemo(() => getUnscheduledTodos(visibleTodos), [visibleTodos]);
   const weekLabel = getWeekLabel(weekDays);
 
@@ -284,6 +304,77 @@ function TodoWeekCalendar({
               </button>
             </div>
           </div>
+
+          {untimedTodos.length > 0 && (
+            <div className="TodoWeekCalendar-allDay" role="group" aria-label="Elementos sin horario por dia">
+              {untimedTodosByDay.map(group => {
+                const compactRecurringTodos = group.todos.filter(isCompactRecurringTodo);
+                const listedTodos = group.todos.filter(todo => !isCompactRecurringTodo(todo));
+
+                return (
+                  <section
+                    className={[
+                      'TodoWeekCalendar-allDayColumn',
+                      group.isToday ? 'TodoWeekCalendar-allDayColumn--today' : '',
+                    ].filter(Boolean).join(' ')}
+                    aria-label={`Sin horario ${group.dayLabel}`}
+                    key={group.dateValue}
+                  >
+                    <span>{group.dayLabel}</span>
+                    {group.todos.length === 0 ? (
+                      <small>Libre</small>
+                    ) : (
+                      <>
+                        {listedTodos.length > 0 && (
+                          <ul>
+                            {listedTodos.map(todo => (
+                              <li key={todo.id}>
+                                <button
+                                  type="button"
+                                  className={`TodoWeekCalendar-allDayItem TodoWeekCalendar-allDayItem--${todo.kind || TODO_KINDS.task}`}
+                                  aria-label={[
+                                    getTodoTypeLabel(todo),
+                                    getTodoRecurrenceLabel(todo),
+                                    todo.text,
+                                  ].filter(Boolean).join(' ')}
+                                  onClick={() => onEditTodo(todo.id)}
+                                >
+                                  <small>{getTodoTypeLabel(todo)}</small>
+                                  {todo.text}
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        {compactRecurringTodos.length > 0 && (
+                          <details className="TodoWeekCalendar-dailyDetails">
+                            <summary>
+                              {compactRecurringTodos.length === 1
+                                ? '1 diaria'
+                                : `${compactRecurringTodos.length} diarias`}
+                            </summary>
+                            <ul aria-label={`Rutinas diarias de ${group.dayLabel}`}>
+                              {compactRecurringTodos.map(todo => (
+                                <li key={todo.id}>
+                                  <button
+                                    type="button"
+                                    className="TodoWeekCalendar-allDayItem"
+                                    onClick={() => onEditTodo(todo.id)}
+                                  >
+                                    {todo.text}
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          </details>
+                        )}
+                      </>
+                    )}
+                  </section>
+                );
+              })}
+            </div>
+          )}
 
           <div className="TodoWeekCalendar-scroller">
             <div className="TodoWeekCalendar-grid" role="grid" aria-label={`Agenda semanal ${weekLabel}`}>
@@ -348,22 +439,6 @@ function TodoWeekCalendar({
             </p>
           )}
 
-          {untimedTodos.length > 0 && (
-            <aside className="TodoWeekCalendar-sideList" aria-label="Elementos sin horario esta semana">
-              <h3>Sin horario esta semana</h3>
-              <ul>
-                {untimedTodos.map(({ dateValue, dayLabel, todo }) => (
-                  <li key={`${dateValue}-${todo.id}`}>
-                    <span>{dayLabel}</span>
-                    <button type="button" onClick={() => onEditTodo(todo.id)}>
-                      {todo.text}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </aside>
-          )}
-
           {unscheduledTodos.length > 0 && (
             <aside className="TodoWeekCalendar-sideList" aria-label="Elementos sin fecha">
               <h3>Sin fecha</h3>
@@ -389,6 +464,7 @@ export {
   formatHourSlot,
   getHourSlots,
   getTimedTodosForSlot,
+  getUntimedTodosByDay,
   getUntimedWeekTodos,
   getWeekDays,
   getWeekStart,
