@@ -85,6 +85,38 @@
   margin: 0;
 }
 
+.TodoBackupActions-field {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.TodoBackupActions-field span {
+  color: var(--color-text);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.TodoBackupActions-field select {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  min-height: 38px;
+  padding: 0 12px;
+}
+
+.TodoBackupActions-field select:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-focus);
+  outline: none;
+}
+
 .TodoBackupActions-previewActions {
   display: flex;
   flex-wrap: wrap;

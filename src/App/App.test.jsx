@@ -1615,16 +1615,88 @@ describe('App', () => {
     await user.upload(screen.getByLabelText('Importar backup JSON'), backupFile);
 
     expect(screen.getByText('taskflow-merge.json: 2 tareas encontradas.')).toBeInTheDocument();
-    expect(screen.getByText('Al fusionar: 1 tarea agregada y 1 duplicada omitida.')).toBeInTheDocument();
+    expect(screen.getByText('Al fusionar en Personal: 1 tarea agregada y 1 duplicada omitida.')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Fusionar sin duplicados' }));
 
     expect(screen.getByText('Nueva tarea importada')).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('1 tarea agregada. 1 duplicada omitida.');
+    expect(screen.getByRole('status')).toHaveTextContent('1 tarea agregada en Personal. 1 duplicada omitida.');
     expect(JSON.parse(localStorage.getItem('TODOS_V1')).map(todo => todo.text)).toEqual([
       'Preparar demo',
       'Nueva tarea importada',
     ]);
+  });
+
+  test('merges imported todos into the selected board', async () => {
+    const user = userEvent.setup();
+    const backupFile = new File([
+      JSON.stringify({
+        version: 1,
+        todos: [
+          { id: 'todo-import-1', text: 'Preparar demo', completed: false },
+          { id: 'todo-import-2', text: 'Nueva tarea importada', completed: false },
+        ],
+      }),
+    ], 'taskflow-board-import.json', { type: 'application/json' });
+
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      { id: 'todo-personal', text: 'Preparar demo', completed: false, order: 0 },
+    ]));
+    localStorage.setItem('ACTIVE_TODO_BOARD_V1', JSON.stringify('personal'));
+    localStorage.setItem('TODO_BOARDS_V1', JSON.stringify([
+      {
+        id: 'personal',
+        name: 'Personal',
+        todos: [{ id: 'todo-personal', text: 'Preparar demo', completed: false, order: 0 }],
+        createdAt: null,
+        updatedAt: null,
+      },
+      {
+        id: 'work',
+        name: 'Trabajo',
+        todos: [{ id: 'todo-work', text: 'Plan trabajo', completed: false, order: 0 }],
+        createdAt: null,
+        updatedAt: null,
+      },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Preparar demo')).toBeInTheDocument();
+
+    await openTools(user);
+    await user.upload(screen.getByLabelText('Importar backup JSON'), backupFile);
+
+    expect(screen.getByText('taskflow-board-import.json: 2 tareas encontradas.')).toBeInTheDocument();
+    expect(screen.getByText('Al fusionar en Personal: 1 tarea agregada y 1 duplicada omitida.')).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText('Tablero destino'), 'work');
+
+    expect(screen.getByText('Al fusionar en Trabajo: 2 tareas agregadas y 0 duplicadas omitidas.')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Fusionar sin duplicados' }));
+
+    expect(screen.getByRole('status')).toHaveTextContent('2 tareas agregadas en Trabajo.');
+    expect(screen.queryByText('Nueva tarea importada')).not.toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(JSON.parse(localStorage.getItem('TODOS_V1')).map(todo => todo.text)).toEqual([
+        'Preparar demo',
+      ]);
+      expect(JSON.parse(localStorage.getItem('TODO_BOARDS_V1'))).toEqual([
+        expect.objectContaining({
+          id: 'personal',
+          todos: [expect.objectContaining({ text: 'Preparar demo' })],
+        }),
+        expect.objectContaining({
+          id: 'work',
+          todos: [
+            expect.objectContaining({ text: 'Plan trabajo' }),
+            expect.objectContaining({ text: 'Preparar demo' }),
+            expect.objectContaining({ text: 'Nueva tarea importada' }),
+          ],
+        }),
+      ]);
+    });
   });
 
   test('restores boards and saved views from a workspace backup', async () => {

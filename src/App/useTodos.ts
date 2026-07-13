@@ -73,7 +73,7 @@ const DEFAULT_TODO_BOARDS: TodoBoard[] = [];
 const DEFAULT_TODO_SAVED_VIEWS: TodoSavedView[] = [];
 
 type TodoActionResult = { ok: true } | { ok: false; error: string };
-type TodoImportOptions = { mode?: ImportMode };
+type TodoImportOptions = { mode?: ImportMode; targetBoardId?: string };
 
 function getDuplicateTodoText(todos: Todo[], text: string): string {
     const existingTexts = new Set(todos.map(todo => todo.text.toLowerCase()));
@@ -790,9 +790,42 @@ function useTodos() {
 
         const result = analyzeTodosImport(normalizedTodos, backup);
 
-        return result.ok
-            ? { ...result, kind: 'todos' }
-            : result;
+        if (!result.ok) {
+            return result;
+        }
+
+        const previewBoards = todoBoards.map(board =>
+            board.id === activeBoardId
+                ? { ...board, todos: normalizedTodos }
+                : board
+        );
+        const boardPreviews = previewBoards.map(board => {
+            const boardPreview = analyzeTodosImport(board.todos, backup);
+
+            return boardPreview.ok
+                ? {
+                    id: board.id,
+                    name: board.name,
+                    totalTodos: normalizeTodos(board.todos).length,
+                    totalCount: boardPreview.totalCount,
+                    newCount: boardPreview.newCount,
+                    duplicateCount: boardPreview.duplicateCount,
+                }
+                : null;
+        }).filter((board): board is {
+            id: string;
+            name: string;
+            totalTodos: number;
+            totalCount: number;
+            newCount: number;
+            duplicateCount: number;
+        } => Boolean(board));
+
+        return {
+            ...result,
+            kind: 'todos',
+            boardPreviews,
+        };
     };
 
     const previewCalendarImport = (content: unknown) => {
@@ -845,6 +878,38 @@ function useTodos() {
             return workspaceResult;
         }
 
+        if (mode === 'merge' && options.targetBoardId) {
+            const boardsWithCurrentTodos = upsertTodoBoardTodos(todoBoards, activeBoardId, normalizedTodos);
+            const targetBoard = boardsWithCurrentTodos.find(board => board.id === options.targetBoardId);
+
+            if (!targetBoard) {
+                return {
+                    ok: false,
+                    error: 'No encontramos el tablero destino.',
+                };
+            }
+
+            if (targetBoard.id !== activeBoardId) {
+                const result = applyTodosImport(targetBoard.todos, backup, mode);
+
+                if (!result.ok) {
+                    return result;
+                }
+
+                saveBoards(upsertTodoBoardTodos(boardsWithCurrentTodos, targetBoard.id, result.todos));
+
+                return {
+                    ok: true,
+                    count: result.importedCount,
+                    skippedDuplicates: result.skippedDuplicates,
+                    totalCount: result.totalCount,
+                    mode,
+                    targetBoardId: targetBoard.id,
+                    targetBoardName: targetBoard.name,
+                };
+            }
+        }
+
         const result = applyTodosImport(normalizedTodos, backup, mode);
 
         if (!result.ok) {
@@ -860,6 +925,8 @@ function useTodos() {
             skippedDuplicates: result.skippedDuplicates,
             totalCount: result.totalCount,
             mode,
+            targetBoardId: activeBoardId,
+            targetBoardName: mode === 'merge' ? activeBoard?.name : undefined,
         };
     }
 

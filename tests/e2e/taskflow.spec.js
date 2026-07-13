@@ -168,7 +168,8 @@ test('previews and merges imported todos without duplicates', async ({ page }) =
 
   await expect(page.getByRole('region', { name: 'Previsualizacion de importacion' })).toBeVisible();
   await expect(page.getByText('taskflow-e2e.json: 2 tareas encontradas.')).toBeVisible();
-  await expect(page.getByText('Al fusionar: 1 tarea agregada y 1 duplicada omitida.')).toBeVisible();
+  await expect(page.getByLabel('Tablero destino')).toHaveValue('personal');
+  await expect(page.getByText('Al fusionar en Personal: 1 tarea agregada y 1 duplicada omitida.')).toBeVisible();
 
   await page.getByRole('button', { name: 'Fusionar sin duplicados' }).click();
 
@@ -176,7 +177,7 @@ test('previews and merges imported todos without duplicates', async ({ page }) =
   await expect(page.getByRole('button', { name: 'Filtrar por proyecto QA' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Filtrar por etiqueta backup' })).toBeVisible();
   await expect(page.getByText('Preparar entrevista tecnica', { exact: true })).toHaveCount(1);
-  await expect(page.getByText('1 tarea agregada. 1 duplicada omitida.')).toBeVisible();
+  await expect(page.getByText('1 tarea agregada en Personal. 1 duplicada omitida.')).toBeVisible();
 });
 
 test('restores a full workspace backup', async ({ page }) => {

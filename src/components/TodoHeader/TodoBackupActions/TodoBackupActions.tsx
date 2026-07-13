@@ -29,6 +29,10 @@ function getSavedViewLabel(count: number) {
   return count === 1 ? '1 filtro guardado' : `${count} filtros guardados`;
 }
 
+function getCurrentTaskLabel(count: number) {
+  return count === 1 ? '1 tarea actual' : `${count} tareas actuales`;
+}
+
 function getImportedTaskLabel(count: number) {
   return count === 1 ? '1 tarea importada' : `${count} tareas importadas`;
 }
@@ -51,9 +55,10 @@ function getImportStatusMessage(result: any) {
   }
 
   if (result.mode === 'merge') {
+    const targetBoardMessage = result.targetBoardName ? ` en ${result.targetBoardName}` : '';
     const importedMessage = result.count
-      ? `${getAddedTaskLabel(result.count)}.`
-      : 'No se agregaron tareas nuevas.';
+      ? `${getAddedTaskLabel(result.count)}${targetBoardMessage}.`
+      : `No se agregaron tareas nuevas${targetBoardMessage}.`;
     const skippedMessage = result.skippedDuplicates
       ? ` ${getOmittedDuplicateLabel(result.skippedDuplicates)}.`
       : '';
@@ -75,17 +80,28 @@ function getImportStatusMessage(result: any) {
   return `${getImportedTaskLabel(result.count)}. Tus tareas anteriores fueron reemplazadas.`;
 }
 
+interface ImportBoardPreview {
+  id: string;
+  name: string;
+  totalTodos: number;
+  totalCount: number;
+  newCount: number;
+  duplicateCount: number;
+}
+
 interface TodoBackupActionsProps {
+  activeBoardId?: string;
   loading?: boolean;
   onExportTodos: () => any;
   onExportCalendar: () => { content: string; count: number };
   onPreviewImport: (backup: any) => any;
   onPreviewCalendarImport: (content: string) => any;
-  onImportTodos: (backup: any, options: { mode: any }) => any;
+  onImportTodos: (backup: any, options: { mode: any; targetBoardId?: string }) => any;
   onImportCalendar: (content: string) => any;
 }
 
 function TodoBackupActions({
+  activeBoardId,
   loading,
   onExportTodos,
   onExportCalendar,
@@ -96,6 +112,14 @@ function TodoBackupActions({
 }: TodoBackupActionsProps) {
   const [statusMessage, setStatusMessage] = React.useState('');
   const [importPreview, setImportPreview] = React.useState<any>(null);
+  const [targetBoardId, setTargetBoardId] = React.useState('');
+
+  const boardPreviews: ImportBoardPreview[] = Array.isArray(importPreview?.boardPreviews)
+    ? importPreview.boardPreviews
+    : [];
+  const selectedBoardPreview = boardPreviews.find(board => board.id === targetBoardId)
+    || boardPreviews[0]
+    || null;
 
   const handleExport = () => {
     const backup = onExportTodos();
@@ -159,9 +183,15 @@ function TodoBackupActions({
         fileName: file.name,
         ...result,
       });
+      setTargetBoardId(result.kind === 'todos'
+        ? (result.boardPreviews?.find((board: ImportBoardPreview) => board.id === activeBoardId)?.id
+          || result.boardPreviews?.[0]?.id
+          || '')
+        : '');
       setStatusMessage('Backup listo para revisar.');
     } catch {
       setImportPreview(null);
+      setTargetBoardId('');
       setStatusMessage('No pudimos leer ese archivo JSON.');
     }
   };
@@ -189,9 +219,11 @@ function TodoBackupActions({
         fileName: file.name,
         ...result,
       });
+      setTargetBoardId('');
       setStatusMessage('Calendario listo para revisar.');
     } catch {
       setImportPreview(null);
+      setTargetBoardId('');
       setStatusMessage('No pudimos leer ese archivo ICS.');
     }
   };
@@ -214,7 +246,12 @@ function TodoBackupActions({
       return;
     }
 
-    const result = onImportTodos(importPreview.backup, { mode });
+    const result = onImportTodos(importPreview.backup, {
+      mode,
+      targetBoardId: importPreview.kind === 'todos' && mode === 'merge'
+        ? targetBoardId
+        : undefined,
+    });
 
     if (!result.ok) {
       setStatusMessage(result.error);
@@ -222,11 +259,13 @@ function TodoBackupActions({
     }
 
     setImportPreview(null);
+    setTargetBoardId('');
     setStatusMessage(getImportStatusMessage(result));
   };
 
   const cancelImport = () => {
     setImportPreview(null);
+    setTargetBoardId('');
     setStatusMessage('Importacion cancelada.');
   };
 
@@ -297,8 +336,27 @@ function TodoBackupActions({
                 <p className="TodoBackupActions-previewText">
                   {importPreview.fileName}: {getFoundTaskLabel(importPreview.totalCount)}.
                 </p>
+                {selectedBoardPreview && (
+                  <label className="TodoBackupActions-field">
+                    <span>Tablero destino</span>
+                    <select
+                      disabled={loading || boardPreviews.length <= 1}
+                      onChange={(event) => setTargetBoardId(event.target.value)}
+                      value={selectedBoardPreview.id}
+                    >
+                      {boardPreviews.map(board => (
+                        <option key={board.id} value={board.id}>
+                          {board.name} ({getCurrentTaskLabel(board.totalTodos)})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
                 <p className="TodoBackupActions-previewText">
-                  Al fusionar: {getAddedTaskLabel(importPreview.newCount)} y {getOmittedDuplicateLabel(importPreview.duplicateCount)}.
+                  Al fusionar{selectedBoardPreview ? ` en ${selectedBoardPreview.name}` : ''}: {getAddedTaskLabel(selectedBoardPreview?.newCount ?? importPreview.newCount)} y {getOmittedDuplicateLabel(selectedBoardPreview?.duplicateCount ?? importPreview.duplicateCount)}.
+                </p>
+                <p className="TodoBackupActions-previewText">
+                  Reemplazar tareas solo afecta el tablero actual.
                 </p>
               </>
             )}

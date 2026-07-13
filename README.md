@@ -32,7 +32,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - Estados visibles para carga, error, lista vacia y busqueda sin resultados.
 - Sincronizacion cuando el almacenamiento cambia desde otra pestana.
 - Soporte PWA con shell offline para abrir la app sin conexion luego de la primera visita.
-- Exportacion e importacion de backups completos en JSON, mas exportacion e importacion de agenda en formato ICS.
+- Exportacion e importacion guiada de backups completos en JSON, mas exportacion e importacion de agenda en formato ICS.
 - Recordatorios locales opcionales con notificaciones del navegador.
 - Pruebas automatizadas y validacion continua antes de publicar cambios.
 
@@ -72,6 +72,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - Normalizar tareas antiguas guardadas sin `id`.
 - Detectar cambios hechos en otra pestana y permitir sincronizar.
 - Exportar e importar el workspace completo con un archivo JSON local.
+- Revisar el impacto de una importacion JSON y elegir tablero destino antes de fusionar tareas.
 - Exportar elementos con fecha a un archivo `.ics` compatible con calendarios externos.
 - Importar archivos `.ics` y fusionar eventos sin duplicar elementos existentes.
 - Mostrar metricas locales de progreso, completadas recientes, vencidas y alta prioridad.
@@ -290,7 +291,7 @@ La suite actual cubre:
 - Cancelacion segura antes de eliminar una tarea.
 - Deshacer una eliminacion reciente y autocierre del aviso.
 - Navegacion por teclado, skip link, foco en modal y cierre con `Escape`.
-- Exportacion e importacion de backups JSON.
+- Exportacion e importacion guiada de backups JSON.
 - Metricas locales de progreso, completadas recientes, vencidas y alta prioridad.
 - Estado PWA/offline y aplicacion de actualizaciones del service worker.
 - Flujo E2E de produccion con Playwright: crear, buscar, editar, completar, cancelar borrado y eliminar.
