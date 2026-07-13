@@ -1377,6 +1377,62 @@ describe('App', () => {
     expect(screen.getByRole('status')).toHaveTextContent('2 elementos exportados al calendario.');
   });
 
+  test('previews and imports an ICS calendar without duplicates', async () => {
+    const user = userEvent.setup();
+    const calendarFile = new File([
+      [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'BEGIN:VEVENT',
+        'UID:exam-2026@example.com',
+        'SUMMARY:Examen de algebra',
+        'DTSTART:20260808T100000',
+        'DTEND:20260808T120000',
+        'END:VEVENT',
+        'BEGIN:VEVENT',
+        'UID:course-2026@example.com',
+        'SUMMARY:Cursada de redes',
+        'DTSTART:20260804T100000',
+        'DTEND:20260804T120000',
+        'RRULE:FREQ=WEEKLY;UNTIL=20261201T235959',
+        'END:VEVENT',
+        'END:VCALENDAR',
+      ].join('\r\n'),
+    ], 'facultad.ics', { type: 'text/calendar' });
+
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      {
+        id: 'todo-existing',
+        text: 'Examen de algebra',
+        kind: 'event',
+        completed: false,
+        dateType: 'event',
+        startDate: '2026-08-08',
+        startTime: '10:00',
+      },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Examen de algebra')).toBeInTheDocument();
+
+    await openTools(user);
+    await user.upload(screen.getByLabelText('Importar calendario ICS'), calendarFile);
+
+    expect(screen.getByRole('region', { name: 'Previsualizacion de importacion' })).toBeInTheDocument();
+    expect(screen.getByText('facultad.ics: 2 elementos encontrados.')).toBeInTheDocument();
+    expect(screen.getByText('Al importar: 1 elemento agregado y 1 duplicada omitida.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Reemplazar tareas' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Importar calendario' }));
+
+    expect(screen.getByText('Cursada de redes')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('1 elemento agregado. 1 duplicada omitida.');
+    expect(JSON.parse(localStorage.getItem('TODOS_V1')).map(todo => todo.text)).toEqual([
+      'Examen de algebra',
+      'Cursada de redes',
+    ]);
+  });
+
   test('imports todos from a JSON backup', async () => {
     const user = userEvent.setup();
     const backupFile = new File([

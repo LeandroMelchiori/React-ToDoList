@@ -32,7 +32,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - Estados visibles para carga, error, lista vacia y busqueda sin resultados.
 - Sincronizacion cuando el almacenamiento cambia desde otra pestana.
 - Soporte PWA con shell offline para abrir la app sin conexion luego de la primera visita.
-- Exportacion e importacion de backups completos en JSON y exportacion de agenda en formato ICS.
+- Exportacion e importacion de backups completos en JSON, mas exportacion e importacion de agenda en formato ICS.
 - Pruebas automatizadas y validacion continua antes de publicar cambios.
 
 ## Funcionalidades
@@ -68,6 +68,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - Detectar cambios hechos en otra pestana y permitir sincronizar.
 - Exportar e importar el workspace completo con un archivo JSON local.
 - Exportar elementos con fecha a un archivo `.ics` compatible con calendarios externos.
+- Importar archivos `.ics` y fusionar eventos sin duplicar elementos existentes.
 - Mostrar metricas locales de progreso, completadas recientes, vencidas y alta prioridad.
 - Mostrar estado offline/PWA y avisar cuando hay una version nueva disponible.
 - Mostrar estados de carga, error, lista vacia y busqueda sin resultados.
@@ -267,6 +268,7 @@ La suite actual cubre:
 - Vista Tablero con columnas por estado y apertura de detalle.
 - Calendario mensual y agenda semanal con recurrencias.
 - Exportacion ICS de elementos fechados.
+- Importacion ICS con preview y fusion sin duplicados.
 - Tableros, filtros guardados y backups completos del workspace.
 - Plantillas iniciales desde el estado vacio.
 - Reordenamiento manual con botones y drag and drop.
@@ -288,7 +290,6 @@ La suite actual cubre:
 - Migrar componentes y hooks restantes a TypeScript.
 - Arrastre entre columnas del tablero para cambiar estado o fecha con reglas seguras.
 - Recordatorios locales opcionales con permisos del navegador.
-- Importacion de archivos `.ics` para cargar calendarios existentes.
 - Reglas avanzadas de recurrencia, excepciones y finalizacion por cantidad de repeticiones.
 
 ## Autor

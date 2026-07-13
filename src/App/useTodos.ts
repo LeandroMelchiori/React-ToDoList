@@ -25,6 +25,7 @@ import {
     normalizeTodoSchedule,
     normalizeTodoTimes,
     normalizeTodos,
+    readTodosCalendarImport,
     reindexTodos,
 } from './todoModel';
 import {
@@ -733,6 +734,20 @@ function useTodos() {
             : result;
     };
 
+    const previewCalendarImport = (content: unknown) => {
+        const calendarResult = readTodosCalendarImport(content);
+
+        if (!calendarResult.ok) {
+            return calendarResult;
+        }
+
+        const result = analyzeTodosImport(normalizedTodos, { todos: calendarResult.todos });
+
+        return result.ok
+            ? { ...result, kind: 'calendar' }
+            : result;
+    };
+
     const importTodos = (backup: unknown, options: TodoImportOptions = {}) => {
         const mode = options.mode === 'merge' ? 'merge' : 'replace';
         const workspaceResult = readTodoWorkspaceBackup(backup);
@@ -784,6 +799,31 @@ function useTodos() {
             skippedDuplicates: result.skippedDuplicates,
             totalCount: result.totalCount,
             mode,
+        };
+    }
+
+    const importCalendar = (content: unknown) => {
+        const calendarResult = readTodosCalendarImport(content);
+
+        if (!calendarResult.ok) {
+            return calendarResult;
+        }
+
+        const result = applyTodosImport(normalizedTodos, { todos: calendarResult.todos }, 'merge');
+
+        if (!result.ok) {
+            return result;
+        }
+
+        saveActiveTodos(result.todos);
+        resetTodoView();
+
+        return {
+            ok: true,
+            count: result.importedCount,
+            skippedDuplicates: result.skippedDuplicates,
+            totalCount: result.totalCount,
+            mode: 'calendar',
         };
     }
 
@@ -853,7 +893,9 @@ function useTodos() {
         exportTodos,
         exportCalendar,
         previewTodosImport,
+        previewCalendarImport,
         importTodos,
+        importCalendar,
         syncTodos
     }
 

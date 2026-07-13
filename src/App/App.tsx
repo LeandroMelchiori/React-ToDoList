@@ -130,7 +130,9 @@ function App() {
         exportTodos,
         exportCalendar,
         previewTodosImport,
+        previewCalendarImport,
         importTodos,
+        importCalendar,
         syncTodos
     } = stateUpdaters;
 
@@ -321,7 +323,9 @@ function App() {
                         onExportTodos={exportTodos}
                         onExportCalendar={exportCalendar}
                         onPreviewImport={previewTodosImport}
+                        onPreviewCalendarImport={previewCalendarImport}
                         onImportTodos={importTodos}
+                        onImportCalendar={importCalendar}
                     />
                 </TodoHeaderTools>
             </TodoHeader>

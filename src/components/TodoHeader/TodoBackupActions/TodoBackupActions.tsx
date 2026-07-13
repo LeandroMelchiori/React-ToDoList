@@ -13,6 +13,10 @@ function getFoundTaskLabel(count: number) {
   return count === 1 ? '1 tarea encontrada' : `${count} tareas encontradas`;
 }
 
+function getFoundCalendarItemLabel(count: number) {
+  return count === 1 ? '1 elemento encontrado' : `${count} elementos encontrados`;
+}
+
 function getTaskLabel(count: number) {
   return count === 1 ? '1 tarea' : `${count} tareas`;
 }
@@ -31,6 +35,10 @@ function getImportedTaskLabel(count: number) {
 
 function getAddedTaskLabel(count: number) {
   return count === 1 ? '1 tarea agregada' : `${count} tareas agregadas`;
+}
+
+function getAddedCalendarItemLabel(count: number) {
+  return count === 1 ? '1 elemento agregado' : `${count} elementos agregados`;
 }
 
 function getOmittedDuplicateLabel(count: number) {
@@ -53,6 +61,17 @@ function getImportStatusMessage(result: any) {
     return `${importedMessage}${skippedMessage}`;
   }
 
+  if (result.mode === 'calendar') {
+    const importedMessage = result.count
+      ? `${getAddedCalendarItemLabel(result.count)}.`
+      : 'No se agregaron elementos nuevos.';
+    const skippedMessage = result.skippedDuplicates
+      ? ` ${getOmittedDuplicateLabel(result.skippedDuplicates)}.`
+      : '';
+
+    return `${importedMessage}${skippedMessage}`;
+  }
+
   return `${getImportedTaskLabel(result.count)}. Tus tareas anteriores fueron reemplazadas.`;
 }
 
@@ -61,10 +80,20 @@ interface TodoBackupActionsProps {
   onExportTodos: () => any;
   onExportCalendar: () => { content: string; count: number };
   onPreviewImport: (backup: any) => any;
+  onPreviewCalendarImport: (content: string) => any;
   onImportTodos: (backup: any, options: { mode: any }) => any;
+  onImportCalendar: (content: string) => any;
 }
 
-function TodoBackupActions({ loading, onExportTodos, onExportCalendar, onPreviewImport, onImportTodos }: TodoBackupActionsProps) {
+function TodoBackupActions({
+  loading,
+  onExportTodos,
+  onExportCalendar,
+  onPreviewImport,
+  onPreviewCalendarImport,
+  onImportTodos,
+  onImportCalendar,
+}: TodoBackupActionsProps) {
   const [statusMessage, setStatusMessage] = React.useState('');
   const [importPreview, setImportPreview] = React.useState<any>(null);
 
@@ -137,8 +166,51 @@ function TodoBackupActions({ loading, onExportTodos, onExportCalendar, onPreview
     }
   };
 
+  const handleCalendarImport = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      const fileContent = await file.text();
+      const result = onPreviewCalendarImport(fileContent);
+
+      if (!result.ok) {
+        setImportPreview(null);
+        setStatusMessage(result.error);
+        return;
+      }
+
+      setImportPreview({
+        content: fileContent,
+        fileName: file.name,
+        ...result,
+      });
+      setStatusMessage('Calendario listo para revisar.');
+    } catch {
+      setImportPreview(null);
+      setStatusMessage('No pudimos leer ese archivo ICS.');
+    }
+  };
+
   const confirmImport = (mode: string) => {
     if (!importPreview) {
+      return;
+    }
+
+    if (importPreview.kind === 'calendar') {
+      const result = onImportCalendar(importPreview.content);
+
+      if (!result.ok) {
+        setStatusMessage(result.error);
+        return;
+      }
+
+      setImportPreview(null);
+      setStatusMessage(getImportStatusMessage(result));
       return;
     }
 
@@ -188,6 +260,16 @@ function TodoBackupActions({ loading, onExportTodos, onExportCalendar, onPreview
           onChange={handleImport}
         />
       </label>
+      <label className="TodoBackupActions-button">
+        Importar calendario
+        <input
+          type="file"
+          accept="text/calendar,.ics"
+          aria-label="Importar calendario ICS"
+          disabled={loading}
+          onChange={handleCalendarImport}
+        />
+      </label>
       {importPreview && (
         <div className="TodoBackupActions-preview" role="region" aria-label="Previsualizacion de importacion">
           <div>
@@ -199,6 +281,15 @@ function TodoBackupActions({ loading, onExportTodos, onExportCalendar, onPreview
                 </p>
                 <p className="TodoBackupActions-previewText">
                   Al restaurar, se reemplazan tus tableros, tareas y filtros guardados.
+                </p>
+              </>
+            ) : importPreview.kind === 'calendar' ? (
+              <>
+                <p className="TodoBackupActions-previewText">
+                  {importPreview.fileName}: {getFoundCalendarItemLabel(importPreview.totalCount)}.
+                </p>
+                <p className="TodoBackupActions-previewText">
+                  Al importar: {getAddedCalendarItemLabel(importPreview.newCount)} y {getOmittedDuplicateLabel(importPreview.duplicateCount)}.
                 </p>
               </>
             ) : (
@@ -213,7 +304,15 @@ function TodoBackupActions({ loading, onExportTodos, onExportCalendar, onPreview
             )}
           </div>
           <div className="TodoBackupActions-previewActions">
-            {importPreview.kind !== 'workspace' && (
+            {importPreview.kind === 'calendar' ? (
+              <button
+                type="button"
+                className="TodoBackupActions-button"
+                onClick={() => confirmImport('merge')}
+              >
+                Importar calendario
+              </button>
+            ) : importPreview.kind !== 'workspace' && (
               <button
                 type="button"
                 className="TodoBackupActions-button"
@@ -222,13 +321,15 @@ function TodoBackupActions({ loading, onExportTodos, onExportCalendar, onPreview
                 Fusionar sin duplicados
               </button>
             )}
-            <button
-              type="button"
-              className="TodoBackupActions-button TodoBackupActions-button--danger"
-              onClick={() => confirmImport('replace')}
-            >
-              {importPreview.kind === 'workspace' ? 'Restaurar backup' : 'Reemplazar tareas'}
-            </button>
+            {importPreview.kind !== 'calendar' && (
+              <button
+                type="button"
+                className="TodoBackupActions-button TodoBackupActions-button--danger"
+                onClick={() => confirmImport('replace')}
+              >
+                {importPreview.kind === 'workspace' ? 'Restaurar backup' : 'Reemplazar tareas'}
+              </button>
+            )}
             <button
               type="button"
               className="TodoBackupActions-button"
