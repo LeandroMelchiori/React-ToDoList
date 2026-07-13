@@ -6,18 +6,19 @@ Actua siempre como un programador experto, con criterio senior, buen manejo de U
 
 ## Contexto del proyecto
 
-Este repositorio es una aplicacion React de lista de tareas creada con Vite.
+Este repositorio es una aplicacion React local-first de tareas, agenda y horarios creada con Vite.
 
 - Entrada principal: `src/index.tsx`.
 - Registro PWA: `src/serviceWorkerRegistration.js`.
 - Componente raiz: `src/App/App.tsx`.
 - Estado de todos: `src/App/useTodos.ts`.
-- Modelo puro de tareas: `src/App/todoModel.ts`.
+- Modelos puros: `src/App/todoModel.ts` (tareas, agenda, recurrencias, export ICS), `src/App/todoBoards.ts` (tableros), `src/App/todoSavedViews.ts` (vistas guardadas), `src/App/todoWorkspaceBackup.ts` (backups).
 - Persistencia: `src/App/useLocalStorage.ts` + `src/App/todoStorage.ts`.
 - Base local principal: IndexedDB (`taskflow-db`), con migracion/espejo desde `localStorage`.
 - Claves locales: tareas `TODOS_V1`, tema `THEME_V1`.
 - Tema visual: `src/App/useTheme.ts`, con modo claro/oscuro persistido.
-- Componentes UI: `src/components/`, organizados por dominio visual.
+- Estado PWA: `src/App/usePwaStatus.ts`.
+- Componentes UI: `src/components/`, organizados por dominio visual. Las vistas principales incluyen `TodoList`, `TodoToday`, `TodoCalendar` y `TodoWeekCalendar`.
 - Estilos: archivos `.css` junto a cada componente.
 - PWA/offline shell: `public/sw.js` y `public/manifest.json`.
 - Configuracion de Vite/Vitest: `vite.config.mjs`.
@@ -34,7 +35,7 @@ Los tests unitarios e integracion corren con `npm test`, usando Vitest, jsdom y 
 - Evita refactors amplios si no son necesarios para la tarea.
 - Mantente dentro de la arquitectura actual salvo que exista una razon tecnica clara para cambiarla.
 - Lee los componentes y hooks afectados antes de editar.
-- Protege el comportamiento existente, especialmente carga, error, busqueda, filtros, creacion, edicion, completado, borrado, modal, tema, export/import, PWA y sincronizacion por `storage`.
+- Protege el comportamiento existente, especialmente carga, error, busqueda, filtros, vistas guardadas, tableros, creacion, edicion, detalle, duplicado, completado, subtareas, borrado, calendario, vista semanal, vista de hoy, modal, tema, export/import, export ICS, PWA y sincronizacion por `storage`.
 - Cuando el usuario pida varias mejoras, separalas en commits y pushes atomicos si asi lo solicita. No mezcles features, refactors y fixes en el mismo commit.
 - No elimines cambios ajenos ni archivos generados sin confirmarlo.
 
@@ -44,7 +45,7 @@ Los tests unitarios e integracion corren con `npm test`, usando Vitest, jsdom y 
 - IndexedDB es la persistencia principal para tareas; `localStorage` se mantiene como compatibilidad/migracion y para eventos `storage`.
 - Toda tarea debe normalizarse con los helpers de `todoModel.ts` antes de persistirse o importarse.
 - Conserva compatibilidad con tareas antiguas sin `id`, `priority` o `dueDate`.
-- Export/import usa JSON versionado; valida y normaliza cualquier archivo importado antes de guardarlo.
+- Export/import usa JSON versionado; valida y normaliza cualquier archivo importado antes de guardarlo. Soporta backups completos del workspace (`todoWorkspaceBackup.ts`) y exportacion local de calendario ICS desde `todoModel.ts`.
 - No rompas el service worker ni el manifest al cambiar rutas, assets o comportamiento de build.
 - Evita introducir dependencias de backend, autenticacion o servicios externos salvo pedido explicito.
 
@@ -54,6 +55,8 @@ Los tests unitarios e integracion corren con `npm test`, usando Vitest, jsdom y 
 - Cuida estados vacios, carga, error, foco, teclado y contraste.
 - Evita textos largos en controles; usa labels claros y mensajes breves.
 - En formularios, valida entradas de usuario y evita crear tareas vacias o duplicadas si el flujo lo requiere.
+- Diferencia con claridad tareas completables, eventos, horarios y periodos; no mezcles metricas de completado con elementos de agenda.
+- En calendario, evita contaminar la grilla con recurrencias diarias numerosas; usa resumenes compactos cuando corresponda.
 - En modales, conserva foco inicial, cierre con `Escape`, ciclo de tabulacion y restauracion de foco.
 - Manten el layout estable en desktop y mobile; no introduzcas solapamientos ni saltos visuales innecesarios.
 - Revisa contraste tanto en modo claro como oscuro.
@@ -62,7 +65,7 @@ Los tests unitarios e integracion corren con `npm test`, usando Vitest, jsdom y 
 
 - Prefiere componentes funcionales y hooks.
 - Manten la logica de estado en hooks cuando sea compartida o compleja.
-- Manten helpers puros de tareas en `src/App/todoModel.ts`; no vuelvas a mezclar modelo puro dentro de `useTodos.ts`.
+- Manten helpers puros en los archivos del dominio (`src/App/todoModel.ts`, `todoBoards.ts`, `todoSavedViews.ts`, `todoWorkspaceBackup.ts`); no vuelvas a mezclar modelo puro dentro de los hooks como `useTodos.ts`.
 - Evita mutar objetos de estado directamente; crea nuevas referencias antes de guardar.
 - Usa nombres consistentes y corrige typos solo cuando el cambio sea seguro o este dentro del alcance.
 - Evita logs de depuracion en produccion salvo que sean parte explicita del comportamiento esperado.
@@ -77,7 +80,7 @@ Los tests unitarios e integracion corren con `npm test`, usando Vitest, jsdom y 
 ## Tests
 
 - Genera tests unitarios para hooks, helpers y componentes con logica propia.
-- Genera tests de integracion para flujos de usuario importantes: buscar, agregar, editar, completar, borrar, abrir/cerrar modal, tema, export/import y sincronizar cambios externos.
+- Genera tests de integracion para flujos de usuario importantes: buscar, agregar, editar, detalle, duplicar, completar, subtareas, borrar, abrir/cerrar modal, calendario, vista semanal, vista de hoy, tema, export/import, export ICS y sincronizar cambios externos.
 - Genera tests E2E cuando el cambio afecte un flujo principal de usuario.
 - Usa React Testing Library para validar comportamiento visible por el usuario.
 - Mockea `localStorage`, IndexedDB, eventos `storage`, archivos, URLs de descarga y timers cuando sea necesario.
