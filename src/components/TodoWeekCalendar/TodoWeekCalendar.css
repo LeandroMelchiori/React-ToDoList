@@ -62,6 +62,24 @@
   outline: none;
 }
 
+.TodoWeekCalendar-conflicts {
+  align-items: center;
+  background: color-mix(in srgb, var(--color-danger) 9%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-danger) 34%, var(--color-border));
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 13px;
+  gap: 6px 10px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+}
+
+.TodoWeekCalendar-conflicts strong {
+  color: var(--color-danger-hover);
+}
+
 .TodoWeekCalendar-allDay {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -296,6 +314,24 @@
 .TodoWeekCalendar-event--completed {
   opacity: 0.62;
   text-decoration: line-through;
+}
+
+.TodoWeekCalendar-event--conflict {
+  border-color: var(--color-danger);
+  box-shadow: inset 3px 0 0 var(--color-danger);
+}
+
+.TodoWeekCalendar-conflictBadge {
+  background: var(--color-danger);
+  border-radius: 999px;
+  color: #fff;
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 1;
+  margin: 0 5px 3px 0;
+  padding: 4px 5px;
+  text-transform: uppercase;
 }
 
 .TodoWeekCalendar-emptyWeek {

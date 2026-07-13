@@ -8,6 +8,7 @@ import {
   TodoKind,
   TodoRecurrence,
 } from '../../App/todoModel';
+import { getTodoScheduleConflicts } from '../../App/todoScheduleConflicts';
 import {
   getTodoScheduleRange,
   getTodoTimeLabel,
@@ -269,6 +270,18 @@ function TodoWeekCalendar({
   const untimedTodos = React.useMemo(() => getUntimedWeekTodos(visibleTodos, weekDays), [visibleTodos, weekDays]);
   const untimedTodosByDay = React.useMemo(() => getUntimedTodosByDay(untimedTodos, weekDays), [untimedTodos, weekDays]);
   const unscheduledTodos = React.useMemo(() => getUnscheduledTodos(visibleTodos), [visibleTodos]);
+  const scheduleConflicts = React.useMemo(
+    () => getTodoScheduleConflicts(visibleTodos, weekDays.map(day => day.dateValue)),
+    [visibleTodos, weekDays]
+  );
+  const conflictingTodoKeys = React.useMemo(() => new Set(
+    scheduleConflicts.flatMap(conflict => (
+      conflict.todoIds.map(todoId => `${conflict.dateValue}:${todoId}`)
+    ))
+  ), [scheduleConflicts]);
+  const conflictDayLabels = scheduleConflicts.map(conflict => (
+    weekDays.find(day => day.dateValue === conflict.dateValue)
+  )).filter((day): day is WeekDay => Boolean(day));
   const weekLabel = getWeekLabel(weekDays);
 
   return (
@@ -304,6 +317,19 @@ function TodoWeekCalendar({
               </button>
             </div>
           </div>
+
+          {scheduleConflicts.length > 0 && (
+            <aside className="TodoWeekCalendar-conflicts" role="status" aria-label="Conflictos de horario">
+              <strong>
+                {scheduleConflicts.length === 1
+                  ? '1 conflicto de horario'
+                  : `${scheduleConflicts.length} conflictos de horario`}
+              </strong>
+              <span>
+                Revisa {conflictDayLabels.map(day => `${day.dayName} ${formatShortDate(day.dateValue)}`).join(', ')}.
+              </span>
+            </aside>
+          )}
 
           {untimedTodos.length > 0 && (
             <div className="TodoWeekCalendar-allDay" role="group" aria-label="Elementos sin horario por dia">
@@ -408,23 +434,29 @@ function TodoWeekCalendar({
                         aria-label={`${day.dayName} ${formatShortDate(day.dateValue)} ${formatHourSlot(hour)}`}
                         key={`${day.dateValue}-${hour}`}
                       >
-                        {slotTodos.map(todo => (
-                          <button
-                            type="button"
-                            className={[
-                              'TodoWeekCalendar-event',
-                              `TodoWeekCalendar-event--${getTodoScheduleRange(todo)?.type || TODO_DATE_TYPES.due}`,
-                              `TodoWeekCalendar-event--kind-${todo.kind || TODO_KINDS.task}`,
-                              todo.completed ? 'TodoWeekCalendar-event--completed' : '',
-                            ].filter(Boolean).join(' ')}
-                            aria-label={getTodoWeekAriaLabel(todo)}
-                            key={todo.id}
-                            onClick={() => onEditTodo(todo.id)}
-                          >
-                            <small>{getTodoTimeLabel(todo)}</small>
-                            {todo.text}
-                          </button>
-                        ))}
+                        {slotTodos.map(todo => {
+                          const hasConflict = conflictingTodoKeys.has(`${day.dateValue}:${todo.id}`);
+
+                          return (
+                            <button
+                              type="button"
+                              className={[
+                                'TodoWeekCalendar-event',
+                                `TodoWeekCalendar-event--${getTodoScheduleRange(todo)?.type || TODO_DATE_TYPES.due}`,
+                                `TodoWeekCalendar-event--kind-${todo.kind || TODO_KINDS.task}`,
+                                todo.completed ? 'TodoWeekCalendar-event--completed' : '',
+                                hasConflict ? 'TodoWeekCalendar-event--conflict' : '',
+                              ].filter(Boolean).join(' ')}
+                              aria-label={`${getTodoWeekAriaLabel(todo)}${hasConflict ? ' Conflicto de horario' : ''}`}
+                              key={todo.id}
+                              onClick={() => onEditTodo(todo.id)}
+                            >
+                              <small>{getTodoTimeLabel(todo)}</small>
+                              {hasConflict && <span className="TodoWeekCalendar-conflictBadge">Conflicto</span>}
+                              {todo.text}
+                            </button>
+                          );
+                        })}
                       </div>
                     );
                   })}

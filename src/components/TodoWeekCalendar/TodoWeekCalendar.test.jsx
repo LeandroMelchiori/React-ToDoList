@@ -1,3 +1,5 @@
+import { render, screen } from '@testing-library/react';
+import { TodoWeekCalendar } from './TodoWeekCalendar';
 import {
   formatHourSlot,
   getHourSlots,
@@ -99,5 +101,56 @@ describe('TodoWeekCalendar helpers', () => {
     expect(getUntimedTodosByDay(untimedTodos, weekDays).find(day => day.dateValue === '2026-08-11').todos).toEqual([
       expect.objectContaining({ id: 'reading' }),
     ]);
+  });
+});
+
+describe('TodoWeekCalendar conflicts', () => {
+  test('highlights overlapping schedule ranges in the visible week', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 7, 10, 9, 0));
+    const baseTodo = {
+      kind: 'schedule',
+      description: null,
+      completed: false,
+      order: 0,
+      priority: 'medium',
+      dateType: 'period',
+      dueDate: null,
+      startDate: '2026-08-10',
+      endDate: '2026-08-10',
+      recurrence: 'none',
+      recurrenceDays: [],
+      recurrenceEndDate: null,
+      recurrenceCount: null,
+      completedOccurrences: [],
+      reminder: 'none',
+      project: null,
+      tags: [],
+      subtasks: [],
+      createdAt: null,
+      completedAt: null,
+      archivedAt: null,
+    };
+
+    render(
+      <TodoWeekCalendar
+        onEditTodo={vi.fn()}
+        onEmptySearchResults={() => null}
+        onEmptyTodos={() => null}
+        onError={() => null}
+        onLoading={() => null}
+        totalTodos={2}
+        visibleTodos={[
+          { ...baseTodo, id: 'course', text: 'Cursar algebra', startTime: '10:00', endTime: '12:00' },
+          { ...baseTodo, id: 'exam', text: 'Consulta previa', startTime: '11:00', endTime: '11:30' },
+        ]}
+      />
+    );
+
+    expect(screen.getByRole('status', { name: 'Conflictos de horario' })).toHaveTextContent('1 conflicto de horario');
+    expect(screen.getByRole('button', { name: /Cursar algebra Conflicto de horario/ })).toHaveClass('TodoWeekCalendar-event--conflict');
+    expect(screen.getByRole('button', { name: /Consulta previa Conflicto de horario/ })).toHaveClass('TodoWeekCalendar-event--conflict');
+
+    vi.useRealTimers();
   });
 });
