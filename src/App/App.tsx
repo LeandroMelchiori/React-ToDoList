@@ -124,6 +124,7 @@ function App() {
         dismissUndoDelete,
         closeModal,
         addTodo,
+        duplicateTodo,
         updateTodo,
         exportTodos,
         previewTodosImport,
@@ -474,6 +475,7 @@ function App() {
                             todo={detailTodo}
                             onClose={closeModal}
                             onDelete={() => startDeletingTodo(detailTodo.id)}
+                            onDuplicate={() => duplicateTodo(detailTodo.id)}
                             onEdit={() => startEditingTodo(detailTodo.id)}
                         />
                     ) : (

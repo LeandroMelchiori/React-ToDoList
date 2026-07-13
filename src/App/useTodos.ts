@@ -66,6 +66,25 @@ const DEFAULT_TODO_SAVED_VIEWS: TodoSavedView[] = [];
 type TodoActionResult = { ok: true } | { ok: false; error: string };
 type TodoImportOptions = { mode?: ImportMode };
 
+function getDuplicateTodoText(todos: Todo[], text: string): string {
+    const existingTexts = new Set(todos.map(todo => todo.text.toLowerCase()));
+    const baseText = `Copia de ${text}`;
+
+    if (!existingTexts.has(baseText.toLowerCase())) {
+        return baseText;
+    }
+
+    let copyNumber = 2;
+    let nextText = `Copia ${copyNumber} de ${text}`;
+
+    while (existingTexts.has(nextText.toLowerCase())) {
+        copyNumber += 1;
+        nextText = `Copia ${copyNumber} de ${text}`;
+    }
+
+    return nextText;
+}
+
 function isTodoList(item: unknown): boolean {
     return Array.isArray(item);
 }
@@ -428,6 +447,37 @@ function useTodos() {
         return { ok: true };
     }
 
+    const duplicateTodo = (id: string): TodoActionResult => {
+        const todoToDuplicate = normalizedTodos.find(todo => todo.id === id);
+
+        if (!todoToDuplicate) {
+            return { ok: false, error: 'No encontramos ese elemento.' };
+        }
+
+        const newTodo = createTodo(getDuplicateTodoText(normalizedTodos, todoToDuplicate.text), {
+            kind: todoToDuplicate.kind,
+            description: todoToDuplicate.description,
+            priority: todoToDuplicate.priority,
+            dateType: todoToDuplicate.dateType,
+            dueDate: todoToDuplicate.dueDate,
+            startDate: todoToDuplicate.startDate,
+            endDate: todoToDuplicate.endDate,
+            startTime: todoToDuplicate.startTime,
+            endTime: todoToDuplicate.endTime,
+            recurrence: todoToDuplicate.recurrence,
+            project: todoToDuplicate.project,
+            tags: todoToDuplicate.tags,
+            subtasks: todoToDuplicate.subtasks.map(subtask => subtask.text),
+            order: normalizedTodos.length,
+        });
+
+        saveActiveTodos([...normalizedTodos, newTodo]);
+        resetTodoView({ preserveProject: Boolean(activeProject) });
+        setOpenModal(false);
+
+        return { ok: true };
+    }
+
     const updateTodo = (id: string, text: string, details: TodoDetails = {}): TodoActionResult => {
         const trimmedText = text.trim();
 
@@ -783,6 +833,7 @@ function useTodos() {
         deleteSavedView,
         completeTodo,
         deleteTodo,
+        duplicateTodo,
         toggleSubtask,
         moveTodo,
         moveTodoToPosition,

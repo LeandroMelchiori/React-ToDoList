@@ -33,6 +33,7 @@ const TODO_RECURRENCE_LABELS: Record<TodoRecurrence, string> = {
 interface TodoDetailProps {
   onClose: () => void;
   onDelete: () => void;
+  onDuplicate: () => void;
   onEdit: () => void;
   todo: Todo;
 }
@@ -84,7 +85,7 @@ function getScheduleLabel(todo: Todo): string | null {
   return [dueDate ? `Limite ${dueDate}` : null, timeLabel].filter(Boolean).join(' ') || null;
 }
 
-function TodoDetail({ onClose, onDelete, onEdit, todo }: TodoDetailProps) {
+function TodoDetail({ onClose, onDelete, onDuplicate, onEdit, todo }: TodoDetailProps) {
   const isTask = todo.kind === TODO_KINDS.task;
   const recurrenceLabel = todo.recurrence !== TODO_RECURRENCES.none
     ? TODO_RECURRENCE_LABELS[todo.recurrence]
@@ -166,6 +167,9 @@ function TodoDetail({ onClose, onDelete, onEdit, todo }: TodoDetailProps) {
       <div className="TodoDetail-actions">
         <button type="button" className="TodoDetail-button TodoDetail-button--primary" onClick={onEdit}>
           Editar
+        </button>
+        <button type="button" className="TodoDetail-button" onClick={onDuplicate}>
+          Duplicar
         </button>
         <button type="button" className="TodoDetail-button TodoDetail-button--danger" onClick={onDelete}>
           Eliminar

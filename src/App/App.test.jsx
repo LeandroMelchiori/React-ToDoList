@@ -1487,6 +1487,56 @@ describe('App', () => {
     }));
   });
 
+  test('duplicates a todo from the detail panel as a fresh copy', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      {
+        id: 'todo-1',
+        text: 'Preparar final',
+        completed: true,
+        completedAt: '2026-07-20T10:00:00.000Z',
+        priority: 'high',
+        dueDate: '2026-07-20',
+        recurrence: 'weekly',
+        project: 'Facultad',
+        tags: ['algebra'],
+        subtasks: [{ id: 'subtask-1', text: 'Leer resumen', completed: true }],
+        order: 0,
+      },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Preparar final')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Ver detalle' }));
+
+    const detailDialog = screen.getByRole('dialog', { name: 'Detalle del elemento' });
+    await user.click(within(detailDialog).getByRole('button', { name: 'Duplicar' }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByText('Preparar final')).toBeInTheDocument();
+    expect(screen.getByText('Copia de Preparar final')).toBeInTheDocument();
+
+    const storedTodos = JSON.parse(localStorage.getItem('TODOS_V1'));
+    expect(storedTodos).toHaveLength(2);
+    expect(storedTodos[1]).toEqual(expect.objectContaining({
+      text: 'Copia de Preparar final',
+      completed: false,
+      completedAt: null,
+      priority: 'high',
+      dueDate: '2026-07-20',
+      recurrence: 'weekly',
+      project: 'Facultad',
+      tags: ['algebra'],
+      subtasks: [
+        expect.objectContaining({
+          text: 'Leer resumen',
+          completed: false,
+        }),
+      ],
+    }));
+  });
+
   test('keeps a todo when delete confirmation is cancelled', async () => {
     const user = userEvent.setup();
     localStorage.setItem('TODOS_V1', JSON.stringify([
