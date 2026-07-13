@@ -3,6 +3,7 @@ import './App.css';
 import { useTodos } from './useTodos';
 import { TodoCounter } from '../components/TodoHeader/TodoCounter/TodoCounter';
 import { TodoSearch } from '../components/TodoHeader/TodoSearch/TodoSearch';
+import { TodoQuickAdd } from '../components/TodoHeader/TodoQuickAdd/TodoQuickAdd';
 import { TodoFilters } from '../components/TodoHeader/TodoFilters/TodoFilters';
 import { TodoInsights } from '../components/TodoHeader/TodoInsights/TodoInsights';
 import { TodoFacetFilters } from '../components/TodoHeader/TodoFacetFilters/TodoFacetFilters';
@@ -280,6 +281,7 @@ function App() {
                     onSelectBoard={selectTodoBoard}
                     showCreateForm={false}
                 />
+                <TodoQuickAdd onAddTodo={addTodo} />
                 <TodoSearch
                     ref={searchInputRef}
                     searchValue={searchValue}

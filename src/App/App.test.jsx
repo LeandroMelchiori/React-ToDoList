@@ -707,6 +707,37 @@ describe('App', () => {
     expect(JSON.parse(localStorage.getItem('TODOS_V1') || '[]')).toEqual([]);
   });
 
+  test('creates a task from the local quick add input', async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    expect(await screen.findByText('Organiza tu dia con una primera tarea')).toBeInTheDocument();
+
+    const quickAddInput = screen.getByLabelText('Agregar rapido');
+    const quickAddForm = quickAddInput.closest('form');
+
+    await user.type(
+      quickAddInput,
+      'Repasar ingles cada dia 18/07/2026 09:00 #facultad !alta'
+    );
+
+    expect(within(quickAddForm).getByText(/Detectado: Alta/)).toHaveTextContent(
+      'Alta · #facultad · Diaria · 18/07/2026 · 09:00'
+    );
+    await user.click(within(quickAddForm).getByRole('button', { name: 'Agregar rapido' }));
+
+    expect(screen.getByText('Repasar ingles')).toBeInTheDocument();
+    expect(quickAddInput).toHaveValue('');
+    expect(JSON.parse(localStorage.getItem('TODOS_V1'))[0]).toEqual(expect.objectContaining({
+      text: 'Repasar ingles',
+      priority: 'high',
+      dueDate: '2026-07-18',
+      startTime: '09:00',
+      recurrence: 'daily',
+      tags: ['facultad'],
+    }));
+  });
+
   test('creates a weekly recurrence with selected weekdays and limits', async () => {
     const user = userEvent.setup();
     renderApp();

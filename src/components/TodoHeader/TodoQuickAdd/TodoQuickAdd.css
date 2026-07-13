@@ -1,0 +1,92 @@
+.TodoQuickAdd {
+  margin: 22px auto 0;
+  max-width: 960px;
+}
+
+.TodoQuickAdd > label {
+  color: var(--color-text-muted);
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.TodoQuickAdd-row {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.TodoQuickAdd input,
+.TodoQuickAdd button {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  box-sizing: border-box;
+  font: inherit;
+  min-height: 48px;
+}
+
+.TodoQuickAdd input {
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-weight: 700;
+  padding: 0 16px;
+  width: 100%;
+}
+
+.TodoQuickAdd input::placeholder {
+  color: var(--color-text-soft);
+}
+
+.TodoQuickAdd input:focus-visible,
+.TodoQuickAdd button:focus-visible {
+  box-shadow: var(--shadow-focus);
+  outline: none;
+}
+
+.TodoQuickAdd button {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: white;
+  cursor: pointer;
+  font-weight: 900;
+  padding: 0 18px;
+}
+
+.TodoQuickAdd button:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+}
+
+.TodoQuickAdd input:disabled,
+.TodoQuickAdd button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.TodoQuickAdd-feedback {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  min-height: 18px;
+  padding-top: 6px;
+}
+
+.TodoQuickAdd-error {
+  color: var(--color-danger);
+}
+
+.TodoQuickAdd p {
+  color: var(--color-text-soft);
+  font-size: 12px;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .TodoQuickAdd-row {
+    grid-template-columns: 1fr;
+  }
+
+  .TodoQuickAdd button {
+    width: 100%;
+  }
+}
