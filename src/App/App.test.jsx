@@ -125,13 +125,17 @@ describe('App', () => {
     expect(await screen.findByText('Organiza tu dia con una primera tarea')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Crear nueva tarea' }));
+    expect(within(screen.getByRole('dialog')).getByText('Tarea completable')).toBeInTheDocument();
     await user.type(screen.getByLabelText('Nueva tarea'), 'Rendir parcial de algebra');
     await user.selectOptions(screen.getByLabelText('Tipo de elemento'), 'event');
+    expect(within(screen.getByRole('dialog')).getByText('Evento de agenda')).toBeInTheDocument();
     await user.type(screen.getByLabelText('Descripcion'), 'Aula 4, llevar DNI y calculadora');
     expect(within(screen.getByLabelText('Repeticion')).queryByRole('option', { name: 'Diaria' })).not.toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText('Repeticion'), 'yearly');
     await user.type(screen.getByLabelText('Dia del evento'), '2026-08-15');
     fireEvent.change(screen.getByLabelText('Hora del evento'), { target: { value: '10:00' } });
+    expect(within(screen.getByRole('dialog')).getByText('Dia 15/08/2026')).toBeInTheDocument();
+    expect(within(screen.getByRole('dialog')).getByText('Hora 10:00')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Agregar' }));
 
     expect(screen.getByText('Rendir parcial de algebra')).toBeInTheDocument();
@@ -142,6 +146,7 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: 'Crear nueva tarea' }));
     await user.type(screen.getByLabelText('Nueva tarea'), 'Inscripcion a finales');
     await user.selectOptions(screen.getByLabelText('Tipo de elemento'), 'period');
+    expect(within(screen.getByRole('dialog')).getByText('Rango activo')).toBeInTheDocument();
     expect(screen.getByLabelText('Repeticion')).toBeDisabled();
     await user.type(screen.getByLabelText('Inicio del periodo'), '2026-09-01');
     await user.type(screen.getByLabelText('Fin del periodo'), '2026-08-30');

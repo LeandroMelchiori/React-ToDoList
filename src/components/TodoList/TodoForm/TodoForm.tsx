@@ -53,7 +53,14 @@ const TODO_RECURRENCE_HINTS: Record<TodoKind, string> = {
     [TODO_KINDS.task]: 'Se calcula desde la fecha limite.',
     [TODO_KINDS.event]: 'Util para eventos que vuelven semanal, mensual o anualmente.',
     [TODO_KINDS.schedule]: 'Ideal para cursadas o bloques fijos de agenda.',
-    [TODO_KINDS.period]: 'Los periodos se muestran como rangos unicos.',
+    [TODO_KINDS.period]: 'Los periodos son rangos unicos y no se repiten.',
+};
+
+const TODO_KIND_PREVIEW_TITLES: Record<TodoKind, string> = {
+    [TODO_KINDS.task]: 'Tarea completable',
+    [TODO_KINDS.event]: 'Evento de agenda',
+    [TODO_KINDS.schedule]: 'Bloque de horario',
+    [TODO_KINDS.period]: 'Rango activo',
 };
 
 interface TodoFormProps {
@@ -76,6 +83,74 @@ interface TodoFormProps {
     onCancel: () => void;
     onSubmitTodo: (text: string, details: TodoDetails) => { ok: boolean; error?: string };
     submitLabel?: string;
+}
+
+function formatDateValue(dateValue: string): string {
+    const [year, month, day] = dateValue.split('-');
+
+    return year && month && day ? `${day}/${month}/${year}` : dateValue;
+}
+
+function formatTimeRange(startTime: string, endTime: string): string {
+    if (!startTime) {
+        return 'Sin horario definido';
+    }
+
+    return endTime ? `${startTime} a ${endTime}` : startTime;
+}
+
+function getRecurrenceLabel(recurrence: TodoRecurrence): string {
+    return TODO_RECURRENCE_OPTIONS.find(option => option.value === recurrence)?.label || 'No se repite';
+}
+
+function getFormPreviewDetails({
+    dueDate,
+    endDate,
+    endTime,
+    kind,
+    recurrence,
+    startDate,
+    startTime,
+}: {
+    dueDate: string;
+    endDate: string;
+    endTime: string;
+    kind: TodoKind;
+    recurrence: TodoRecurrence;
+    startDate: string;
+    startTime: string;
+}): string[] {
+    if (kind === TODO_KINDS.task) {
+        return [
+            dueDate ? `Limite ${formatDateValue(dueDate)}` : 'Sin fecha limite',
+            startTime ? `Hora limite ${startTime}` : 'Sin hora limite',
+            getRecurrenceLabel(recurrence),
+        ];
+    }
+
+    if (kind === TODO_KINDS.event) {
+        return [
+            startDate ? `Dia ${formatDateValue(startDate)}` : 'Sin dia definido',
+            startTime ? `Hora ${startTime}` : 'Sin horario definido',
+            getRecurrenceLabel(recurrence),
+        ];
+    }
+
+    if (kind === TODO_KINDS.schedule) {
+        return [
+            startDate ? `Desde ${formatDateValue(startDate)}` : 'Sin primer dia',
+            endDate ? `Hasta ${formatDateValue(endDate)}` : 'Sin ultimo dia',
+            formatTimeRange(startTime, endTime),
+            getRecurrenceLabel(recurrence),
+        ];
+    }
+
+    return [
+        startDate ? `Desde ${formatDateValue(startDate)}` : 'Sin inicio',
+        endDate ? `Hasta ${formatDateValue(endDate)}` : 'Sin fin',
+        formatTimeRange(startTime, endTime),
+        'No se repite',
+    ];
 }
 
 function TodoForm({
@@ -149,6 +224,15 @@ function TodoForm({
         )
     ), [dateTypeForKind, kindValue]);
     const isRecurrenceDisabled = recurrenceOptions.length === 1;
+    const previewDetails = getFormPreviewDetails({
+        dueDate: dueDateValue,
+        endDate: endDateValue,
+        endTime: endTimeValue,
+        kind: kindValue,
+        recurrence: recurrenceValue,
+        startDate: startDateValue,
+        startTime: startTimeValue,
+    });
 
     React.useEffect(() => {
         if (!recurrenceOptions.some(option => option.value === recurrenceValue)) {
@@ -360,6 +444,11 @@ function TodoForm({
                 <span className="TodoForm-fieldHint">
                     {kindHint}
                 </span>
+                <span className="TodoForm-kindDecision">
+                    {isTaskKind
+                        ? 'Puede completarse y usar subtareas.'
+                        : 'Se agenda, pero no se marca como completado.'}
+                </span>
             </div>
             <label className="TodoForm-description" htmlFor={descriptionId}>
                 Descripcion
@@ -560,6 +649,15 @@ function TodoForm({
                     />
                 </label>
             </div>
+            <aside className="TodoForm-preview" aria-label="Vista previa del elemento" aria-live="polite">
+                <span>Vista previa</span>
+                <strong>{TODO_KIND_PREVIEW_TITLES[kindValue]}</strong>
+                <ul>
+                    {previewDetails.map(detail => (
+                        <li key={detail}>{detail}</li>
+                    ))}
+                </ul>
+            </aside>
             {isTaskKind && (
                 <div className="TodoForm-subtasks">
                     <label htmlFor={subtasksId}>

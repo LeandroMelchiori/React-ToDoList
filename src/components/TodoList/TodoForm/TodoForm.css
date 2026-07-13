@@ -125,6 +125,59 @@
   font-weight: 700;
 }
 
+.TodoForm-kindDecision {
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.35;
+  padding: 10px 12px;
+}
+
+.TodoForm-preview {
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 14px;
+}
+
+.TodoForm-preview span {
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.TodoForm-preview strong {
+  color: var(--color-text-strong);
+  font-size: 15px;
+}
+
+.TodoForm-preview ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.TodoForm-preview li {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 8px 10px;
+}
+
 .TodoForm-subtasks {
   display: grid;
   gap: 10px;
