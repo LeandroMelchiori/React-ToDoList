@@ -233,6 +233,49 @@ describe('App', () => {
     await waitFor(() => expect(requestPermission).toHaveBeenCalledTimes(1));
   });
 
+  test('warns before saving an overlapping schedule', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      {
+        id: 'existing-course',
+        text: 'Cursar algebra',
+        kind: 'schedule',
+        dateType: 'period',
+        startDate: '2026-08-10',
+        endDate: '2026-08-10',
+        startTime: '10:00',
+        endTime: '12:00',
+        recurrence: 'none',
+      },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Cursar algebra')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Crear nueva tarea' }));
+    await user.type(screen.getByLabelText('Nueva tarea'), 'Consulta de algebra');
+    await user.click(screen.getByRole('radio', { name: /Horario/ }));
+    fireEvent.change(screen.getByLabelText('Primer dia'), { target: { value: '2026-08-10' } });
+    fireEvent.change(screen.getByLabelText('Ultimo dia'), { target: { value: '2026-08-10' } });
+    fireEvent.change(screen.getByLabelText('Hora de inicio'), { target: { value: '11:00' } });
+    fireEvent.change(screen.getByLabelText('Hora de fin'), { target: { value: '11:30' } });
+    await user.click(screen.getByRole('button', { name: 'Agregar' }));
+
+    const conflictAlert = screen.getByRole('alert');
+    expect(conflictAlert).toHaveTextContent('Este horario se superpone');
+    expect(conflictAlert).toHaveTextContent('Cursar algebra desde 10/08/2026');
+    expect(JSON.parse(localStorage.getItem('TODOS_V1'))).toHaveLength(1);
+
+    await user.click(within(conflictAlert).getByRole('button', { name: 'Cambiar horario' }));
+    expect(screen.getByLabelText('Hora de inicio')).toHaveFocus();
+
+    await user.click(within(conflictAlert).getByRole('button', { name: 'Guardar de todos modos' }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByText('Consulta de algebra')).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('TODOS_V1'))).toHaveLength(2);
+  });
+
   test('shows scheduled todos in the calendar view and opens editing from it', async () => {
     const user = userEvent.setup();
     const today = getRelativeDateInputValue(0);

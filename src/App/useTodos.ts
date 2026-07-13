@@ -74,6 +74,8 @@ import type {
 import type { TodoBoard } from './todoBoards';
 import type { TodoSavedView } from './todoSavedViews';
 import type { TodoSnapshot } from './todoSnapshotHistory';
+import { getTodoScheduleConflictMatches } from './todoScheduleConflicts';
+import type { TodoScheduleConflictMatch } from './todoScheduleConflicts';
 
 const STORAGE_KEY = 'TODOS_V1';
 const BOARD_STORAGE_KEY = 'TODO_BOARDS_V1';
@@ -651,6 +653,16 @@ function useTodos() {
         return deletedCount;
     }
 
+    const checkTodoScheduleConflicts = (
+        text: string,
+        details: TodoDetails,
+        excludedTodoId: string | null = null
+    ): TodoScheduleConflictMatch[] => {
+        const candidate = createTodo(text.trim() || 'Nuevo elemento', details);
+
+        return getTodoScheduleConflictMatches(normalizedTodos, candidate, excludedTodoId);
+    };
+
     const addTodo = (text: string, details: TodoDetails = {}): TodoActionResult => {
         const trimmedText = text.trim();
 
@@ -1220,6 +1232,7 @@ function useTodos() {
         completeTodos,
         deleteTodo,
         deleteTodos,
+        checkTodoScheduleConflicts,
         archiveTodo,
         archiveTodos,
         unarchiveTodo,

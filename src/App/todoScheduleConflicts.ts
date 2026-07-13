@@ -10,6 +10,13 @@ type TodoScheduleConflict = {
   todoIds: string[];
 };
 
+type TodoScheduleConflictMatch = {
+  firstDate: string;
+  occurrences: number;
+  text: string;
+  todoId: string;
+};
+
 type TodoTimeInterval = {
   endMinutes: number;
   startMinutes: number;
@@ -65,6 +72,101 @@ function getTodoTimeInterval(todo: Todo, dateValue: string): TodoTimeInterval | 
   return { startMinutes, endMinutes, todoId: todo.id };
 }
 
+function parseDateValue(dateValue: string): Date | null {
+  const [year, month, day] = dateValue.split('-').map(Number);
+
+  if (!year || !month || !day) {
+    return null;
+  }
+
+  return new Date(year, month - 1, day);
+}
+
+function toDateValue(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
+function getCandidateDateValues(todo: Todo, maximumDays = 366): string[] {
+  const startDateValue = todo.dateType === TODO_DATE_TYPES.due
+    ? todo.dueDate
+    : todo.startDate;
+  const startDate = startDateValue ? parseDateValue(startDateValue) : null;
+
+  if (!startDate || !todo.startTime || !todo.endTime) {
+    return [];
+  }
+
+  const explicitEndDateValue = todo.recurrence !== TODO_RECURRENCES.none
+    ? todo.recurrenceEndDate || todo.endDate
+    : todo.endDate || startDateValue;
+  const explicitEndDate = explicitEndDateValue ? parseDateValue(explicitEndDateValue) : null;
+  const fallbackEndDate = new Date(startDate);
+  fallbackEndDate.setDate(fallbackEndDate.getDate() + maximumDays - 1);
+  const endDate = explicitEndDate && explicitEndDate < fallbackEndDate
+    ? explicitEndDate
+    : todo.recurrence === TODO_RECURRENCES.none
+      ? explicitEndDate || startDate
+      : fallbackEndDate;
+  const dateValues: string[] = [];
+  const currentDate = new Date(startDate);
+
+  while (currentDate <= endDate && dateValues.length < maximumDays) {
+    const dateValue = toDateValue(currentDate);
+
+    if (isTodoScheduledOnDate(todo, dateValue)) {
+      dateValues.push(dateValue);
+    }
+
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return dateValues;
+}
+
+function getTodoScheduleConflictMatches(
+  todos: Todo[],
+  candidate: Todo,
+  excludedTodoId: string | null = null
+): TodoScheduleConflictMatch[] {
+  const matches = new Map<string, TodoScheduleConflictMatch>();
+
+  getCandidateDateValues(candidate).forEach((dateValue) => {
+    const candidateInterval = getTodoTimeInterval(candidate, dateValue);
+
+    if (!candidateInterval) {
+      return;
+    }
+
+    todos.forEach((todo) => {
+      if (todo.id === excludedTodoId || todo.id === candidate.id) {
+        return;
+      }
+
+      const interval = getTodoTimeInterval(todo, dateValue);
+
+      if (
+        !interval ||
+        candidateInterval.startMinutes >= interval.endMinutes ||
+        interval.startMinutes >= candidateInterval.endMinutes
+      ) {
+        return;
+      }
+
+      const currentMatch = matches.get(todo.id);
+
+      matches.set(todo.id, currentMatch
+        ? { ...currentMatch, occurrences: currentMatch.occurrences + 1 }
+        : { firstDate: dateValue, occurrences: 1, text: todo.text, todoId: todo.id });
+    });
+  });
+
+  return [...matches.values()];
+}
+
 function getTodoScheduleConflicts(todos: Todo[], dateValues: string[]): TodoScheduleConflict[] {
   return dateValues.flatMap((dateValue) => {
     const intervals = todos
@@ -103,5 +205,5 @@ function getTodoScheduleConflicts(todos: Todo[], dateValues: string[]): TodoSche
   });
 }
 
-export { getTodoScheduleConflicts };
-export type { TodoScheduleConflict };
+export { getTodoScheduleConflictMatches, getTodoScheduleConflicts };
+export type { TodoScheduleConflict, TodoScheduleConflictMatch };

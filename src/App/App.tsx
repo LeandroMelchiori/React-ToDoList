@@ -121,6 +121,7 @@ function App() {
         saveCurrentView,
         applySavedView,
         deleteSavedView,
+        checkTodoScheduleConflicts,
         deleteTodoSnapshot,
         restoreTodoSnapshot,
         selectProjectFilter,
@@ -702,6 +703,9 @@ function App() {
                             lockedProject={!editingTodo ? activeProject : null}
                             mode={formMode}
                             onCancel={closeModal}
+                            onCheckConflicts={(text, details) => (
+                                checkTodoScheduleConflicts(text, details, editingTodo?.id || null)
+                            )}
                             onSubmitTodo={(text, details) => (
                                 editingTodo ? updateTodo(editingTodo.id, text, details) : addTodo(text, details)
                             )}

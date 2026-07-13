@@ -13,6 +13,7 @@ import {
     TodoSubtask,
     TodoDetails,
 } from '../../../App/todoModel';
+import type { TodoScheduleConflictMatch } from '../../../App/todoScheduleConflicts';
 import './TodoForm.css';
 
 const TODO_PRIORITY_OPTIONS = [
@@ -106,6 +107,7 @@ interface TodoFormProps {
     lockedProject?: string | null;
     mode?: 'create' | 'edit';
     onCancel: () => void;
+    onCheckConflicts?: (text: string, details: TodoDetails) => TodoScheduleConflictMatch[];
     onSubmitTodo: (text: string, details: TodoDetails) => { ok: boolean; error?: string };
     submitLabel?: string;
 }
@@ -250,6 +252,7 @@ function TodoForm({
     lockedProject = null,
     mode = 'create',
     onCancel,
+    onCheckConflicts,
     onSubmitTodo,
     submitLabel = 'Agregar',
 }: TodoFormProps) {
@@ -280,6 +283,9 @@ function TodoForm({
     );
     const [subtaskDraft, setSubtaskDraft] = React.useState('');
     const [formError, setFormError] = React.useState('');
+    const [conflictMatches, setConflictMatches] = React.useState<TodoScheduleConflictMatch[]>([]);
+    const [pendingConflictDetails, setPendingConflictDetails] = React.useState<TodoDetails | null>(null);
+    const startTimeInputRef = React.useRef<HTMLInputElement>(null);
     const inputId = mode === 'edit' ? 'editTodo' : 'newTodo';
     const descriptionId = mode === 'edit' ? 'editTodoDescription' : 'newTodoDescription';
     const priorityId = mode === 'edit' ? 'editTodoPriority' : 'newTodoPriority';
@@ -344,6 +350,21 @@ function TodoForm({
             setRecurrenceCountValue('');
         }
     }, [recurrenceDaysValue.length, recurrenceValue]);
+
+    React.useEffect(() => {
+        setConflictMatches([]);
+        setPendingConflictDetails(null);
+    }, [
+        dueDateValue,
+        endDateValue,
+        endTimeValue,
+        kindValue,
+        recurrenceDaysValue,
+        recurrenceEndDateValue,
+        recurrenceValue,
+        startDateValue,
+        startTimeValue,
+    ]);
 
     const onChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
         setNewTodoValue(event.target.value);
@@ -449,6 +470,17 @@ function TodoForm({
         return [...subtasksValue, draftSubtask];
     };
 
+    const saveTodo = (details: TodoDetails) => {
+        const result = onSubmitTodo(newTodoValue, details);
+
+        if (!result.ok) {
+            setFormError(result.error || 'Error al guardar');
+            return;
+        }
+
+        onCancel();
+    };
+
     const onSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
@@ -520,7 +552,7 @@ function TodoForm({
             return;
         }
 
-        const result = onSubmitTodo(newTodoValue, {
+        const details: TodoDetails = {
             kind: kindValue,
             description: descriptionValue,
             priority: priorityValue,
@@ -538,14 +570,16 @@ function TodoForm({
             project: isProjectLocked ? lockedProject : projectValue,
             tags: tagsValue,
             subtasks: submittedSubtasks,
-        });
+        };
+        const conflicts = onCheckConflicts?.(newTodoValue, details) || [];
 
-        if (!result.ok) {
-            setFormError(result.error || 'Error al guardar');
+        if (conflicts.length > 0) {
+            setConflictMatches(conflicts);
+            setPendingConflictDetails(details);
             return;
         }
 
-        onCancel();
+        saveTodo(details);
     }
 
     return (
@@ -632,6 +666,7 @@ function TodoForm({
                             Hora limite
                             <input
                                 id={startTimeId}
+                                ref={startTimeInputRef}
                                 type="time"
                                 value={startTimeValue}
                                 onChange={event => setStartTimeValue(event.target.value)}
@@ -654,6 +689,7 @@ function TodoForm({
                             Hora del evento
                             <input
                                 id={startTimeId}
+                                ref={startTimeInputRef}
                                 type="time"
                                 value={startTimeValue}
                                 onChange={event => setStartTimeValue(event.target.value)}
@@ -685,6 +721,7 @@ function TodoForm({
                             Hora de inicio
                             <input
                                 id={startTimeId}
+                                ref={startTimeInputRef}
                                 type="time"
                                 value={startTimeValue}
                                 onChange={event => setStartTimeValue(event.target.value)}
@@ -725,6 +762,7 @@ function TodoForm({
                             Hora de inicio
                             <input
                                 id={startTimeId}
+                                ref={startTimeInputRef}
                                 type="time"
                                 value={startTimeValue}
                                 onChange={event => setStartTimeValue(event.target.value)}
@@ -901,6 +939,35 @@ function TodoForm({
                         </ul>
                     )}
                 </div>
+            )}
+            {conflictMatches.length > 0 && pendingConflictDetails && (
+                <section className="TodoForm-conflict" role="alert" aria-labelledby="todo-form-conflict-title">
+                    <strong id="todo-form-conflict-title">Este horario se superpone</strong>
+                    <p>Coincide con:</p>
+                    <ul>
+                        {conflictMatches.map(match => (
+                            <li key={match.todoId}>
+                                {match.text} desde {formatDateValue(match.firstDate)}
+                                {match.occurrences > 1 ? ` (${match.occurrences} coincidencias)` : ''}
+                            </li>
+                        ))}
+                    </ul>
+                    <div>
+                        <button
+                            type="button"
+                            onClick={() => startTimeInputRef.current?.focus()}
+                        >
+                            Cambiar horario
+                        </button>
+                        <button
+                            className="TodoForm-conflictConfirm"
+                            type="button"
+                            onClick={() => saveTodo(pendingConflictDetails)}
+                        >
+                            Guardar de todos modos
+                        </button>
+                    </div>
+                </section>
             )}
             <div className='TodoForm-buttonContainer'>
                 <button

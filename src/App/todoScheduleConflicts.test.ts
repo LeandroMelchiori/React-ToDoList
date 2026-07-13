@@ -1,6 +1,9 @@
 import { describe, expect, test } from 'vitest';
 import { createTodo } from './todoModel';
-import { getTodoScheduleConflicts } from './todoScheduleConflicts';
+import {
+  getTodoScheduleConflictMatches,
+  getTodoScheduleConflicts,
+} from './todoScheduleConflicts';
 
 function createSchedule(
   id: string,
@@ -67,5 +70,28 @@ describe('todoScheduleConflicts', () => {
         todoIds: ['cursada', 'consulta'],
       },
     ]);
+  });
+
+  test('summarizes recurring conflicts for a candidate before saving', () => {
+    const existing = createSchedule('cursada', '10:00', '12:00', {
+      endDate: '2026-08-31',
+      recurrence: 'weekly',
+      recurrenceDays: [1],
+    });
+    const candidate = createSchedule('consulta', '11:00', '11:30', {
+      endDate: '2026-08-31',
+      recurrence: 'weekly',
+      recurrenceDays: [1],
+    });
+
+    expect(getTodoScheduleConflictMatches([existing], candidate)).toEqual([
+      {
+        firstDate: '2026-08-10',
+        occurrences: 4,
+        text: 'cursada',
+        todoId: 'cursada',
+      },
+    ]);
+    expect(getTodoScheduleConflictMatches([candidate], candidate, candidate.id)).toEqual([]);
   });
 });

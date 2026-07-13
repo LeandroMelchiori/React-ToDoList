@@ -442,3 +442,59 @@
     flex-direction: column;
   }
 }
+
+.TodoForm-conflict {
+  background: color-mix(in srgb, var(--color-danger) 8%, var(--color-surface));
+  border: 1px solid color-mix(in srgb, var(--color-danger) 35%, var(--color-border));
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px;
+}
+
+.TodoForm-conflict strong {
+  color: var(--color-danger-hover);
+  font-size: 14px;
+}
+
+.TodoForm-conflict p,
+.TodoForm-conflict ul {
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.TodoForm-conflict ul {
+  padding-left: 18px;
+}
+
+.TodoForm-conflict > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.TodoForm-conflict button {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  min-height: 36px;
+  padding: 0 12px;
+}
+
+.TodoForm-conflict button:focus-visible {
+  box-shadow: var(--shadow-focus);
+  outline: none;
+}
+
+.TodoForm-conflict .TodoForm-conflictConfirm {
+  border-color: var(--color-danger);
+  color: var(--color-danger-hover);
+}
