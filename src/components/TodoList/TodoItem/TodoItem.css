@@ -6,12 +6,13 @@
   cursor: grab;
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-top: 12px;
-  padding: 16px 18px;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 18px 20px;
   position: relative;
   transition:
     border-color 0.2s ease,
+    box-shadow 0.2s ease,
     opacity 0.2s ease,
     transform 0.2s ease;
 }
@@ -25,6 +26,7 @@
 .TodoItem--complete {
   background-color: var(--color-task-complete-bg);
   box-shadow: none;
+  opacity: 0.88;
 }
 
 .TodoItem--dragging {
@@ -59,9 +61,9 @@
 
 .TodoItem-p {
   color: var(--color-text-strong);
-  font-size: 17px;
-  font-weight: 800;
-  line-height: 1.45;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.35;
   margin: 0;
   overflow-wrap: anywhere;
   transition: color var(--transition-fast);
@@ -103,9 +105,9 @@
 .TodoItem-description {
   color: var(--color-text-muted);
   font-size: 13px;
-  font-weight: 600;
-  line-height: 1.45;
-  margin: 4px 0 0;
+  font-weight: 700;
+  line-height: 1.5;
+  margin: 6px 0 0;
   overflow-wrap: anywhere;
 }
 
@@ -114,10 +116,10 @@
   border: 1px dashed var(--color-border);
   border-radius: 8px;
   display: grid;
-  gap: 7px;
-  margin: 10px 0 0;
+  gap: 8px;
+  margin: 12px 0 0;
   max-width: 520px;
-  padding: 9px 10px;
+  padding: 10px 12px;
 }
 
 .TodoItem-checklistSummary {
@@ -231,7 +233,7 @@
   display: flex;
   flex: 0 0 auto;
   flex-wrap: wrap;
-  gap: 7px;
+  gap: 8px;
   justify-content: flex-end;
 }
 
@@ -244,9 +246,9 @@
 .TodoItem-tag {
   border-radius: 999px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 900;
   line-height: 1;
-  padding: 6px 8px;
+  padding: 7px 9px;
   white-space: nowrap;
 }
 
@@ -338,6 +340,7 @@
   .TodoItem {
     align-items: flex-start;
     flex-wrap: wrap;
+    padding: 16px;
   }
 
   .TodoItem-content {

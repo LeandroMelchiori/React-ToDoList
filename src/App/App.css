@@ -21,15 +21,31 @@
   margin: 0 auto;
   max-width: 1120px;
   min-height: 100vh;
-  padding: 0 32px;
+  padding: 28px 32px 56px;
 }
 
 .App header {
-  padding-bottom: 12px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0)),
+    transparent;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 22px;
+  padding-bottom: 20px;
+}
+
+[data-theme='dark'] .App header {
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.72), rgba(15, 23, 42, 0)),
+    transparent;
 }
 
 @media (max-width: 640px) {
   .App {
-    padding: 0 16px;
+    padding: 18px 16px 44px;
+  }
+
+  .App header {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
   }
 }

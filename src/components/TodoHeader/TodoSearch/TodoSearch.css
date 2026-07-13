@@ -1,6 +1,6 @@
 .TodoSearch-label {
   display: block;
-  margin: 20px auto 0;
+  margin: 22px auto 0;
   max-width: 960px;
 }
 
@@ -21,10 +21,15 @@
   color: var(--color-text);
   font-family: inherit;
   font-size: 18px;
-  font-weight: 500;
-  height: 54px;
-  padding: 0 18px;
+  font-weight: 700;
+  height: 58px;
+  padding: 0 20px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
   width: 100%;
+}
+
+.TodoSearch:hover:not(:disabled) {
+  border-color: var(--color-border-strong);
 }
 
 .TodoSearch::placeholder {
@@ -36,6 +41,7 @@
   border-color: var(--color-accent);
   box-shadow: var(--shadow-focus);
   outline: none;
+  transform: translateY(-1px);
 }
 
 .TodoSearch:disabled {
