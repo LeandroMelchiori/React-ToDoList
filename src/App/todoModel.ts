@@ -4,6 +4,7 @@ type TodoPriority = 'low' | 'medium' | 'high';
 type TodoDateType = 'due' | 'event' | 'period';
 type TodoRecurrence = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 type TodoReminder = 'none' | 'at-time' | '10-minutes' | '30-minutes' | '1-day';
+type TodoWeekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 type TodoKind = 'task' | 'event' | 'schedule' | 'period';
 type TodoGroup = 'overdue' | 'today' | 'upcoming' | 'unscheduled' | 'completed';
 type ImportMode = 'merge' | 'replace';
@@ -29,6 +30,9 @@ type Todo = {
     startTime: string | null;
     endTime: string | null;
     recurrence: TodoRecurrence;
+    recurrenceDays: TodoWeekday[];
+    recurrenceEndDate: string | null;
+    recurrenceCount: number | null;
     reminder: TodoReminder;
     project: string | null;
     tags: string[];
@@ -93,6 +97,8 @@ type IcsDateValue = {
 
 type IcsRecurrence = {
     recurrence: TodoRecurrence;
+    recurrenceCount: number | null;
+    recurrenceDays: TodoWeekday[];
     untilDate: string | null;
 };
 
@@ -108,6 +114,9 @@ type TodoDetails = {
     startTime?: unknown;
     endTime?: unknown;
     recurrence?: unknown;
+    recurrenceDays?: unknown;
+    recurrenceEndDate?: unknown;
+    recurrenceCount?: unknown;
     reminder?: unknown;
     project?: unknown;
     tags?: unknown;
@@ -271,6 +280,45 @@ function normalizeReminder(reminder: unknown): TodoReminder {
     const validReminder = Object.values(TODO_REMINDERS).find(value => value === reminder);
 
     return validReminder || TODO_REMINDERS.none;
+}
+
+function normalizeRecurrenceDays(recurrenceDays: unknown): TodoWeekday[] {
+    const rawDays = Array.isArray(recurrenceDays)
+        ? recurrenceDays
+        : typeof recurrenceDays === 'string'
+            ? recurrenceDays.split(',')
+            : [];
+    const uniqueDays = new Set<TodoWeekday>();
+
+    rawDays.forEach(day => {
+        const numericDay = typeof day === 'number'
+            ? day
+            : typeof day === 'string'
+                ? Number(day.trim())
+                : Number.NaN;
+
+        if (
+            Number.isInteger(numericDay) &&
+            numericDay >= 0 &&
+            numericDay <= 6
+        ) {
+            uniqueDays.add(numericDay as TodoWeekday);
+        }
+    });
+
+    return [...uniqueDays].sort((firstDay, secondDay) => firstDay - secondDay);
+}
+
+function normalizeRecurrenceCount(recurrenceCount: unknown): number | null {
+    const numericCount = typeof recurrenceCount === 'number'
+        ? recurrenceCount
+        : typeof recurrenceCount === 'string' && recurrenceCount.trim()
+            ? Number(recurrenceCount)
+            : Number.NaN;
+
+    return Number.isInteger(numericCount) && numericCount > 0
+        ? Math.min(numericCount, 999)
+        : null;
 }
 
 function getAllowedRecurrencesForDateType(dateType: unknown): TodoRecurrence[] {
@@ -590,6 +638,11 @@ function createTodo(text: string, details: TodoDetails = {}): Todo {
         startTime: 'startTime' in details ? details.startTime : undefined,
         endTime: 'endTime' in details ? details.endTime : undefined,
     });
+    const recurrence = normalizeTodoRecurrenceForKind(
+        kind,
+        schedule.dateType,
+        'recurrence' in details ? details.recurrence : undefined
+    );
 
     return {
         id: createTodoId(),
@@ -605,7 +658,16 @@ function createTodo(text: string, details: TodoDetails = {}): Todo {
         endDate: schedule.endDate,
         startTime: times.startTime,
         endTime: times.endTime,
-        recurrence: normalizeTodoRecurrenceForKind(kind, schedule.dateType, 'recurrence' in details ? details.recurrence : undefined),
+        recurrence,
+        recurrenceDays: recurrence === TODO_RECURRENCES.weekly
+            ? normalizeRecurrenceDays('recurrenceDays' in details ? details.recurrenceDays : undefined)
+            : [],
+        recurrenceEndDate: recurrence !== TODO_RECURRENCES.none
+            ? normalizeDueDate('recurrenceEndDate' in details ? details.recurrenceEndDate : undefined)
+            : null,
+        recurrenceCount: recurrence !== TODO_RECURRENCES.none
+            ? normalizeRecurrenceCount('recurrenceCount' in details ? details.recurrenceCount : undefined)
+            : null,
         reminder: normalizeReminder('reminder' in details ? details.reminder : undefined),
         project: normalizeProject('project' in details ? details.project : undefined),
         tags: normalizeTags('tags' in details ? details.tags : undefined),
@@ -639,6 +701,7 @@ function normalizeTodos(todos: unknown): Todo[] {
                 startTime: todo.startTime,
                 endTime: todo.endTime,
             });
+            const recurrence = normalizeTodoRecurrenceForKind(kind, schedule.dateType, todo.recurrence);
 
             return {
                 id: typeof todo.id === 'string' && todo.id ? todo.id : createLegacyTodoId(todo, index),
@@ -654,7 +717,16 @@ function normalizeTodos(todos: unknown): Todo[] {
                 endDate: schedule.endDate,
                 startTime: times.startTime,
                 endTime: times.endTime,
-                recurrence: normalizeTodoRecurrenceForKind(kind, schedule.dateType, todo.recurrence),
+                recurrence,
+                recurrenceDays: recurrence === TODO_RECURRENCES.weekly
+                    ? normalizeRecurrenceDays(todo.recurrenceDays)
+                    : [],
+                recurrenceEndDate: recurrence !== TODO_RECURRENCES.none
+                    ? normalizeDueDate(todo.recurrenceEndDate)
+                    : null,
+                recurrenceCount: recurrence !== TODO_RECURRENCES.none
+                    ? normalizeRecurrenceCount(todo.recurrenceCount)
+                    : null,
                 reminder: normalizeReminder(todo.reminder),
                 project: normalizeProject(todo.project),
                 tags: normalizeTags(todo.tags),
@@ -940,10 +1012,27 @@ function getTodoIcsRrule(todo: Todo): string | null {
         [TODO_RECURRENCES.monthly]: 'MONTHLY',
         [TODO_RECURRENCES.yearly]: 'YEARLY',
     };
+    const weekdayByDay: Record<TodoWeekday, string> = {
+        0: 'SU',
+        1: 'MO',
+        2: 'TU',
+        3: 'WE',
+        4: 'TH',
+        5: 'FR',
+        6: 'SA',
+    };
     const frequency = frequencyByRecurrence[recurrence];
-    const until = todo.endDate ? `;UNTIL=${formatIcsDate(todo.endDate)}T235959` : '';
+    const recurrenceDays = recurrence === TODO_RECURRENCES.weekly
+        ? normalizeRecurrenceDays(todo.recurrenceDays)
+        : [];
+    const byDay = recurrenceDays.length
+        ? `;BYDAY=${recurrenceDays.map(day => weekdayByDay[day]).join(',')}`
+        : '';
+    const count = todo.recurrenceCount ? `;COUNT=${todo.recurrenceCount}` : '';
+    const recurrenceEndDate = todo.recurrenceEndDate || todo.endDate;
+    const until = !count && recurrenceEndDate ? `;UNTIL=${formatIcsDate(recurrenceEndDate)}T235959` : '';
 
-    return `RRULE:FREQ=${frequency}${until}`;
+    return `RRULE:FREQ=${frequency}${byDay}${count}${until}`;
 }
 
 function getTodoIcsLines(todo: Todo, dtstamp: string): string[] | null {
@@ -1107,6 +1196,8 @@ function parseIcsRecurrence(property?: IcsProperty): IcsRecurrence {
     if (!property) {
         return {
             recurrence: TODO_RECURRENCES.none,
+            recurrenceCount: null,
+            recurrenceDays: [],
             untilDate: null,
         };
     }
@@ -1126,9 +1217,26 @@ function parseIcsRecurrence(property?: IcsProperty): IcsRecurrence {
         MONTHLY: TODO_RECURRENCES.monthly,
         YEARLY: TODO_RECURRENCES.yearly,
     };
+    const dayByWeekday: Record<string, TodoWeekday> = {
+        SU: 0,
+        MO: 1,
+        TU: 2,
+        WE: 3,
+        TH: 4,
+        FR: 5,
+        SA: 6,
+    };
+    const recurrenceDays = typeof rruleParts.BYDAY === 'string'
+        ? rruleParts.BYDAY
+            .split(',')
+            .map(day => dayByWeekday[day.toUpperCase()])
+            .filter((day): day is TodoWeekday => typeof day === 'number')
+        : [];
 
     return {
         recurrence: recurrenceByFrequency[rruleParts.FREQ] || TODO_RECURRENCES.none,
+        recurrenceCount: normalizeRecurrenceCount(rruleParts.COUNT),
+        recurrenceDays: normalizeRecurrenceDays(recurrenceDays),
         untilDate: rruleParts.UNTIL ? getIcsDateValue(rruleParts.UNTIL) : null,
     };
 }
@@ -1218,6 +1326,9 @@ function readTodoFromIcsProperties(properties: Map<string, IcsProperty>, index: 
         startTime: start.time,
         endTime: kind === TODO_KINDS.schedule ? end?.time : null,
         recurrence: recurrence.recurrence,
+        recurrenceDays: recurrence.recurrenceDays,
+        recurrenceEndDate: recurrence.untilDate,
+        recurrenceCount: recurrence.recurrenceCount,
         order: index,
     };
 }
@@ -1284,6 +1395,85 @@ function getTodoRecurrenceAnchorDate(todo: Pick<Todo, 'dateType' | 'dueDate' | '
     return todo.dateType === TODO_DATE_TYPES.event || todo.dateType === TODO_DATE_TYPES.period
         ? todo.startDate
         : todo.dueDate;
+}
+
+function getDateWeekday(dateValue: string): TodoWeekday | null {
+    const dateParts = getDateParts(dateValue);
+
+    if (!dateParts) {
+        return null;
+    }
+
+    return new Date(dateParts.year, dateParts.month - 1, dateParts.day).getDay() as TodoWeekday;
+}
+
+function isTodoRecurrenceBaseMatch(
+    todo: Pick<Todo, 'dateType' | 'dueDate' | 'startDate' | 'recurrence'> & {
+        recurrenceDays?: TodoWeekday[];
+    },
+    anchorDate: string,
+    dateValue: string
+): boolean {
+    const recurrence = normalizeRecurrence(todo.recurrence);
+    const differenceInDays = getDateDiffInDays(anchorDate, dateValue);
+
+    if (!Number.isFinite(differenceInDays) || differenceInDays < 0) {
+        return false;
+    }
+
+    if (recurrence === TODO_RECURRENCES.daily) {
+        return true;
+    }
+
+    if (recurrence === TODO_RECURRENCES.weekly) {
+        const recurrenceDays = normalizeRecurrenceDays(todo.recurrenceDays);
+
+        if (recurrenceDays.length) {
+            const weekday = getDateWeekday(dateValue);
+
+            return weekday !== null && recurrenceDays.includes(weekday);
+        }
+
+        return differenceInDays % 7 === 0;
+    }
+
+    const anchorParts = getDateParts(anchorDate);
+    const dateParts = getDateParts(dateValue);
+
+    if (!anchorParts || !dateParts) {
+        return false;
+    }
+
+    if (recurrence === TODO_RECURRENCES.monthly) {
+        return anchorParts.day === dateParts.day;
+    }
+
+    return anchorParts.month === dateParts.month && anchorParts.day === dateParts.day;
+}
+
+function getTodoRecurrenceOccurrenceNumber(
+    todo: Pick<Todo, 'dateType' | 'dueDate' | 'startDate' | 'recurrence'> & {
+        recurrenceDays?: TodoWeekday[];
+    },
+    anchorDate: string,
+    dateValue: string
+): number | null {
+    if (!isTodoRecurrenceBaseMatch(todo, anchorDate, dateValue)) {
+        return null;
+    }
+
+    let occurrenceNumber = 0;
+    const differenceInDays = getDateDiffInDays(anchorDate, dateValue);
+
+    for (let dayOffset = 0; dayOffset <= differenceInDays; dayOffset += 1) {
+        const currentDate = getDateValueOffset(anchorDate, dayOffset);
+
+        if (isTodoRecurrenceBaseMatch(todo, anchorDate, currentDate)) {
+            occurrenceNumber += 1;
+        }
+    }
+
+    return occurrenceNumber;
 }
 
 function getLocalDateTime(dateValue: string, timeValue: string): Date | null {
@@ -1357,7 +1547,12 @@ function getTodoReminderTarget(todo: Todo, now = new Date()): Date | null {
 }
 
 function isTodoRecurringOnDate(
-    todo: Pick<Todo, 'dateType' | 'dueDate' | 'startDate' | 'recurrence'> & { endDate?: string | null },
+    todo: Pick<Todo, 'dateType' | 'dueDate' | 'startDate' | 'recurrence'> & {
+        endDate?: string | null;
+        recurrenceCount?: number | null;
+        recurrenceDays?: TodoWeekday[];
+        recurrenceEndDate?: string | null;
+    },
     dateValue: string
 ): boolean {
     const recurrence = normalizeRecurrence(todo.recurrence);
@@ -1367,37 +1562,25 @@ function isTodoRecurringOnDate(
     }
 
     const anchorDate = getTodoRecurrenceAnchorDate(todo);
+    const recurrenceEndDate = normalizeDueDate(todo.recurrenceEndDate) || todo.endDate;
 
-    if (!anchorDate || dateValue < anchorDate || (todo.endDate && dateValue > todo.endDate)) {
+    if (!anchorDate || dateValue < anchorDate || (recurrenceEndDate && dateValue > recurrenceEndDate)) {
         return false;
     }
 
-    const differenceInDays = getDateDiffInDays(anchorDate, dateValue);
+    const occurrenceNumber = getTodoRecurrenceOccurrenceNumber(todo, anchorDate, dateValue);
 
-    if (!Number.isFinite(differenceInDays)) {
+    if (!occurrenceNumber) {
         return false;
     }
 
-    if (recurrence === TODO_RECURRENCES.daily) {
-        return true;
-    }
+    const recurrenceCount = normalizeRecurrenceCount(todo.recurrenceCount);
 
-    if (recurrence === TODO_RECURRENCES.weekly) {
-        return differenceInDays % 7 === 0;
-    }
-
-    const anchorParts = getDateParts(anchorDate);
-    const dateParts = getDateParts(dateValue);
-
-    if (!anchorParts || !dateParts) {
+    if (recurrenceCount && occurrenceNumber > recurrenceCount) {
         return false;
     }
 
-    if (recurrence === TODO_RECURRENCES.monthly) {
-        return anchorParts.day === dateParts.day;
-    }
-
-    return anchorParts.month === dateParts.month && anchorParts.day === dateParts.day;
+    return true;
 }
 
 function getTodosDateCounts(
@@ -1627,6 +1810,8 @@ export {
     normalizePriority,
     normalizeProject,
     normalizeRecurrence,
+    normalizeRecurrenceCount,
+    normalizeRecurrenceDays,
     normalizeReminder,
     normalizeTodoKind,
     normalizeTodoRecurrence,
@@ -1657,4 +1842,5 @@ export type {
     TodoReminder,
     TodoRecurrence,
     TodoSubtask,
+    TodoWeekday,
 };

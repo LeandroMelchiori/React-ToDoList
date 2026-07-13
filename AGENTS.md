@@ -12,7 +12,7 @@ Este repositorio es una aplicacion React local-first de tareas, agenda y horario
 - Registro PWA: `src/serviceWorkerRegistration.js`.
 - Componente raiz: `src/App/App.tsx`.
 - Estado de todos: `src/App/useTodos.ts`.
-- Modelos puros: `src/App/todoModel.ts` (tareas, agenda, recurrencias, recordatorios, export/import ICS), `src/App/todoBoards.ts` (tableros), `src/App/todoSavedViews.ts` (vistas guardadas), `src/App/todoWorkspaceBackup.ts` (backups).
+- Modelos puros: `src/App/todoModel.ts` (tareas, agenda, recurrencias avanzadas, recordatorios, export/import ICS), `src/App/todoBoards.ts` (tableros), `src/App/todoSavedViews.ts` (vistas guardadas), `src/App/todoWorkspaceBackup.ts` (backups).
 - Persistencia: `src/App/useLocalStorage.ts` + `src/App/todoStorage.ts`.
 - Base local principal: IndexedDB (`taskflow-db`), con migracion/espejo desde `localStorage`.
 - Claves locales: tareas `TODOS_V1`, tema `THEME_V1`.
@@ -45,6 +45,7 @@ Los tests unitarios e integracion corren con `npm test`, usando Vitest, jsdom y 
 - IndexedDB es la persistencia principal para tareas; `localStorage` se mantiene como compatibilidad/migracion y para eventos `storage`.
 - Toda tarea debe normalizarse con los helpers de `todoModel.ts` antes de persistirse o importarse.
 - Conserva compatibilidad con tareas antiguas sin `id`, `priority` o `dueDate`.
+- Las recurrencias avanzadas (`recurrenceDays`, `recurrenceEndDate`, `recurrenceCount`) deben calcularse desde el modelo puro, no desde componentes.
 - Export/import usa JSON versionado; valida y normaliza cualquier archivo importado antes de guardarlo. Soporta backups completos del workspace (`todoWorkspaceBackup.ts`) y export/import local de calendario ICS desde `todoModel.ts`.
 - Los recordatorios son locales y opcionales; dependen del permiso del navegador y no deben requerir backend.
 - No rompas el service worker ni el manifest al cambiar rutas, assets o comportamiento de build.

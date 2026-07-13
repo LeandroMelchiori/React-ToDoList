@@ -9,6 +9,7 @@ import {
     TodoPriority,
     TodoReminder,
     TodoRecurrence,
+    TodoWeekday,
     TodoSubtask,
     TodoDetails,
 } from '../../../App/todoModel';
@@ -59,6 +60,16 @@ const TODO_REMINDER_OPTIONS: Array<{ value: TodoReminder; label: string }> = [
     { value: TODO_REMINDERS.oneDay, label: '1 dia antes' },
 ];
 
+const TODO_WEEKDAY_OPTIONS: Array<{ value: TodoWeekday; label: string }> = [
+    { value: 1, label: 'Lun' },
+    { value: 2, label: 'Mar' },
+    { value: 3, label: 'Mie' },
+    { value: 4, label: 'Jue' },
+    { value: 5, label: 'Vie' },
+    { value: 6, label: 'Sab' },
+    { value: 0, label: 'Dom' },
+];
+
 const TODO_RECURRENCE_HINTS: Record<TodoKind, string> = {
     [TODO_KINDS.task]: 'Se calcula desde la fecha limite.',
     [TODO_KINDS.event]: 'Util para eventos que vuelven semanal, mensual o anualmente.',
@@ -84,6 +95,9 @@ interface TodoFormProps {
     initialStartTime?: string | null;
     initialEndTime?: string | null;
     initialRecurrence?: TodoRecurrence;
+    initialRecurrenceDays?: TodoWeekday[];
+    initialRecurrenceEndDate?: string | null;
+    initialRecurrenceCount?: number | null;
     initialReminder?: TodoReminder;
     initialProject?: string | null;
     initialTags?: string[];
@@ -118,6 +132,40 @@ function getReminderLabel(reminder: TodoReminder): string {
     return TODO_REMINDER_OPTIONS.find(option => option.value === reminder)?.label || 'Sin recordatorio';
 }
 
+function getRecurrenceSummary(
+    recurrence: TodoRecurrence,
+    recurrenceDays: TodoWeekday[],
+    recurrenceEndDate: string,
+    recurrenceCount: string
+): string {
+    const recurrenceLabel = getRecurrenceLabel(recurrence);
+
+    if (recurrence === TODO_RECURRENCES.none) {
+        return recurrenceLabel;
+    }
+
+    const details = [];
+
+    if (recurrence === TODO_RECURRENCES.weekly && recurrenceDays.length > 0) {
+        const dayLabels = TODO_WEEKDAY_OPTIONS
+            .filter(option => recurrenceDays.includes(option.value))
+            .map(option => option.label)
+            .join(', ');
+
+        details.push(dayLabels);
+    }
+
+    if (recurrenceEndDate) {
+        details.push(`hasta ${formatDateValue(recurrenceEndDate)}`);
+    }
+
+    if (recurrenceCount) {
+        details.push(`${recurrenceCount} veces`);
+    }
+
+    return details.length ? `${recurrenceLabel}: ${details.join(' - ')}` : recurrenceLabel;
+}
+
 function getFormPreviewDetails({
     dueDate,
     endDate,
@@ -125,6 +173,9 @@ function getFormPreviewDetails({
     kind,
     reminder,
     recurrence,
+    recurrenceCount,
+    recurrenceDays,
+    recurrenceEndDate,
     startDate,
     startTime,
 }: {
@@ -134,6 +185,9 @@ function getFormPreviewDetails({
     kind: TodoKind;
     reminder: TodoReminder;
     recurrence: TodoRecurrence;
+    recurrenceCount: string;
+    recurrenceDays: TodoWeekday[];
+    recurrenceEndDate: string;
     startDate: string;
     startTime: string;
 }): string[] {
@@ -141,7 +195,7 @@ function getFormPreviewDetails({
         return [
             dueDate ? `Limite ${formatDateValue(dueDate)}` : 'Sin fecha limite',
             startTime ? `Hora limite ${startTime}` : 'Sin hora limite',
-            getRecurrenceLabel(recurrence),
+            getRecurrenceSummary(recurrence, recurrenceDays, recurrenceEndDate, recurrenceCount),
             getReminderLabel(reminder),
         ];
     }
@@ -150,7 +204,7 @@ function getFormPreviewDetails({
         return [
             startDate ? `Dia ${formatDateValue(startDate)}` : 'Sin dia definido',
             startTime ? `Hora ${startTime}` : 'Sin horario definido',
-            getRecurrenceLabel(recurrence),
+            getRecurrenceSummary(recurrence, recurrenceDays, recurrenceEndDate, recurrenceCount),
             getReminderLabel(reminder),
         ];
     }
@@ -160,7 +214,7 @@ function getFormPreviewDetails({
             startDate ? `Desde ${formatDateValue(startDate)}` : 'Sin primer dia',
             endDate ? `Hasta ${formatDateValue(endDate)}` : 'Sin ultimo dia',
             formatTimeRange(startTime, endTime),
-            getRecurrenceLabel(recurrence),
+            getRecurrenceSummary(recurrence, recurrenceDays, recurrenceEndDate, recurrenceCount),
             getReminderLabel(reminder),
         ];
     }
@@ -185,6 +239,9 @@ function TodoForm({
     initialStartTime = '',
     initialEndTime = '',
     initialRecurrence = TODO_RECURRENCES.none,
+    initialRecurrenceDays = [],
+    initialRecurrenceEndDate = '',
+    initialRecurrenceCount = null,
     initialReminder = TODO_REMINDERS.none,
     initialProject = '',
     initialTags = [],
@@ -206,6 +263,13 @@ function TodoForm({
     const [startTimeValue, setStartTimeValue] = React.useState(initialStartTime || '');
     const [endTimeValue, setEndTimeValue] = React.useState(initialEndTime || '');
     const [recurrenceValue, setRecurrenceValue] = React.useState<TodoRecurrence>(initialRecurrence || TODO_RECURRENCES.none);
+    const [recurrenceDaysValue, setRecurrenceDaysValue] = React.useState<TodoWeekday[]>(
+        Array.isArray(initialRecurrenceDays) ? initialRecurrenceDays : []
+    );
+    const [recurrenceEndDateValue, setRecurrenceEndDateValue] = React.useState(initialRecurrenceEndDate || '');
+    const [recurrenceCountValue, setRecurrenceCountValue] = React.useState(
+        initialRecurrenceCount ? String(initialRecurrenceCount) : ''
+    );
     const [reminderValue, setReminderValue] = React.useState<TodoReminder>(initialReminder || TODO_REMINDERS.none);
     const [projectValue, setProjectValue] = React.useState(lockedProject || initialProject || '');
     const [tagsValue, setTagsValue] = React.useState(Array.isArray(initialTags) ? initialTags.join(', ') : '');
@@ -221,6 +285,8 @@ function TodoForm({
     const descriptionId = mode === 'edit' ? 'editTodoDescription' : 'newTodoDescription';
     const priorityId = mode === 'edit' ? 'editTodoPriority' : 'newTodoPriority';
     const recurrenceId = mode === 'edit' ? 'editTodoRecurrence' : 'newTodoRecurrence';
+    const recurrenceEndDateId = mode === 'edit' ? 'editTodoRecurrenceEndDate' : 'newTodoRecurrenceEndDate';
+    const recurrenceCountId = mode === 'edit' ? 'editTodoRecurrenceCount' : 'newTodoRecurrenceCount';
     const reminderId = mode === 'edit' ? 'editTodoReminder' : 'newTodoReminder';
     const dueDateId = mode === 'edit' ? 'editTodoDueDate' : 'newTodoDueDate';
     const startDateId = mode === 'edit' ? 'editTodoStartDate' : 'newTodoStartDate';
@@ -248,6 +314,8 @@ function TodoForm({
         )
     ), [dateTypeForKind, kindValue]);
     const isRecurrenceDisabled = recurrenceOptions.length === 1;
+    const hasRecurrence = recurrenceValue !== TODO_RECURRENCES.none;
+    const isWeeklyRecurrence = recurrenceValue === TODO_RECURRENCES.weekly;
     const previewDetails = getFormPreviewDetails({
         dueDate: dueDateValue,
         endDate: endDateValue,
@@ -255,6 +323,9 @@ function TodoForm({
         kind: kindValue,
         reminder: reminderValue,
         recurrence: recurrenceValue,
+        recurrenceCount: recurrenceCountValue,
+        recurrenceDays: recurrenceDaysValue,
+        recurrenceEndDate: recurrenceEndDateValue,
         startDate: startDateValue,
         startTime: startTimeValue,
     });
@@ -264,6 +335,17 @@ function TodoForm({
             setRecurrenceValue(TODO_RECURRENCES.none);
         }
     }, [recurrenceOptions, recurrenceValue]);
+
+    React.useEffect(() => {
+        if (recurrenceValue !== TODO_RECURRENCES.weekly && recurrenceDaysValue.length > 0) {
+            setRecurrenceDaysValue([]);
+        }
+
+        if (recurrenceValue === TODO_RECURRENCES.none) {
+            setRecurrenceEndDateValue('');
+            setRecurrenceCountValue('');
+        }
+    }, [recurrenceDaysValue.length, recurrenceValue]);
 
     const onChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
         setNewTodoValue(event.target.value);
@@ -343,6 +425,15 @@ function TodoForm({
         addSubtask();
     };
 
+    const toggleRecurrenceDay = (day: TodoWeekday) => {
+        setRecurrenceDaysValue(currentDays =>
+            currentDays.includes(day)
+                ? currentDays.filter(currentDay => currentDay !== day)
+                : [...currentDays, day].sort((firstDay, secondDay) => firstDay - secondDay)
+        );
+        setFormError('');
+    };
+
     const getSubmittedSubtasks = () => {
         const draftSubtask = subtaskDraft.trim();
 
@@ -399,6 +490,24 @@ function TodoForm({
             return;
         }
 
+        if (
+            recurrenceValue !== TODO_RECURRENCES.none &&
+            recurrenceEndDateValue &&
+            recurrenceAnchorDate &&
+            recurrenceEndDateValue < recurrenceAnchorDate
+        ) {
+            setFormError('El fin de repeticion no puede ser anterior a la fecha base.');
+            return;
+        }
+
+        if (
+            recurrenceCountValue &&
+            (!Number.isInteger(Number(recurrenceCountValue)) || Number(recurrenceCountValue) < 1)
+        ) {
+            setFormError('La cantidad de repeticiones debe ser un numero mayor a 0.');
+            return;
+        }
+
         if (reminderValue !== TODO_REMINDERS.none && !recurrenceAnchorDate) {
             setFormError('Agrega una fecha para poder usar recordatorios.');
             return;
@@ -426,6 +535,9 @@ function TodoForm({
             startTime: startTimeValue,
             endTime: isScheduleKind || isPeriodKind ? endTimeValue : '',
             recurrence: recurrenceValue,
+            recurrenceDays: isWeeklyRecurrence ? recurrenceDaysValue : [],
+            recurrenceEndDate: hasRecurrence ? recurrenceEndDateValue : '',
+            recurrenceCount: hasRecurrence ? recurrenceCountValue : '',
             reminder: reminderValue,
             project: isProjectLocked ? lockedProject : projectValue,
             tags: tagsValue,
@@ -650,6 +762,52 @@ function TodoForm({
                         {TODO_RECURRENCE_HINTS[kindValue]}
                     </span>
                 </div>
+                {isWeeklyRecurrence && (
+                    <fieldset className="TodoForm-field TodoForm-weekdayField">
+                        <legend>Dias de repeticion</legend>
+                        <div className="TodoForm-weekdays">
+                            {TODO_WEEKDAY_OPTIONS.map(option => (
+                                <label key={option.value}>
+                                    <input
+                                        type="checkbox"
+                                        checked={recurrenceDaysValue.includes(option.value)}
+                                        onChange={() => toggleRecurrenceDay(option.value)}
+                                    />
+                                    <span>{option.label}</span>
+                                </label>
+                            ))}
+                        </div>
+                        <span className="TodoForm-fieldHint">
+                            Si no elegis dias, se usa el dia de la fecha base.
+                        </span>
+                    </fieldset>
+                )}
+                {hasRecurrence && (
+                    <>
+                        <label htmlFor={recurrenceEndDateId}>
+                            Fin de repeticion
+                            <input
+                                id={recurrenceEndDateId}
+                                type="date"
+                                value={recurrenceEndDateValue}
+                                onChange={event => setRecurrenceEndDateValue(event.target.value)}
+                            />
+                        </label>
+                        <label htmlFor={recurrenceCountId}>
+                            Cantidad maxima
+                            <input
+                                id={recurrenceCountId}
+                                type="number"
+                                min="1"
+                                max="999"
+                                inputMode="numeric"
+                                placeholder="Ej: 12"
+                                value={recurrenceCountValue}
+                                onChange={event => setRecurrenceCountValue(event.target.value)}
+                            />
+                        </label>
+                    </>
+                )}
                 <div className="TodoForm-field">
                     <label htmlFor={reminderId}>
                         Recordatorio

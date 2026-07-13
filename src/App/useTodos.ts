@@ -3,6 +3,7 @@ import { useLocalStorage } from './useLocalStorage';
 import {
     TODO_FILTERS,
     TODO_KINDS,
+    TODO_RECURRENCES,
     analyzeTodosImport,
     applyTodosImport,
     createTodo,
@@ -17,8 +18,11 @@ import {
     moveTodoToPosition as reorderTodoToPosition,
     normalizeDateTypeForTodoKind,
     normalizeDescription,
+    normalizeDueDate,
     normalizePriority,
     normalizeProject,
+    normalizeRecurrenceCount,
+    normalizeRecurrenceDays,
     normalizeReminder,
     normalizeTags,
     normalizeTodoKind,
@@ -466,9 +470,12 @@ function useTodos() {
             startDate: todoToDuplicate.startDate,
             endDate: todoToDuplicate.endDate,
             startTime: todoToDuplicate.startTime,
-                    endTime: todoToDuplicate.endTime,
-                    recurrence: todoToDuplicate.recurrence,
-                    reminder: todoToDuplicate.reminder,
+            endTime: todoToDuplicate.endTime,
+            recurrence: todoToDuplicate.recurrence,
+            recurrenceDays: todoToDuplicate.recurrenceDays,
+            recurrenceEndDate: todoToDuplicate.recurrenceEndDate,
+            recurrenceCount: todoToDuplicate.recurrenceCount,
+            reminder: todoToDuplicate.reminder,
                     project: todoToDuplicate.project,
             tags: todoToDuplicate.tags,
             subtasks: todoToDuplicate.subtasks.map(subtask => subtask.text),
@@ -517,6 +524,7 @@ function useTodos() {
             startTime: details.startTime,
             endTime: details.endTime,
         });
+        const recurrence = normalizeTodoRecurrenceForKind(kind, schedule.dateType, details.recurrence);
         const newTodos = normalizedTodos.map(todo =>
             todo.id === id
                 ? {
@@ -531,7 +539,16 @@ function useTodos() {
                     endDate: schedule.endDate,
                     startTime: times.startTime,
                     endTime: times.endTime,
-                    recurrence: normalizeTodoRecurrenceForKind(kind, schedule.dateType, details.recurrence),
+                    recurrence,
+                    recurrenceDays: recurrence === TODO_RECURRENCES.weekly
+                        ? normalizeRecurrenceDays(details.recurrenceDays)
+                        : [],
+                    recurrenceEndDate: recurrence !== TODO_RECURRENCES.none
+                        ? normalizeDueDate(details.recurrenceEndDate)
+                        : null,
+                    recurrenceCount: recurrence !== TODO_RECURRENCES.none
+                        ? normalizeRecurrenceCount(details.recurrenceCount)
+                        : null,
                     reminder: normalizeReminder(details.reminder),
                     project: normalizeProject(details.project),
                     tags: normalizeTags(details.tags),

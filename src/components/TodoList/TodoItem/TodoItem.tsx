@@ -16,6 +16,7 @@ import {
   TodoPriority,
   TodoReminder,
   TodoRecurrence,
+  TodoWeekday,
   TodoSubtask,
 } from '../../../App/todoModel';
 
@@ -39,6 +40,16 @@ const TODO_REMINDER_LABELS: Record<TodoReminder, string> = {
   [TODO_REMINDERS.tenMinutes]: 'Recordatorio 10 min antes',
   [TODO_REMINDERS.thirtyMinutes]: 'Recordatorio 30 min antes',
   [TODO_REMINDERS.oneDay]: 'Recordatorio 1 dia antes',
+};
+
+const TODO_WEEKDAY_LABELS: Record<TodoWeekday, string> = {
+  0: 'Dom',
+  1: 'Lun',
+  2: 'Mar',
+  3: 'Mie',
+  4: 'Jue',
+  5: 'Vie',
+  6: 'Sab',
 };
 
 const TODO_KIND_LABELS: Record<TodoKind, string> = {
@@ -68,6 +79,35 @@ function formatTimeValue(startTime?: string | null, endTime?: string | null) {
   }
 
   return endTime ? `${startTime} a ${endTime}` : startTime;
+}
+
+function formatRecurrenceLabel(
+  recurrence?: TodoRecurrence,
+  recurrenceDays: TodoWeekday[] = [],
+  recurrenceEndDate?: string | null,
+  recurrenceCount?: number | null
+) {
+  if (!recurrence || recurrence === TODO_RECURRENCES.none) {
+    return null;
+  }
+
+  const details = [];
+
+  if (recurrence === TODO_RECURRENCES.weekly && recurrenceDays.length) {
+    details.push(recurrenceDays.map(day => TODO_WEEKDAY_LABELS[day]).join(', '));
+  }
+
+  if (recurrenceEndDate) {
+    details.push(`hasta ${formatDateValue(recurrenceEndDate)}`);
+  }
+
+  if (recurrenceCount) {
+    details.push(`${recurrenceCount} veces`);
+  }
+
+  const baseLabel = TODO_RECURRENCE_LABELS[recurrence];
+
+  return details.length ? `${baseLabel}: ${details.join(' - ')}` : baseLabel;
 }
 
 function joinScheduleWithTime(schedule: string | null, startTime?: string | null, endTime?: string | null) {
@@ -127,6 +167,9 @@ interface TodoItemProps {
   startTime?: string | null;
   endTime?: string | null;
   recurrence?: TodoRecurrence;
+  recurrenceDays?: TodoWeekday[];
+  recurrenceEndDate?: string | null;
+  recurrenceCount?: number | null;
   reminder?: TodoReminder;
   project?: string | null;
   tags?: string[];
@@ -162,9 +205,12 @@ function TodoItem(props: TodoItemProps) {
     props.endTime
   );
   const priorityLabel = props.priority ? TODO_PRIORITY_LABELS[props.priority] : TODO_PRIORITY_LABELS.medium;
-  const recurrenceLabel = props.recurrence && props.recurrence !== TODO_RECURRENCES.none
-    ? TODO_RECURRENCE_LABELS[props.recurrence]
-    : null;
+  const recurrenceLabel = formatRecurrenceLabel(
+    props.recurrence,
+    props.recurrenceDays,
+    props.recurrenceEndDate,
+    props.recurrenceCount
+  );
   const reminderLabel = props.reminder && props.reminder !== TODO_REMINDERS.none
     ? TODO_REMINDER_LABELS[props.reminder]
     : null;

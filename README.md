@@ -43,6 +43,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - Crear tareas completables, eventos de agenda, horarios/bloques recurrentes y periodos.
 - Agregar descripcion, prioridad, fecha limite, fecha puntual, rango de fechas y horarios opcionales.
 - Configurar repeticion diaria, semanal, mensual o anual segun el tipo de elemento.
+- Ajustar recurrencias semanales por dias concretos, fecha de fin o cantidad maxima.
 - Configurar recordatorios locales al momento, minutos antes o un dia antes.
 - Organizar tareas por proyecto y etiquetas opcionales.
 - Dividir tareas en subtareas tipo checklist con progreso visual y plegado.
@@ -113,6 +114,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - El formulario se reutiliza para creacion y edicion, manteniendo validaciones consistentes.
 - Las tareas completables se tratan distinto de eventos, horarios y periodos para que la agenda no contamine metricas de completado.
 - El calendario mensual compacta tareas diarias recurrentes y la agenda semanal prioriza bloques con horario.
+- Las reglas de recurrencia viven en el modelo para que lista, calendario, agenda semanal, recordatorios e ICS usen la misma interpretacion.
 - La UI usa labels, botones accesibles, skip link, foco visible y estados claros para mejorar navegacion y feedback.
 - Los recordatorios usan la Notification API del navegador y se programan localmente mientras la app esta abierta.
 - El build usa base `/` para publicar correctamente en Vercel desde `taskflow.sachadev.me`.
@@ -270,6 +272,7 @@ La suite actual cubre:
 - Vista Hoy con tareas, agenda y recordatorio visual del horario actual/proximo.
 - Vista Tablero con columnas por estado y apertura de detalle.
 - Calendario mensual y agenda semanal con recurrencias.
+- Reglas avanzadas de recurrencia semanal, fin por fecha y fin por cantidad.
 - Recordatorios locales con permiso del navegador.
 - Exportacion ICS de elementos fechados.
 - Importacion ICS con preview y fusion sin duplicados.
@@ -293,7 +296,7 @@ La suite actual cubre:
 - Mas plantillas locales para flujos recurrentes de estudio, talleres o proyectos.
 - Migrar componentes y hooks restantes a TypeScript.
 - Arrastre entre columnas del tablero para cambiar estado o fecha con reglas seguras.
-- Reglas avanzadas de recurrencia, excepciones y finalizacion por cantidad de repeticiones.
+- Excepciones puntuales de recurrencia, como saltear una clase o feriado.
 
 ## Autor
 

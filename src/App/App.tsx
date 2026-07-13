@@ -476,6 +476,9 @@ function App() {
                                 startTime={todo.startTime}
                                 endTime={todo.endTime}
                                 recurrence={todo.recurrence}
+                                recurrenceDays={todo.recurrenceDays}
+                                recurrenceEndDate={todo.recurrenceEndDate}
+                                recurrenceCount={todo.recurrenceCount}
                                 reminder={todo.reminder}
                                 project={todo.project}
                                 tags={todo.tags}
@@ -532,6 +535,9 @@ function App() {
                             initialStartTime={editingTodo?.startTime}
                             initialEndTime={editingTodo?.endTime}
                             initialRecurrence={editingTodo?.recurrence}
+                            initialRecurrenceDays={editingTodo?.recurrenceDays}
+                            initialRecurrenceEndDate={editingTodo?.recurrenceEndDate}
+                            initialRecurrenceCount={editingTodo?.recurrenceCount}
                             initialReminder={editingTodo?.reminder}
                             initialProject={editingTodo?.project}
                             initialTags={editingTodo?.tags}

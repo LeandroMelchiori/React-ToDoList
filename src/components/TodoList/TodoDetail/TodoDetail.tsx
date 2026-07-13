@@ -8,6 +8,7 @@ import {
   TodoPriority,
   TodoReminder,
   TodoRecurrence,
+  TodoWeekday,
 } from '../../../App/todoModel';
 import './TodoDetail.css';
 
@@ -38,6 +39,16 @@ const TODO_REMINDER_LABELS: Record<TodoReminder, string> = {
   [TODO_REMINDERS.tenMinutes]: '10 minutos antes',
   [TODO_REMINDERS.thirtyMinutes]: '30 minutos antes',
   [TODO_REMINDERS.oneDay]: '1 dia antes',
+};
+
+const TODO_WEEKDAY_LABELS: Record<TodoWeekday, string> = {
+  0: 'Dom',
+  1: 'Lun',
+  2: 'Mar',
+  3: 'Mie',
+  4: 'Jue',
+  5: 'Vie',
+  6: 'Sab',
 };
 
 interface TodoDetailProps {
@@ -96,11 +107,33 @@ function getScheduleLabel(todo: Todo): string | null {
   return [dueDate ? `Limite ${dueDate}` : null, timeLabel].filter(Boolean).join(' ') || null;
 }
 
+function getRecurrenceLabel(todo: Todo): string | null {
+  if (todo.recurrence === TODO_RECURRENCES.none) {
+    return null;
+  }
+
+  const details = [];
+
+  if (todo.recurrence === TODO_RECURRENCES.weekly && todo.recurrenceDays.length > 0) {
+    details.push(todo.recurrenceDays.map(day => TODO_WEEKDAY_LABELS[day]).join(', '));
+  }
+
+  if (todo.recurrenceEndDate) {
+    details.push(`hasta ${formatDateValue(todo.recurrenceEndDate)}`);
+  }
+
+  if (todo.recurrenceCount) {
+    details.push(`${todo.recurrenceCount} veces`);
+  }
+
+  const baseLabel = TODO_RECURRENCE_LABELS[todo.recurrence];
+
+  return details.length ? `${baseLabel}: ${details.join(' - ')}` : baseLabel;
+}
+
 function TodoDetail({ onClose, onDelete, onDuplicate, onEdit, onToggleComplete, todo }: TodoDetailProps) {
   const isTask = todo.kind === TODO_KINDS.task;
-  const recurrenceLabel = todo.recurrence !== TODO_RECURRENCES.none
-    ? TODO_RECURRENCE_LABELS[todo.recurrence]
-    : null;
+  const recurrenceLabel = getRecurrenceLabel(todo);
   const reminderLabel = todo.reminder !== TODO_REMINDERS.none
     ? TODO_REMINDER_LABELS[todo.reminder]
     : null;

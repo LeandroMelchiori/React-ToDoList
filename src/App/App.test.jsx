@@ -707,6 +707,32 @@ describe('App', () => {
     expect(JSON.parse(localStorage.getItem('TODOS_V1') || '[]')).toEqual([]);
   });
 
+  test('creates a weekly recurrence with selected weekdays and limits', async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    expect(await screen.findByText('Organiza tu dia con una primera tarea')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Crear nueva tarea' }));
+    await user.type(screen.getByLabelText('Nueva tarea'), 'Cursar algebra');
+    await user.type(screen.getByLabelText('Fecha limite'), '2026-08-03');
+    await user.selectOptions(screen.getByLabelText('Repeticion'), 'weekly');
+    await user.click(screen.getByLabelText('Lun'));
+    await user.click(screen.getByLabelText('Mie'));
+    await user.type(screen.getByLabelText('Fin de repeticion'), '2026-08-31');
+    await user.type(screen.getByLabelText('Cantidad maxima'), '4');
+    await user.click(screen.getByRole('button', { name: 'Agregar' }));
+
+    expect(screen.getByText('Semanal: Lun, Mie - hasta 31/08/2026 - 4 veces')).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('TODOS_V1'))[0]).toEqual(expect.objectContaining({
+      text: 'Cursar algebra',
+      recurrence: 'weekly',
+      recurrenceDays: [1, 3],
+      recurrenceEndDate: '2026-08-31',
+      recurrenceCount: 4,
+    }));
+  });
+
   test('filters todos by due date status', async () => {
     const user = userEvent.setup();
     const yesterday = getRelativeDateInputValue(-1);

@@ -21,6 +21,7 @@ import {
   getTodoReminderTarget,
   getTodosDateCounts,
   getVisibleTodos,
+  isTodoRecurringOnDate,
   isTaskTodo,
   moveTodoToPosition,
   normalizeDueDate,
@@ -28,6 +29,8 @@ import {
   normalizePriority,
   normalizeProject,
   normalizeRecurrence,
+  normalizeRecurrenceCount,
+  normalizeRecurrenceDays,
   normalizeReminder,
   normalizeSubtasks,
   normalizeTags,
@@ -83,6 +86,9 @@ describe('todo helpers', () => {
         startTime: null,
         endTime: null,
         recurrence: TODO_RECURRENCES.none,
+        recurrenceDays: [],
+        recurrenceEndDate: null,
+        recurrenceCount: null,
         reminder: TODO_REMINDERS.none,
         project: null,
         tags: [],
@@ -105,6 +111,9 @@ describe('todo helpers', () => {
         startTime: null,
         endTime: null,
         recurrence: TODO_RECURRENCES.none,
+        recurrenceDays: [],
+        recurrenceEndDate: null,
+        recurrenceCount: null,
         reminder: TODO_REMINDERS.none,
         project: null,
         tags: [],
@@ -205,6 +214,9 @@ describe('todo helpers', () => {
     expect(normalizeTodoRecurrence(TODO_DATE_TYPES.event, TODO_RECURRENCES.daily)).toBe(TODO_RECURRENCES.none);
     expect(normalizeTodoRecurrence(TODO_DATE_TYPES.event, TODO_RECURRENCES.yearly)).toBe(TODO_RECURRENCES.yearly);
     expect(normalizeTodoRecurrence(TODO_DATE_TYPES.period, TODO_RECURRENCES.yearly)).toBe(TODO_RECURRENCES.none);
+    expect(normalizeRecurrenceDays([1, '3', 8, 1, 'lunes'])).toEqual([1, 3]);
+    expect(normalizeRecurrenceCount('12')).toBe(12);
+    expect(normalizeRecurrenceCount('0')).toBeNull();
     expect(normalizeReminder('30-minutes')).toBe(TODO_REMINDERS.thirtyMinutes);
     expect(normalizeReminder('tomorrow')).toBe(TODO_REMINDERS.none);
     expect(normalizeDueDate('2026-07-20')).toBe('2026-07-20');
@@ -238,6 +250,27 @@ describe('todo helpers', () => {
       ...dailyTask,
       completed: true,
     }, new Date(2026, 7, 8, 10, 0))).toBeNull();
+  });
+
+  test('matches advanced weekly recurrence rules', () => {
+    const todo = createTodo('Cursar algebra', {
+      kind: TODO_KINDS.schedule,
+      dateType: TODO_DATE_TYPES.period,
+      startDate: '2026-08-03',
+      startTime: '10:00',
+      endTime: '12:00',
+      recurrence: TODO_RECURRENCES.weekly,
+      recurrenceDays: [1, 3],
+      recurrenceCount: 4,
+      recurrenceEndDate: '2026-08-31',
+    });
+
+    expect(isTodoRecurringOnDate(todo, '2026-08-03')).toBe(true);
+    expect(isTodoRecurringOnDate(todo, '2026-08-05')).toBe(true);
+    expect(isTodoRecurringOnDate(todo, '2026-08-10')).toBe(true);
+    expect(isTodoRecurringOnDate(todo, '2026-08-12')).toBe(true);
+    expect(isTodoRecurringOnDate(todo, '2026-08-17')).toBe(false);
+    expect(isTodoRecurringOnDate(todo, '2026-08-04')).toBe(false);
   });
 
   test('normalizes event and period schedule dates', () => {

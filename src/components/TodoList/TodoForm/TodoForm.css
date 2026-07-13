@@ -84,6 +84,48 @@
   margin: 0;
 }
 
+.TodoForm-weekdayField {
+  border: 0;
+  grid-column: 1 / -1;
+  padding: 0;
+}
+
+.TodoForm-weekdayField legend {
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  padding: 0;
+}
+
+.TodoForm-weekdays {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.TodoForm-weekdays label {
+  align-items: center;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  flex-direction: row;
+  font-size: 12px;
+  font-weight: 900;
+  gap: 6px;
+  margin: 0;
+  min-height: 32px;
+  padding: 0 10px;
+}
+
+.TodoForm-weekdays input {
+  min-height: auto;
+  padding: 0;
+  width: auto;
+}
+
 .TodoForm-fields select,
 .TodoForm-fields input,
 .TodoForm-kindField select {
@@ -117,6 +159,12 @@
   border-color: var(--color-accent);
   box-shadow: var(--shadow-focus);
   outline: none;
+}
+
+.TodoForm-fields .TodoForm-weekdays input {
+  min-height: auto;
+  padding: 0;
+  width: auto;
 }
 
 .TodoForm-fieldHint {
