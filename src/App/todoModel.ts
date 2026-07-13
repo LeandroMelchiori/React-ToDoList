@@ -63,6 +63,7 @@ type TodoCalendarExport = {
 };
 
 type BackupReadResult = { ok: true; todos: Todo[] } | { ok: false; error: string };
+type CalendarImportReadResult = { ok: true; todos: Todo[]; totalCount: number } | { ok: false; error: string };
 type ImportPreviewResult = (
     { ok: true; todos: Todo[]; totalCount: number; newCount: number; duplicateCount: number } |
     { ok: false; error: string }
@@ -74,6 +75,23 @@ type ImportApplyResult = (
 type SplitImportResult = {
     newTodos: Todo[];
     duplicateTodos: Todo[];
+};
+
+type IcsProperty = {
+    name: string;
+    params: Record<string, string>;
+    value: string;
+};
+
+type IcsDateValue = {
+    date: string;
+    isDateOnly: boolean;
+    time: string | null;
+};
+
+type IcsRecurrence = {
+    recurrence: TodoRecurrence;
+    untilDate: string | null;
 };
 
 type TodoDetails = {
@@ -971,6 +989,271 @@ function createTodosCalendarExport(todos: Todo[], now = new Date()): TodoCalenda
     };
 }
 
+function unfoldIcsLines(content: string): string[] {
+    return content
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        .split('\n')
+        .reduce<string[]>((lines, line) => {
+            if (/^[ \t]/.test(line) && lines.length) {
+                lines[lines.length - 1] += line.slice(1);
+            } else {
+                lines.push(line);
+            }
+
+            return lines;
+        }, [])
+        .map(line => line.trimEnd())
+        .filter(Boolean);
+}
+
+function parseIcsProperty(line: string): IcsProperty | null {
+    const separatorIndex = line.indexOf(':');
+
+    if (separatorIndex < 0) {
+        return null;
+    }
+
+    const rawName = line.slice(0, separatorIndex);
+    const value = line.slice(separatorIndex + 1);
+    const [name = '', ...rawParams] = rawName.split(';');
+    const params = rawParams.reduce<Record<string, string>>((result, param) => {
+        const [paramName, ...paramValueParts] = param.split('=');
+
+        if (paramName) {
+            result[paramName.toUpperCase()] = paramValueParts.join('=');
+        }
+
+        return result;
+    }, {});
+
+    return name
+        ? {
+            name: name.toUpperCase(),
+            params,
+            value,
+        }
+        : null;
+}
+
+function unescapeIcsText(value: string): string {
+    return value
+        .replace(/\\n/gi, '\n')
+        .replace(/\\,/g, ',')
+        .replace(/\\;/g, ';')
+        .replace(/\\\\/g, '\\')
+        .trim();
+}
+
+function getIcsDateValue(dateValue: string): string | null {
+    const match = dateValue.match(/^(\d{4})(\d{2})(\d{2})/);
+
+    return match ? `${match[1]}-${match[2]}-${match[3]}` : null;
+}
+
+function getIcsTimeValue(dateValue: string): string | null {
+    const match = dateValue.match(/T(\d{2})(\d{2})(\d{2})?/);
+
+    return match ? normalizeTimeValue(`${match[1]}:${match[2]}`) : null;
+}
+
+function parseIcsDateProperty(property?: IcsProperty): IcsDateValue | null {
+    if (!property) {
+        return null;
+    }
+
+    const date = getIcsDateValue(property.value);
+
+    if (!date) {
+        return null;
+    }
+
+    const isDateOnly = property.params.VALUE === 'DATE' || !property.value.includes('T');
+
+    return {
+        date,
+        isDateOnly,
+        time: isDateOnly ? null : getIcsTimeValue(property.value),
+    };
+}
+
+function parseIcsRecurrence(property?: IcsProperty): IcsRecurrence {
+    if (!property) {
+        return {
+            recurrence: TODO_RECURRENCES.none,
+            untilDate: null,
+        };
+    }
+
+    const rruleParts = property.value.split(';').reduce<Record<string, string>>((result, part) => {
+        const [key, value] = part.split('=');
+
+        if (key && value) {
+            result[key.toUpperCase()] = value;
+        }
+
+        return result;
+    }, {});
+    const recurrenceByFrequency: Record<string, TodoRecurrence> = {
+        DAILY: TODO_RECURRENCES.daily,
+        WEEKLY: TODO_RECURRENCES.weekly,
+        MONTHLY: TODO_RECURRENCES.monthly,
+        YEARLY: TODO_RECURRENCES.yearly,
+    };
+
+    return {
+        recurrence: recurrenceByFrequency[rruleParts.FREQ] || TODO_RECURRENCES.none,
+        untilDate: rruleParts.UNTIL ? getIcsDateValue(rruleParts.UNTIL) : null,
+    };
+}
+
+function getIcsEventId(properties: Map<string, IcsProperty>, index: number): string {
+    const uid = properties.get('UID')?.value || `event-${index}`;
+    const normalizedUid = uid
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+
+    return `ics-${normalizedUid || index}`;
+}
+
+function getIcsEventEndDate(start: IcsDateValue, end: IcsDateValue | null): string | null {
+    if (!end) {
+        return null;
+    }
+
+    if (start.isDateOnly && end.isDateOnly && end.date > start.date) {
+        return getDateValueOffset(end.date, -1);
+    }
+
+    return end.date;
+}
+
+function getIcsEventKind(details: {
+    end: IcsDateValue | null;
+    endDate: string | null;
+    recurrence: TodoRecurrence;
+    start: IcsDateValue;
+    untilDate: string | null;
+}): TodoKind {
+    if (details.start.isDateOnly && details.endDate && details.endDate > details.start.date) {
+        return TODO_KINDS.period;
+    }
+
+    if (
+        !details.start.isDateOnly &&
+        details.end?.time &&
+        details.untilDate &&
+        (
+            details.recurrence === TODO_RECURRENCES.daily ||
+            details.recurrence === TODO_RECURRENCES.weekly
+        )
+    ) {
+        return TODO_KINDS.schedule;
+    }
+
+    return TODO_KINDS.event;
+}
+
+function readTodoFromIcsProperties(properties: Map<string, IcsProperty>, index: number): TodoInput | null {
+    const summary = unescapeIcsText(properties.get('SUMMARY')?.value || '');
+    const start = parseIcsDateProperty(properties.get('DTSTART'));
+    const end = parseIcsDateProperty(properties.get('DTEND'));
+
+    if (!summary || !start) {
+        return null;
+    }
+
+    const recurrence = parseIcsRecurrence(properties.get('RRULE'));
+    const endDate = getIcsEventEndDate(start, end);
+    const kind = getIcsEventKind({
+        end,
+        endDate,
+        recurrence: recurrence.recurrence,
+        start,
+        untilDate: recurrence.untilDate,
+    });
+    const dateType = kind === TODO_KINDS.period || kind === TODO_KINDS.schedule
+        ? TODO_DATE_TYPES.period
+        : TODO_DATE_TYPES.event;
+    const description = unescapeIcsText(properties.get('DESCRIPTION')?.value || '');
+
+    return {
+        id: getIcsEventId(properties, index),
+        text: summary,
+        kind,
+        description,
+        completed: false,
+        dateType,
+        startDate: start.date,
+        endDate: kind === TODO_KINDS.schedule
+            ? recurrence.untilDate || endDate
+            : endDate,
+        startTime: start.time,
+        endTime: kind === TODO_KINDS.schedule ? end?.time : null,
+        recurrence: recurrence.recurrence,
+        order: index,
+    };
+}
+
+function readTodosCalendarImport(content: unknown): CalendarImportReadResult {
+    if (typeof content !== 'string' || !content.trim()) {
+        return {
+            ok: false,
+            error: 'El archivo ICS esta vacio o no se pudo leer.',
+        };
+    }
+
+    const lines = unfoldIcsLines(content);
+    const todos: TodoInput[] = [];
+    let activeEvent: Map<string, IcsProperty> | null = null;
+
+    lines.forEach(line => {
+        const property = parseIcsProperty(line);
+
+        if (!property) {
+            return;
+        }
+
+        if (property.name === 'BEGIN' && property.value.toUpperCase() === 'VEVENT') {
+            activeEvent = new Map();
+            return;
+        }
+
+        if (property.name === 'END' && property.value.toUpperCase() === 'VEVENT') {
+            if (activeEvent) {
+                const todo = readTodoFromIcsProperties(activeEvent, todos.length);
+
+                if (todo) {
+                    todos.push(todo);
+                }
+            }
+
+            activeEvent = null;
+            return;
+        }
+
+        if (activeEvent) {
+            activeEvent.set(property.name, property);
+        }
+    });
+
+    const normalizedTodos = normalizeTodos(todos);
+
+    if (!normalizedTodos.length) {
+        return {
+            ok: false,
+            error: 'El calendario no contiene eventos importables.',
+        };
+    }
+
+    return {
+        ok: true,
+        todos: normalizedTodos,
+        totalCount: normalizedTodos.length,
+    };
+}
+
 function getTodoRecurrenceAnchorDate(todo: Pick<Todo, 'dateType' | 'dueDate' | 'startDate'>): string | null {
     return todo.dateType === TODO_DATE_TYPES.event || todo.dateType === TODO_DATE_TYPES.period
         ? todo.startDate
@@ -1255,6 +1538,7 @@ export {
     normalizeTodoTimes,
     normalizeTodos,
     normalizeTimeValue,
+    readTodosCalendarImport,
     readTodosBackup,
     reindexTodos,
 };
