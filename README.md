@@ -13,7 +13,7 @@
   </a>
 </p>
 
-TaskFlow es una aplicacion React para gestionar tareas con busqueda, filtros, edicion, validaciones, orden manual y persistencia local. El proyecto mantiene una base simple, probada y desplegable, con foco en separar estado, UI, modelo de datos y persistencia sin agregar complejidad innecesaria.
+TaskFlow es una aplicacion React local-first para gestionar tareas, agenda y horarios sin backend. Permite trabajar con tareas completables, eventos, bloques recurrentes y periodos, manteniendo una base simple, probada y desplegable, con foco en separar estado, UI, modelo de datos y persistencia sin agregar complejidad innecesaria.
 
 ## Demo
 
@@ -24,23 +24,29 @@ TaskFlow es una aplicacion React para gestionar tareas con busqueda, filtros, ed
 
 La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de producto sin salir de una arquitectura liviana:
 
-- Gestion completa de tareas: crear, editar, completar, buscar, filtrar y eliminar.
+- Gestion completa de tareas y agenda: crear, editar, completar, duplicar, buscar, filtrar y eliminar.
+- Diferenciacion entre tareas completables, eventos puntuales, horarios recurrentes y periodos activos.
 - Persistencia local en IndexedDB con migracion desde `localStorage`.
 - Orden manual con drag and drop y controles accesibles subir/bajar.
 - Validaciones para evitar entradas vacias y duplicadas.
 - Estados visibles para carga, error, lista vacia y busqueda sin resultados.
 - Sincronizacion cuando el almacenamiento cambia desde otra pestana.
 - Soporte PWA con shell offline para abrir la app sin conexion luego de la primera visita.
-- Exportacion e importacion de backups en JSON.
+- Exportacion e importacion de backups completos en JSON y exportacion de agenda en formato ICS.
 - Pruebas automatizadas y validacion continua antes de publicar cambios.
 
 ## Funcionalidades
 
 - Crear tareas con validacion de texto vacio y duplicados.
 - Editar tareas desde un modal con validacion de duplicados.
-- Asignar prioridad y fecha limite opcional a cada tarea.
+- Crear tareas completables, eventos de agenda, horarios/bloques recurrentes y periodos.
+- Agregar descripcion, prioridad, fecha limite, fecha puntual, rango de fechas y horarios opcionales.
+- Configurar repeticion diaria, semanal, mensual o anual segun el tipo de elemento.
 - Organizar tareas por proyecto y etiquetas opcionales.
-- Dividir tareas en subtareas tipo checklist.
+- Dividir tareas en subtareas tipo checklist con progreso visual y plegado.
+- Completar automaticamente una tarea cuando todas sus subtareas estan listas.
+- Ver el detalle completo de un elemento antes de editarlo.
+- Duplicar tareas o elementos de agenda como copias limpias.
 - Cargar plantillas iniciales desde el estado vacio.
 - Marcar tareas como completadas o pendientes.
 - Eliminar tareas con confirmacion previa.
@@ -48,12 +54,19 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - Buscar tareas por texto, proyecto o etiqueta.
 - Filtrar rapidamente por proyecto o etiqueta.
 - Filtrar por todas, pendientes, completadas, vencidas, de hoy o proximas.
+- Guardar combinaciones de filtros para reutilizarlas.
+- Separar el trabajo en tableros locales.
 - Reordenar tareas con drag and drop o con controles subir/bajar.
+- Alternar entre lista, vista de hoy, calendario mensual y agenda semanal.
+- Visualizar eventos, horarios, tareas con fecha y periodos en calendario.
+- Compactar tareas diarias repetidas para no saturar el calendario.
+- Mostrar en Hoy el elemento actual o el proximo elemento con horario.
 - Usar atajos de teclado: `/` enfoca busqueda, `n` abre el formulario de nueva tarea y el skip link salta directo a la lista.
 - Persistir datos en IndexedDB, manteniendo compatibilidad con datos antiguos en `localStorage`.
 - Normalizar tareas antiguas guardadas sin `id`.
 - Detectar cambios hechos en otra pestana y permitir sincronizar.
-- Exportar e importar tareas con un archivo JSON local.
+- Exportar e importar el workspace completo con un archivo JSON local.
+- Exportar elementos con fecha a un archivo `.ics` compatible con calendarios externos.
 - Mostrar metricas locales de progreso, completadas recientes, vencidas y alta prioridad.
 - Mostrar estado offline/PWA y avisar cuando hay una version nueva disponible.
 - Mostrar estados de carga, error, lista vacia y busqueda sin resultados.
@@ -89,10 +102,13 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - Cada tarea usa un `id` unico para evitar depender del texto como key o identificador.
 - Los datos antiguos se normalizan para mantener compatibilidad con tareas sin `id`, prioridad, proyecto o etiquetas.
 - Las operaciones sobre tareas son inmutables: completar, borrar, agregar, editar y reordenar generan nuevas referencias.
-- El modelo puro de tareas vive en `todoModel.ts`; ahi se normalizan datos, filtros, grupos, backups y reordenamiento.
+- El modelo puro de tareas vive en `todoModel.ts`; ahi se normalizan datos, filtros, grupos, backups, recurrencias, calendario ICS y reordenamiento.
+- Los modelos de tableros, filtros guardados y backups completos viven en archivos de dominio separados.
 - La logica principal vive en hooks (`useTodos`, `useLocalStorage`) para separar estado y presentacion.
 - IndexedDB es la persistencia principal y `localStorage` queda como compatibilidad, migracion y puente para eventos `storage`.
 - El formulario se reutiliza para creacion y edicion, manteniendo validaciones consistentes.
+- Las tareas completables se tratan distinto de eventos, horarios y periodos para que la agenda no contamine metricas de completado.
+- El calendario mensual compacta tareas diarias recurrentes y la agenda semanal prioriza bloques con horario.
 - La UI usa labels, botones accesibles, skip link, foco visible y estados claros para mejorar navegacion y feedback.
 - El build usa base `/` para publicar correctamente en Vercel desde `taskflow.sachadev.me`.
 - El toolchain usa Vite para reducir dependencias vulnerables y acelerar desarrollo/build.
@@ -103,6 +119,9 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 flowchart TD
   App["App.tsx"] --> Header["TodoHeader"]
   App --> List["TodoList"]
+  App --> Today["TodoToday"]
+  App --> Calendar["TodoCalendar"]
+  App --> Week["TodoWeekCalendar"]
   App --> Modal["Modal"]
   App --> Alert["ChangeAlert"]
   App --> PWA["PwaStatus"]
@@ -113,15 +132,22 @@ flowchart TD
   Storage --> Adapter["todoStorage.ts"]
   Adapter --> IndexedDB["IndexedDB taskflow-db"]
   Adapter --> LocalStorage["localStorage TODOS_V1"]
+  Todos --> Boards["todoBoards.ts"]
+  Todos --> Views["todoSavedViews.ts"]
+  Todos --> Workspace["todoWorkspaceBackup.ts"]
   Todos --> Filters["search + filters + facets + counts"]
-  Todos --> Actions["create / edit / complete / delete / reorder"]
+  Todos --> Actions["create / edit / detail / duplicate / complete / delete / reorder"]
   List --> Item["TodoItem"]
   Item --> Order["drag and drop + subir/bajar"]
+  Today --> Focus["recordatorio visual actual/proximo"]
+  Calendar --> Agenda["mes + recurrencias compactas"]
+  Week --> Schedule["grilla semanal por horario"]
   Modal --> Form["TodoForm"]
+  Modal --> Detail["TodoDetail"]
   Modal --> DeleteDialog["DeleteTodoDialog"]
 ```
 
-El estado de negocio vive en `useTodos`; las reglas puras de tareas viven en `todoModel.ts`; la persistencia y sincronizacion con el navegador quedan aisladas en `useLocalStorage` y `todoStorage.ts`. Los componentes visuales reciben datos y callbacks, lo que mantiene la UI facil de probar y cambiar.
+El estado de negocio vive en `useTodos`; las reglas puras de tareas y agenda viven en `todoModel.ts`; la persistencia y sincronizacion con el navegador quedan aisladas en `useLocalStorage` y `todoStorage.ts`. Los componentes visuales reciben datos y callbacks, lo que mantiene la UI facil de probar y cambiar.
 
 ## Estructura
 
@@ -129,8 +155,11 @@ El estado de negocio vive en `useTodos`; las reglas puras de tareas viven en `to
 src/
   App/
     App.tsx
+    todoBoards.ts
     todoModel.ts
+    todoSavedViews.ts
     todoStorage.ts
+    todoWorkspaceBackup.ts
     useTodos.ts
     useLocalStorage.ts
     usePwaStatus.ts
@@ -141,9 +170,13 @@ src/
     Modal/
     PwaStatus/
     ThemeToggle/
+    TodoCalendar/
     TodoHeader/
     TodoIcon/
     TodoList/
+    TodoToday/
+    TodoViewToggle/
+    TodoWeekCalendar/
     UndoToast/
   serviceWorkerRegistration.js
 public/
@@ -225,11 +258,17 @@ La suite actual cubre:
 - Filtros por busqueda y estado.
 - Filtros temporales por tareas vencidas, de hoy y proximas.
 - Creacion, marcado y completado automatico de tareas con subtareas.
+- Tareas, eventos, horarios recurrentes y periodos como tipos separados.
+- Vista Hoy con tareas, agenda y recordatorio visual del horario actual/proximo.
+- Calendario mensual y agenda semanal con recurrencias.
+- Exportacion ICS de elementos fechados.
+- Tableros, filtros guardados y backups completos del workspace.
 - Plantillas iniciales desde el estado vacio.
 - Reordenamiento manual con botones y drag and drop.
 - Flujo principal desde la UI: crear, validar, buscar, completar, filtrar y eliminar.
 - Validacion de tareas duplicadas desde el formulario de creacion.
 - Edicion de tareas desde modal y validacion de duplicados en edicion.
+- Panel de detalle, duplicado de elementos y acciones desde el detalle.
 - Cancelacion segura antes de eliminar una tarea.
 - Deshacer una eliminacion reciente y autocierre del aviso.
 - Navegacion por teclado, skip link, foco en modal y cierre con `Escape`.
@@ -242,9 +281,10 @@ La suite actual cubre:
 
 - Mas plantillas locales para flujos recurrentes de estudio, talleres o proyectos.
 - Migrar componentes y hooks restantes a TypeScript.
-- Calendario local-first para visualizar fechas limite, pedidos, examenes y eventos importantes.
 - Vista tipo tablero por fecha o estado, inspirada en Trello, para planificar tareas sin backend.
-- Soporte opcional de recordatorios locales y exportacion de agenda compatible con calendario.
+- Recordatorios locales opcionales con permisos del navegador.
+- Importacion de archivos `.ics` para cargar calendarios existentes.
+- Reglas avanzadas de recurrencia, excepciones y finalizacion por cantidad de repeticiones.
 
 ## Autor
 
