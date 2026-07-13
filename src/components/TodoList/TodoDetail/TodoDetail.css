@@ -172,8 +172,19 @@
   color: #ffffff;
 }
 
+.TodoDetail-button--success {
+  background: var(--color-success);
+  border-color: var(--color-success);
+  color: #ffffff;
+}
+
 .TodoDetail-button--danger {
   color: var(--color-danger-hover);
+}
+
+.TodoDetail-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
 }
 
 .TodoDetail-button:hover,

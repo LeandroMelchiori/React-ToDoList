@@ -1537,6 +1537,43 @@ describe('App', () => {
     }));
   });
 
+  test('toggles task completion from the detail panel', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      {
+        id: 'todo-1',
+        text: 'Enviar inscripcion',
+        completed: false,
+        priority: 'medium',
+        order: 0,
+      },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Enviar inscripcion')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Ver detalle' }));
+
+    const detailDialog = screen.getByRole('dialog', { name: 'Detalle del elemento' });
+    expect(within(detailDialog).getByText('Pendiente')).toBeInTheDocument();
+
+    await user.click(within(detailDialog).getByRole('button', { name: 'Completar' }));
+
+    expect(within(detailDialog).getByText('Completada')).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('TODOS_V1'))[0]).toEqual(expect.objectContaining({
+      completed: true,
+      completedAt: expect.any(String),
+    }));
+
+    await user.click(within(detailDialog).getByRole('button', { name: 'Marcar pendiente' }));
+
+    expect(within(detailDialog).getByText('Pendiente')).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('TODOS_V1'))[0]).toEqual(expect.objectContaining({
+      completed: false,
+      completedAt: null,
+    }));
+  });
+
   test('keeps a todo when delete confirmation is cancelled', async () => {
     const user = userEvent.setup();
     localStorage.setItem('TODOS_V1', JSON.stringify([

@@ -35,6 +35,7 @@ interface TodoDetailProps {
   onDelete: () => void;
   onDuplicate: () => void;
   onEdit: () => void;
+  onToggleComplete: () => void;
   todo: Todo;
 }
 
@@ -85,7 +86,7 @@ function getScheduleLabel(todo: Todo): string | null {
   return [dueDate ? `Limite ${dueDate}` : null, timeLabel].filter(Boolean).join(' ') || null;
 }
 
-function TodoDetail({ onClose, onDelete, onDuplicate, onEdit, todo }: TodoDetailProps) {
+function TodoDetail({ onClose, onDelete, onDuplicate, onEdit, onToggleComplete, todo }: TodoDetailProps) {
   const isTask = todo.kind === TODO_KINDS.task;
   const recurrenceLabel = todo.recurrence !== TODO_RECURRENCES.none
     ? TODO_RECURRENCE_LABELS[todo.recurrence]
@@ -93,6 +94,9 @@ function TodoDetail({ onClose, onDelete, onDuplicate, onEdit, todo }: TodoDetail
   const scheduleLabel = getScheduleLabel(todo);
   const completedSubtasks = todo.subtasks.filter(subtask => subtask.completed).length;
   const hasSubtasks = isTask && todo.subtasks.length > 0;
+  const isCompletedBySubtasks = todo.completed &&
+    todo.subtasks.length > 0 &&
+    todo.subtasks.every(subtask => subtask.completed);
 
   return (
     <article className="TodoDetail">
@@ -165,6 +169,18 @@ function TodoDetail({ onClose, onDelete, onDuplicate, onEdit, todo }: TodoDetail
       )}
 
       <div className="TodoDetail-actions">
+        {isTask && (
+          <button
+            type="button"
+            className="TodoDetail-button TodoDetail-button--success"
+            disabled={isCompletedBySubtasks}
+            onClick={onToggleComplete}
+          >
+            {isCompletedBySubtasks
+              ? 'Completada por subtareas'
+              : todo.completed ? 'Marcar pendiente' : 'Completar'}
+          </button>
+        )}
         <button type="button" className="TodoDetail-button TodoDetail-button--primary" onClick={onEdit}>
           Editar
         </button>

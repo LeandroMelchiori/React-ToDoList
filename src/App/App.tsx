@@ -477,6 +477,7 @@ function App() {
                             onDelete={() => startDeletingTodo(detailTodo.id)}
                             onDuplicate={() => duplicateTodo(detailTodo.id)}
                             onEdit={() => startEditingTodo(detailTodo.id)}
+                            onToggleComplete={() => completeTodo(detailTodo.id)}
                         />
                     ) : (
                         <TodoForm 
