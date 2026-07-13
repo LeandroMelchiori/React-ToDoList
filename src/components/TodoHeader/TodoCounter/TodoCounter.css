@@ -37,6 +37,11 @@
 
 @media (max-width: 640px) {
   .TodoCounterBlock {
-    padding-top: 36px;
+    padding-top: 18px;
+  }
+
+  .TodoCounter {
+    font-size: 28px;
+    line-height: 1.2;
   }
 }

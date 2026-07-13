@@ -360,20 +360,57 @@
 @media (max-width: 640px) {
   .TodoItem {
     align-items: flex-start;
-    flex-wrap: wrap;
-    padding: 16px;
+    cursor: default;
+    display: grid;
+    gap: 10px;
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: 14px;
   }
 
-  .TodoItem-content {
-    flex-basis: auto;
+  .TodoItem:hover {
+    transform: none;
   }
 
   .TodoItem-main {
-    flex-basis: calc(100% - 90px);
+    grid-column: 2;
+    grid-row: 1;
+    padding-right: 76px;
+  }
+
+  .TodoItem > .Icon-container-check {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .TodoItem > .Icon-container-edit,
+  .TodoItem > .Icon-container-delete {
+    position: absolute;
+    top: 12px;
+  }
+
+  .TodoItem > .Icon-container-edit {
+    right: 50px;
+  }
+
+  .TodoItem > .Icon-container-delete {
+    right: 10px;
+  }
+
+  .TodoItem-orderActions {
+    display: flex;
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .TodoItem-checklist {
+    max-width: none;
+  }
+
+  .TodoItem-p {
+    font-size: 16px;
   }
 
   .TodoItem-meta {
-    flex-basis: 100%;
     justify-content: flex-start;
   }
 }

@@ -335,3 +335,18 @@ test('keeps local boards and saved views in the production flow', async ({ page 
     },
   ]);
 });
+
+test('keeps the primary mobile shell inside the viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+
+  await expect(page.getByLabel('Agregar rapido')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Crear nueva tarea' })).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Cambiar vista' })).toBeVisible();
+
+  const hasHorizontalOverflow = await page.evaluate(() => (
+    document.documentElement.scrollWidth > document.documentElement.clientWidth
+  ));
+
+  expect(hasHorizontalOverflow).toBe(false);
+});

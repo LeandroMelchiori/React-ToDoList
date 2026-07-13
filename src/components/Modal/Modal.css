@@ -45,3 +45,20 @@
     transform: scale(1) translateY(0);
   }
 }
+
+@media (max-width: 560px) {
+  .ModalBackground {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .ModalContent {
+    max-height: 94dvh;
+    width: 100%;
+  }
+
+  .ModalContent > * {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+}

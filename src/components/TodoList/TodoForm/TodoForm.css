@@ -361,7 +361,7 @@
 
 @media (max-width: 480px) {
   .TodoForm {
-    padding: 22px;
+    padding: 20px 16px max(18px, env(safe-area-inset-bottom));
   }
 
   .TodoForm-buttonContainer {
