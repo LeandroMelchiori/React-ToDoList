@@ -1163,6 +1163,50 @@ describe('App', () => {
     ]);
   });
 
+  test('applies bulk actions only to compatible selected elements', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      { id: 'todo-pending', text: 'Preparar entrega', completed: false, order: 0 },
+      { id: 'todo-completed', text: 'Entrega anterior', completed: true, order: 1 },
+      {
+        id: 'event-exam',
+        text: 'Examen final',
+        kind: 'event',
+        dateType: 'event',
+        startDate: '2026-08-08',
+        completed: false,
+        order: 2,
+      },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Preparar entrega')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Seleccionar tareas' }));
+    await user.click(screen.getByLabelText('Seleccionar Preparar entrega'));
+    await user.click(screen.getByLabelText('Seleccionar Examen final'));
+    await user.click(within(screen.getByRole('region', { name: 'Acciones masivas' }))
+      .getByRole('button', { name: 'Completar' }));
+
+    expect(screen.getByText('1 elemento completado.')).toBeInTheDocument();
+    let storedTodos = JSON.parse(localStorage.getItem('TODOS_V1'));
+    expect(storedTodos.find(todo => todo.id === 'todo-pending').completed).toBe(true);
+    expect(storedTodos.find(todo => todo.id === 'event-exam').completed).toBe(false);
+
+    await user.click(screen.getByLabelText('Seleccionar Entrega anterior'));
+    await user.click(within(screen.getByRole('region', { name: 'Acciones masivas' }))
+      .getByRole('button', { name: 'Archivar completadas' }));
+    storedTodos = JSON.parse(localStorage.getItem('TODOS_V1'));
+    expect(storedTodos.find(todo => todo.id === 'todo-completed').archivedAt).toEqual(expect.any(String));
+
+    await user.click(screen.getByLabelText('Seleccionar Examen final'));
+    await user.click(within(screen.getByRole('region', { name: 'Acciones masivas' }))
+      .getByRole('button', { name: 'Eliminar' }));
+    const bulkDeleteDialog = screen.getByRole('dialog', { name: 'Eliminar seleccion' });
+    await user.click(within(bulkDeleteDialog).getByRole('button', { name: 'Eliminar 1' }));
+
+    expect(screen.queryByText('Examen final')).not.toBeInTheDocument();
+  });
+
   test('creates and toggles todo subtasks', async () => {
     const user = userEvent.setup();
     renderApp();

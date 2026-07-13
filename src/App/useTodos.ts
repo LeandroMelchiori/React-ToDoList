@@ -438,6 +438,50 @@ function useTodos() {
         saveActiveTodos(newTodos);
     }
 
+    const completeTodos = (ids: string[]) => {
+        const selectedIds = new Set(ids);
+        let completedCount = 0;
+        const newTodos = normalizedTodos.map(todo => {
+            if (!selectedIds.has(todo.id) || !isTaskTodo(todo) || isTodoArchived(todo)) {
+                return todo;
+            }
+
+            if (todo.recurrence !== TODO_RECURRENCES.none) {
+                const occurrenceDate = getTodoNextOccurrenceDate(todo);
+
+                if (!occurrenceDate || isTodoOccurrenceCompleted(todo, occurrenceDate)) {
+                    return todo;
+                }
+
+                completedCount += 1;
+
+                return {
+                    ...setTodoOccurrenceCompletion(todo, occurrenceDate, true),
+                    subtasks: todo.subtasks.map(subtask => ({ ...subtask, completed: false })),
+                };
+            }
+
+            if (todo.completed) {
+                return todo;
+            }
+
+            completedCount += 1;
+
+            return {
+                ...todo,
+                completed: true,
+                completedAt: new Date().toISOString(),
+                subtasks: todo.subtasks.map(subtask => ({ ...subtask, completed: true })),
+            };
+        });
+
+        if (completedCount > 0) {
+            saveActiveTodos(newTodos);
+        }
+
+        return completedCount;
+    }
+
     const deleteTodo = (id: string) => {
         const todoToDelete = normalizedTodos.find(todo => todo.id === id);
 
@@ -485,6 +529,46 @@ function useTodos() {
         ));
 
         return { ok: true };
+    }
+
+    const archiveTodos = (ids: string[]) => {
+        const selectedIds = new Set(ids);
+        const archivedAt = new Date().toISOString();
+        let archivedCount = 0;
+        const newTodos = normalizedTodos.map(todo => {
+            if (
+                !selectedIds.has(todo.id) ||
+                !isTaskTodo(todo) ||
+                todo.recurrence !== TODO_RECURRENCES.none ||
+                !todo.completed ||
+                isTodoArchived(todo)
+            ) {
+                return todo;
+            }
+
+            archivedCount += 1;
+
+            return { ...todo, archivedAt };
+        });
+
+        if (archivedCount > 0) {
+            saveActiveTodos(newTodos);
+            resetTodoView();
+        }
+
+        return archivedCount;
+    }
+
+    const deleteTodos = (ids: string[]) => {
+        const selectedIds = new Set(ids);
+        const newTodos = reindexTodos(normalizedTodos.filter(todo => !selectedIds.has(todo.id)));
+        const deletedCount = normalizedTodos.length - newTodos.length;
+
+        if (deletedCount > 0) {
+            saveActiveTodos(newTodos);
+        }
+
+        return deletedCount;
     }
 
     const addTodo = (text: string, details: TodoDetails = {}): TodoActionResult => {
@@ -1045,8 +1129,11 @@ function useTodos() {
         applySavedView,
         deleteSavedView,
         completeTodo,
+        completeTodos,
         deleteTodo,
+        deleteTodos,
         archiveTodo,
+        archiveTodos,
         unarchiveTodo,
         duplicateTodo,
         toggleSubtask,

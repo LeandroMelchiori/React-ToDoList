@@ -182,6 +182,9 @@ interface TodoItemProps {
   dropPosition?: 'before' | 'after' | null;
   canMoveUp?: boolean;
   canMoveDown?: boolean;
+  selectionMode?: boolean;
+  selected?: boolean;
+  onSelect?: () => void;
   onComplete: () => void;
   onDelete: () => void;
   onEdit: () => void;
@@ -269,24 +272,36 @@ function TodoItem(props: TodoItemProps) {
       onDrop={props.onDrop}
       onDragEnd={props.onDragEnd}
     >
-      <div
-        className="TodoItem-orderActions"
-        role="group"
-        aria-label={`Ordenar tarea ${props.text}`}
-        onKeyDown={handleButtonGroupNavigation}
-      >
-        <MoveIcon
-          direction="up"
-          disabled={!props.canMoveUp}
-          onMove={props.onMoveUp || (() => {})}
-        />
-        <MoveIcon
-          direction="down"
-          disabled={!props.canMoveDown}
-          onMove={props.onMoveDown || (() => {})}
-        />
-      </div>
-      {isTaskKind && (
+      {props.selectionMode && (
+        <label className="TodoItem-select">
+          <input
+            type="checkbox"
+            checked={Boolean(props.selected)}
+            aria-label={`Seleccionar ${props.text}`}
+            onChange={props.onSelect}
+          />
+        </label>
+      )}
+      {!props.selectionMode && (
+        <div
+          className="TodoItem-orderActions"
+          role="group"
+          aria-label={`Ordenar tarea ${props.text}`}
+          onKeyDown={handleButtonGroupNavigation}
+        >
+          <MoveIcon
+            direction="up"
+            disabled={!props.canMoveUp}
+            onMove={props.onMoveUp || (() => {})}
+          />
+          <MoveIcon
+            direction="down"
+            disabled={!props.canMoveDown}
+            onMove={props.onMoveDown || (() => {})}
+          />
+        </div>
+      )}
+      {isTaskKind && !props.selectionMode && (
         <CompleteIcon
           completed={displayCompleted}
           disabled={isCompletedBySubtasks}
@@ -412,12 +427,12 @@ function TodoItem(props: TodoItemProps) {
           )}
         </div>
       </div>
-      <EditIcon 
-        onEdit={props.onEdit}
-      />
-      <DeleteIcon 
-        onDelete={props.onDelete}
-      />
+      {!props.selectionMode && (
+        <>
+          <EditIcon onEdit={props.onEdit} />
+          <DeleteIcon onDelete={props.onDelete} />
+        </>
+      )}
     </li>
   );
 }

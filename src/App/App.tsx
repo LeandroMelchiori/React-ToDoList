@@ -32,6 +32,8 @@ import { ChangeAlert } from '../components/ChangeAlert/ChangeAlert';
 import { PwaStatus } from '../components/PwaStatus/PwaStatus';
 import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle';
 import { UndoToast } from '../components/UndoToast/UndoToast';
+import { TodoBulkActions } from '../components/TodoList/TodoBulkActions/TodoBulkActions';
+import { BulkDeleteDialog } from '../components/TodoList/BulkDeleteDialog/BulkDeleteDialog';
 import { usePwaStatus } from './usePwaStatus';
 import { useTheme } from './useTheme';
 import { useTodoReminders } from './useTodoReminders';
@@ -66,6 +68,10 @@ function App() {
     } = usePwaStatus();
     const searchInputRef = React.useRef<HTMLInputElement>(null);
     const [todoViewMode, setTodoViewMode] = React.useState<TodoViewMode>(settings.defaultView);
+    const [isSelectionMode, setIsSelectionMode] = React.useState(false);
+    const [selectedTodoIds, setSelectedTodoIds] = React.useState<Set<string>>(() => new Set());
+    const [bulkActionMessage, setBulkActionMessage] = React.useState('');
+    const [isBulkDeleteOpen, setIsBulkDeleteOpen] = React.useState(false);
     const [dragState, setDragState] = React.useState<{
         draggedTodoId: string | null;
         targetTodoId: string | null;
@@ -117,7 +123,9 @@ function App() {
         selectTagFilter,
         clearFacetFilters,
         completeTodo,
+        completeTodos,
         archiveTodo,
+        archiveTodos,
         unarchiveTodo,
         toggleSubtask,
         moveTodo,
@@ -132,6 +140,7 @@ function App() {
         closeModal,
         addTodo,
         duplicateTodo,
+        deleteTodos,
         updateTodo,
         exportTodos,
         exportCalendar,
@@ -142,6 +151,12 @@ function App() {
         syncTodos
     } = stateUpdaters;
     const reminderStatus = useTodoReminders(reminderTodos);
+    const visibleTodoIds = React.useMemo(
+        () => visibleTodos.map(todo => todo.id),
+        [visibleTodos]
+    );
+    const allVisibleSelected = visibleTodoIds.length > 0 &&
+        visibleTodoIds.every(id => selectedTodoIds.has(id));
     const changeSettings = (nextSettings: Partial<TodoSettings>) => {
         updateSettings(nextSettings);
 
@@ -165,6 +180,73 @@ function App() {
             position: null,
         });
     }, []);
+    const closeSelectionMode = () => {
+        setIsSelectionMode(false);
+        setSelectedTodoIds(new Set());
+        setBulkActionMessage('');
+    };
+    const changeTodoView = (view: TodoViewMode) => {
+        setTodoViewMode(view);
+
+        if (view !== 'list') {
+            closeSelectionMode();
+        }
+    };
+    const toggleTodoSelection = (todoId: string) => {
+        setSelectedTodoIds(currentIds => {
+            const nextIds = new Set(currentIds);
+
+            if (nextIds.has(todoId)) {
+                nextIds.delete(todoId);
+            } else {
+                nextIds.add(todoId);
+            }
+
+            return nextIds;
+        });
+        setBulkActionMessage('');
+    };
+    const toggleVisibleSelection = () => {
+        setSelectedTodoIds(currentIds => {
+            const nextIds = new Set(currentIds);
+
+            if (allVisibleSelected) {
+                visibleTodoIds.forEach(id => nextIds.delete(id));
+            } else {
+                visibleTodoIds.forEach(id => nextIds.add(id));
+            }
+
+            return nextIds;
+        });
+        setBulkActionMessage('');
+    };
+    const completeSelectedTodos = () => {
+        const completedCount = completeTodos(Array.from(selectedTodoIds));
+        setSelectedTodoIds(new Set());
+        setBulkActionMessage(completedCount > 0
+            ? completedCount === 1
+                ? '1 elemento completado.'
+                : `${completedCount} elementos completados.`
+            : 'No habia tareas pendientes para completar.');
+    };
+    const archiveSelectedTodos = () => {
+        const archivedCount = archiveTodos(Array.from(selectedTodoIds));
+        setSelectedTodoIds(new Set());
+        setBulkActionMessage(archivedCount > 0
+            ? archivedCount === 1
+                ? '1 tarea archivada.'
+                : `${archivedCount} tareas archivadas.`
+            : 'Selecciona tareas completadas para archivarlas.');
+    };
+    const confirmBulkDelete = () => {
+        deleteTodos(Array.from(selectedTodoIds));
+        setIsBulkDeleteOpen(false);
+        closeSelectionMode();
+    };
+
+    React.useEffect(() => {
+        closeSelectionMode();
+    }, [activeBoardId]);
 
     const startTodoDrag = React.useCallback((todoId: string, event: React.DragEvent<any>) => {
         event.dataTransfer.effectAllowed = 'move';
@@ -361,7 +443,7 @@ function App() {
 
             <TodoViewToggle
                 activeView={todoViewMode}
-                onChangeView={setTodoViewMode}
+                onChangeView={changeTodoView}
             />
 
             {todoViewMode === 'today' ? (
@@ -454,6 +536,23 @@ function App() {
                     )}
                 />
             ) : (
+                <>
+                <TodoBulkActions
+                    allVisibleSelected={allVisibleSelected}
+                    isSelectionMode={isSelectionMode}
+                    message={bulkActionMessage}
+                    selectedCount={selectedTodoIds.size}
+                    visibleCount={visibleTodoIds.length}
+                    onStart={() => {
+                        setIsSelectionMode(true);
+                        setBulkActionMessage('');
+                    }}
+                    onCancel={closeSelectionMode}
+                    onSelectAll={toggleVisibleSelection}
+                    onComplete={completeSelectedTodos}
+                    onArchive={archiveSelectedTodos}
+                    onDelete={() => setIsBulkDeleteOpen(true)}
+                />
                 <TodoList
                     error={error}
                     loading={loading}
@@ -494,6 +593,8 @@ function App() {
                                 recurrenceEndDate={todo.recurrenceEndDate}
                                 recurrenceCount={todo.recurrenceCount}
                                 completedOccurrences={todo.completedOccurrences}
+                                selectionMode={isSelectionMode}
+                                selected={selectedTodoIds.has(todo.id)}
                                 reminder={todo.reminder}
                                 archivedAt={todo.archivedAt}
                                 project={todo.project}
@@ -507,11 +608,12 @@ function App() {
                                 onToggleSubtask={(subtaskId) => toggleSubtask(todo.id, subtaskId)}
                                 onMoveUp={() => moveTodo(todo.id, 'up')}
                                 onMoveDown={() => moveTodo(todo.id, 'down')}
-                                onDragStart={(event) => startTodoDrag(todo.id, event)}
-                                onDragOver={(event) => updateTodoDropTarget(todo.id, event)}
-                                onDragLeave={(event) => clearTodoDropTarget(todo.id, event)}
-                                onDrop={(event) => dropTodo(todo.id, event)}
-                                onDragEnd={clearDragState}
+                                onSelect={() => toggleTodoSelection(todo.id)}
+                                onDragStart={isSelectionMode ? undefined : (event) => startTodoDrag(todo.id, event)}
+                                onDragOver={isSelectionMode ? undefined : (event) => updateTodoDropTarget(todo.id, event)}
+                                onDragLeave={isSelectionMode ? undefined : (event) => clearTodoDropTarget(todo.id, event)}
+                                onDrop={isSelectionMode ? undefined : (event) => dropTodo(todo.id, event)}
+                                onDragEnd={isSelectionMode ? undefined : clearDragState}
                                 onFilterProject={() => selectProjectFilter(todo.project)}
                                 onFilterTag={selectTagFilter}
                                 onEdit={() => startViewingTodo(todo.id)}
@@ -519,8 +621,19 @@ function App() {
                         />
                     )}
                 />
+                </>
             )}
             </main>
+
+            {isBulkDeleteOpen && (
+                <Modal label="Eliminar seleccion" onClose={() => setIsBulkDeleteOpen(false)}>
+                    <BulkDeleteDialog
+                        count={selectedTodoIds.size}
+                        onCancel={() => setIsBulkDeleteOpen(false)}
+                        onConfirm={confirmBulkDelete}
+                    />
+                </Modal>
+            )}
 
             {openModal && (
                 <Modal label={modalLabel} onClose={closeModal}>

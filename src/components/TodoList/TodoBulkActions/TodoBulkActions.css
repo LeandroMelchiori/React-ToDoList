@@ -1,0 +1,91 @@
+.TodoBulkActions {
+  margin: 20px auto 0;
+  max-width: 860px;
+}
+
+.TodoBulkActions button {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  min-height: 40px;
+  padding: 0 12px;
+}
+
+.TodoBulkActions button:hover:not(:disabled),
+.TodoBulkActions button:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-focus);
+  color: var(--color-text);
+  outline: none;
+}
+
+.TodoBulkActions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.TodoBulkActions--active {
+  align-items: center;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 10px 12px;
+}
+
+.TodoBulkActions--active strong {
+  color: var(--color-text-strong);
+  flex: 0 0 auto;
+  font-size: 13px;
+}
+
+.TodoBulkActions-summary {
+  display: grid;
+  gap: 3px;
+}
+
+.TodoBulkActions-summary span {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.TodoBulkActions-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.TodoBulkActions .TodoBulkActions-danger {
+  color: var(--color-danger-hover);
+}
+
+.TodoBulkActions .TodoBulkActions-danger:hover:not(:disabled),
+.TodoBulkActions .TodoBulkActions-danger:focus-visible {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+@media (max-width: 680px) {
+  .TodoBulkActions--active {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .TodoBulkActions-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .TodoBulkActions button {
+    min-height: 44px;
+  }
+}
