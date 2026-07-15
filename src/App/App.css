@@ -77,7 +77,10 @@
   margin: 0;
 }
 
-.App-viewControls .App-commandButton {
+.App-workspaceActions {
+  align-items: center;
+  display: flex;
+  gap: 8px;
   grid-column: 3;
   justify-self: end;
 }
@@ -143,6 +146,11 @@
     gap: 8px;
     margin-top: 12px;
     width: 100%;
+  }
+
+  .App-workspaceActions {
+    justify-content: flex-end;
+    margin-top: 8px;
   }
 
   .App-commandButton {

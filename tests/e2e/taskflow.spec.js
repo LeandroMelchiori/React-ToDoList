@@ -1,8 +1,9 @@
 import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 
-async function openTools(page) {
-  await page.getByRole('button', { name: /Herramientas/ }).click();
+async function openTools(page, sectionName) {
+  await page.getByRole('button', { name: 'Opciones' }).click();
+  await page.getByRole('button', { name: new RegExp(sectionName) }).click();
 }
 
 function getBoardSwitcher(page) {
@@ -125,7 +126,7 @@ test('exports current todos as a JSON backup', async ({ page }) => {
   await page.getByRole('button', { name: 'Usar plantilla Plan semanal' }).click();
   await expect(page.getByText('Definir prioridades de la semana')).toBeVisible();
 
-  await openTools(page);
+  await openTools(page, 'Datos y copias');
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Exportar backup completo' }).click();
   const download = await downloadPromise;
@@ -160,7 +161,7 @@ test('previews and merges imported todos without duplicates', async ({ page }) =
   await page.getByRole('button', { name: 'Usar plantilla Preparar entrevista' }).click();
   await expect(page.getByText('Preparar entrevista tecnica', { exact: true })).toBeVisible();
 
-  await openTools(page);
+  await openTools(page, 'Datos y copias');
   await page.getByLabel('Importar backup JSON').setInputFiles({
     name: 'taskflow-e2e.json',
     mimeType: 'application/json',
@@ -196,7 +197,7 @@ test('previews and merges imported todos without duplicates', async ({ page }) =
 test('restores a full workspace backup', async ({ page }) => {
   await page.goto('/');
 
-  await openTools(page);
+  await openTools(page, 'Datos y copias');
   await page.getByLabel('Importar backup JSON').setInputFiles({
     name: 'taskflow-workspace.json',
     mimeType: 'application/json',
@@ -266,7 +267,7 @@ test('keeps local boards and saved views in the production flow', async ({ page 
   await dialog.getByRole('button', { name: 'Agregar', exact: true }).click();
   await expect(page.getByText('Plan personal')).toBeVisible();
 
-  await openTools(page);
+  await openTools(page, 'Tableros y filtros');
   const createBoardForm = page.getByRole('form', { name: 'Crear tablero' });
   await createBoardForm.getByLabel('Nombre del tablero', { exact: true }).fill('Talleres');
   await createBoardForm.getByRole('button', { name: 'Crear' }).click();

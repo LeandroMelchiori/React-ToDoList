@@ -509,58 +509,6 @@ function App() {
                         onClearFacetFilters={clearFacetFilters}
                     />
                 </TodoMobileSummary>
-                <TodoHeaderTools>
-                    <TodoReminderStatus
-                        isSupported={reminderStatus.isSupported}
-                        permission={reminderStatus.permission}
-                        scheduledCount={reminderStatus.scheduledCount}
-                        onRequestPermission={reminderStatus.requestPermission}
-                    />
-                    <TodoBoards
-                        activeBoardId={activeBoardId}
-                        boards={todoBoards}
-                        onDeleteBoard={deleteBoard}
-                        onCreateBoard={createBoard}
-                        onRenameBoard={renameBoard}
-                        onSelectBoard={selectTodoBoard}
-                        showBoardList={false}
-                        showManagement
-                    />
-                    <TodoSavedViews
-                        savedViews={savedViews}
-                        onSaveView={saveCurrentView}
-                        onApplyView={applySavedView}
-                        onDeleteView={deleteSavedView}
-                    />
-                    <TodoBackupActions
-                        activeBoardId={activeBoardId}
-                        onExportTodos={exportTodos}
-                        onExportCalendar={exportCalendar}
-                        onPreviewImport={previewTodosImport}
-                        onPreviewCalendarImport={previewCalendarImport}
-                        onImportTodos={importTodos}
-                        onImportCalendar={importCalendar}
-                    />
-                    <TodoDataCenter
-                        agendaCount={totalTodos - totalTasks}
-                        archivedCount={filterCounts.archived}
-                        boardCount={todoBoards.length}
-                        lastSnapshot={todoSnapshots[0] || null}
-                        onCreateSnapshot={createManualTodoSnapshot}
-                        savedViewCount={savedViews.length}
-                        snapshotCount={todoSnapshots.length}
-                        taskCount={totalTasks}
-                    />
-                    <TodoSnapshots
-                        snapshots={todoSnapshots}
-                        onDeleteSnapshot={deleteTodoSnapshot}
-                        onRestoreSnapshot={restoreTodoSnapshot}
-                    />
-                    <TodoSettingsPanel
-                        settings={settings}
-                        onChange={changeSettings}
-                    />
-                </TodoHeaderTools>
             </TodoHeader>
 
             <CreateTodoButton
@@ -573,14 +521,101 @@ function App() {
                     activeView={todoViewMode}
                     onChangeView={changeTodoView}
                 />
-                <button
-                    aria-keyshortcuts="Control+K Meta+K"
-                    className="App-commandButton"
-                    onClick={() => setIsCommandPaletteOpen(true)}
-                    type="button"
-                >
-                    Comandos <kbd>Ctrl K</kbd>
-                </button>
+                <div className="App-workspaceActions">
+                    <button
+                        aria-keyshortcuts="Control+K Meta+K"
+                        className="App-commandButton"
+                        onClick={() => setIsCommandPaletteOpen(true)}
+                        type="button"
+                    >
+                        Comandos <kbd>Ctrl K</kbd>
+                    </button>
+                    <TodoHeaderTools
+                        loading={loading}
+                        sections={[
+                            {
+                                id: 'reminders',
+                                label: 'Recordatorios',
+                                description: 'Permisos y avisos locales',
+                                content: (
+                                    <TodoReminderStatus
+                                        isSupported={reminderStatus.isSupported}
+                                        permission={reminderStatus.permission}
+                                        scheduledCount={reminderStatus.scheduledCount}
+                                        onRequestPermission={reminderStatus.requestPermission}
+                                    />
+                                ),
+                            },
+                            {
+                                id: 'organization',
+                                label: 'Tableros y filtros',
+                                description: 'Organizacion y filtros guardados',
+                                content: [
+                                    <TodoBoards
+                                        activeBoardId={activeBoardId}
+                                        boards={todoBoards}
+                                        key="boards"
+                                        onDeleteBoard={deleteBoard}
+                                        onCreateBoard={createBoard}
+                                        onRenameBoard={renameBoard}
+                                        onSelectBoard={selectTodoBoard}
+                                        showBoardList={false}
+                                        showManagement
+                                    />,
+                                    <TodoSavedViews
+                                        key="saved-views"
+                                        savedViews={savedViews}
+                                        onSaveView={saveCurrentView}
+                                        onApplyView={applySavedView}
+                                        onDeleteView={deleteSavedView}
+                                    />,
+                                ],
+                            },
+                            {
+                                id: 'data',
+                                label: 'Datos y copias',
+                                description: 'Importar, exportar y recuperar',
+                                content: [
+                                    <TodoBackupActions
+                                        activeBoardId={activeBoardId}
+                                        key="backups"
+                                        onExportTodos={exportTodos}
+                                        onExportCalendar={exportCalendar}
+                                        onPreviewImport={previewTodosImport}
+                                        onPreviewCalendarImport={previewCalendarImport}
+                                        onImportTodos={importTodos}
+                                        onImportCalendar={importCalendar}
+                                    />,
+                                    <TodoDataCenter
+                                        agendaCount={totalTodos - totalTasks}
+                                        archivedCount={filterCounts.archived}
+                                        boardCount={todoBoards.length}
+                                        key="data-center"
+                                        lastSnapshot={todoSnapshots[0] || null}
+                                        onCreateSnapshot={createManualTodoSnapshot}
+                                        savedViewCount={savedViews.length}
+                                        snapshotCount={todoSnapshots.length}
+                                        taskCount={totalTasks}
+                                    />,
+                                    <TodoSnapshots
+                                        key="snapshots"
+                                        snapshots={todoSnapshots}
+                                        onDeleteSnapshot={deleteTodoSnapshot}
+                                        onRestoreSnapshot={restoreTodoSnapshot}
+                                    />,
+                                ],
+                            },
+                            {
+                                id: 'settings',
+                                label: 'Preferencias',
+                                description: 'Vista, densidad y carga rapida',
+                                content: (
+                                    <TodoSettingsPanel settings={settings} onChange={changeSettings} />
+                                ),
+                            },
+                        ]}
+                    />
+                </div>
             </div>
 
             {settings.showQuickAdd && (

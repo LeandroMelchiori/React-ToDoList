@@ -10,8 +10,9 @@ function renderApp() {
   return render(<App />);
 }
 
-async function openTools(user) {
-  await user.click(screen.getByRole('button', { name: /Herramientas/ }));
+async function openTools(user, sectionName) {
+  await user.click(screen.getByRole('button', { name: 'Opciones' }));
+  await user.click(screen.getByRole('button', { name: new RegExp(sectionName) }));
 }
 
 async function openFilters(user) {
@@ -261,7 +262,7 @@ describe('App', () => {
       reminder: '30-minutes',
     }));
 
-    await openTools(user);
+    await openTools(user, 'Recordatorios');
     await user.click(within(screen.getByLabelText('Recordatorios')).getByRole('button', { name: 'Activar' }));
 
     await waitFor(() => expect(requestPermission).toHaveBeenCalledTimes(1));
@@ -750,7 +751,7 @@ describe('App', () => {
 
     expect(screen.getByText('Plan personal')).toBeInTheDocument();
 
-    await openTools(user);
+    await openTools(user, 'Tableros y filtros');
     const createBoardForm = screen.getByRole('form', { name: 'Crear tablero' });
     await user.type(within(createBoardForm).getByLabelText('Nombre del tablero'), 'Talleres');
     await user.click(within(createBoardForm).getByRole('button', { name: 'Crear' }));
@@ -800,7 +801,7 @@ describe('App', () => {
     await user.type(screen.getByLabelText('Nueva tarea'), 'Plan personal');
     await user.click(screen.getByRole('button', { name: 'Agregar' }));
 
-    await openTools(user);
+    await openTools(user, 'Tableros y filtros');
     const createBoardForm = screen.getByRole('form', { name: 'Crear tablero' });
     await user.type(within(createBoardForm).getByLabelText('Nombre del tablero'), 'Talleres');
     await user.click(within(createBoardForm).getByRole('button', { name: 'Crear' }));
@@ -809,6 +810,7 @@ describe('App', () => {
     await user.type(screen.getByLabelText('Nueva tarea'), 'Preparar taller');
     await user.click(screen.getByRole('button', { name: 'Agregar' }));
 
+    await openTools(user, 'Tableros y filtros');
     const boardNameInput = screen.getByLabelText('Nombre del tablero actual');
     await user.clear(boardNameInput);
     await user.type(boardNameInput, 'Capacitaciones');
@@ -1177,7 +1179,7 @@ describe('App', () => {
     await user.type(screen.getByLabelText('Buscar tareas'), 'demo');
     await openSummary(user);
     await user.click(screen.getByRole('button', { name: 'Filtrar por etiqueta frontend' }));
-    await openTools(user);
+    await openTools(user, 'Tableros y filtros');
     await user.type(screen.getByLabelText('Nombre para estos filtros'), 'Demo frontend');
     await user.click(screen.getByRole('button', { name: 'Guardar filtros' }));
 
@@ -1190,6 +1192,7 @@ describe('App', () => {
     expect(screen.getByText('Preparar demo')).toBeInTheDocument();
     expect(screen.getByText('Ordenar apuntes')).toBeInTheDocument();
 
+    await openTools(user, 'Tableros y filtros');
     await user.click(screen.getByRole('button', { name: 'Demo frontend' }));
 
     expect(screen.getByText('Preparar demo')).toBeInTheDocument();
@@ -1581,7 +1584,7 @@ describe('App', () => {
     renderApp();
 
     expect(await screen.findByText('Organiza tu dia con una primera tarea')).toBeInTheDocument();
-    await openTools(user);
+    await openTools(user, 'Preferencias');
 
     await user.selectOptions(screen.getByLabelText('Densidad'), 'compact');
     expect(screen.getByRole('main')).toHaveClass('App--compact');
@@ -1725,7 +1728,7 @@ describe('App', () => {
 
     expect(await screen.findByText('Exportar tareas')).toBeInTheDocument();
 
-    await openTools(user);
+    await openTools(user, 'Datos y copias');
     await user.click(screen.getByRole('button', { name: 'Exportar backup completo' }));
 
     const [backupBlob] = createObjectURL.mock.calls[0];
@@ -1798,7 +1801,7 @@ describe('App', () => {
 
     expect(await screen.findByText('Examen de algebra')).toBeInTheDocument();
 
-    await openTools(user);
+    await openTools(user, 'Datos y copias');
     await user.click(screen.getByRole('button', { name: 'Exportar calendario ICS' }));
 
     const [calendarBlob] = createObjectURL.mock.calls[0];
@@ -1851,7 +1854,7 @@ describe('App', () => {
 
     expect(await screen.findByText('Examen de algebra')).toBeInTheDocument();
 
-    await openTools(user);
+    await openTools(user, 'Datos y copias');
     await user.upload(screen.getByLabelText('Importar calendario ICS'), calendarFile);
 
     expect(screen.getByRole('region', { name: 'Previsualizacion de importacion' })).toBeInTheDocument();
@@ -1892,7 +1895,7 @@ describe('App', () => {
 
     expect(await screen.findByText('Organiza tu dia con una primera tarea')).toBeInTheDocument();
 
-    await openTools(user);
+    await openTools(user, 'Datos y copias');
     await user.upload(screen.getByLabelText('Importar backup JSON'), backupFile);
 
     expect(screen.getByRole('region', { name: 'Previsualizacion de importacion' })).toBeInTheDocument();
@@ -1938,7 +1941,7 @@ describe('App', () => {
 
     expect(await screen.findByText('Preparar demo')).toBeInTheDocument();
 
-    await openTools(user);
+    await openTools(user, 'Datos y copias');
     await user.upload(screen.getByLabelText('Importar backup JSON'), backupFile);
 
     expect(screen.getByText('taskflow-merge.json: 2 tareas encontradas.')).toBeInTheDocument();
@@ -1990,7 +1993,7 @@ describe('App', () => {
 
     expect(await screen.findByText('Preparar demo')).toBeInTheDocument();
 
-    await openTools(user);
+    await openTools(user, 'Datos y copias');
     await user.upload(screen.getByLabelText('Importar backup JSON'), backupFile);
 
     expect(screen.getByText('taskflow-board-import.json: 2 tareas encontradas.')).toBeInTheDocument();
@@ -2074,7 +2077,7 @@ describe('App', () => {
 
     expect(await screen.findByText('Tarea anterior')).toBeInTheDocument();
 
-    await openTools(user);
+    await openTools(user, 'Datos y copias');
     await user.upload(screen.getByLabelText('Importar backup JSON'), backupFile);
 
     expect(screen.getByText('taskflow-workspace.json: 2 tableros, 2 tareas y 1 filtro guardado.')).toBeInTheDocument();
@@ -2087,6 +2090,8 @@ describe('App', () => {
 
     const boardSwitcher = screen.getByRole('group', { name: 'Cambiar tablero' });
     expect(within(boardSwitcher).getByRole('button', { name: /Trabajo/ })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Volver a opciones' }));
+    await user.click(screen.getByRole('button', { name: /Tableros y filtros/ }));
     expect(screen.getByRole('button', { name: 'Trabajo activo' })).toBeInTheDocument();
 
     await waitFor(() => {
@@ -2512,7 +2517,7 @@ describe('App', () => {
       expect(snapshots[0].backup.todos[0].text).toBe('Conservar antes de borrar');
     });
 
-    await openTools(user);
+    await openTools(user, 'Datos y copias');
 
     expect(screen.getByRole('heading', { name: 'Copias automaticas' })).toBeInTheDocument();
     expect(screen.getByText('Antes de eliminar una tarea')).toBeInTheDocument();
@@ -2530,7 +2535,7 @@ describe('App', () => {
     renderApp();
 
     expect(await screen.findByText('Preparar respaldo')).toBeInTheDocument();
-    await openTools(user);
+    await openTools(user, 'Datos y copias');
 
     expect(screen.getByRole('heading', { name: 'Datos locales' })).toBeInTheDocument();
     expect(screen.getByText('Sin backend')).toBeInTheDocument();
