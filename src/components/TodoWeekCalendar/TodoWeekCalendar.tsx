@@ -7,6 +7,7 @@ import {
   TodoDateType,
   TodoKind,
   TodoRecurrence,
+  TodoTimeBlock,
 } from '../../App/todoModel';
 import { getTodoScheduleConflicts } from '../../App/todoScheduleConflicts';
 import {
@@ -61,6 +62,11 @@ type UntimedWeekDayGroup = {
   dayLabel: string;
   isToday: boolean;
   todos: Todo[];
+};
+
+type TodoTimeBlockEntry = {
+  timeBlock: TodoTimeBlock;
+  todo: Todo;
 };
 
 interface TodoWeekCalendarProps {
@@ -167,18 +173,44 @@ function getWeekTimedTodos(todos: Todo[], weekDays: WeekDay[]): Todo[] {
   );
 }
 
+function getWeekTimeBlockEntries(todos: Todo[], weekDays: WeekDay[]): TodoTimeBlockEntry[] {
+  const weekDateValues = new Set(weekDays.map(day => day.dateValue));
+
+  return todos.flatMap(todo => (todo.timeBlocks || [])
+    .filter(timeBlock => weekDateValues.has(timeBlock.date))
+    .map(timeBlock => ({ timeBlock, todo })));
+}
+
 function getHourSlots(todos: Todo[], weekDays: WeekDay[]): number[] {
   const timedTodos = getWeekTimedTodos(todos, weekDays);
+  const timeBlockEntries = getWeekTimeBlockEntries(todos, weekDays);
   const startHours = timedTodos
     .map(getTodoStartHour)
-    .filter((hour): hour is number => hour !== null);
+    .filter((hour): hour is number => hour !== null)
+    .concat(timeBlockEntries
+      .map(entry => getTodoStartHour(entry.timeBlock))
+      .filter((hour): hour is number => hour !== null));
   const endHours = timedTodos
     .map(getTodoEndHour)
-    .filter((hour): hour is number => hour !== null);
+    .filter((hour): hour is number => hour !== null)
+    .concat(timeBlockEntries
+      .map(entry => getTodoEndHour(entry.timeBlock))
+      .filter((hour): hour is number => hour !== null));
   const startHour = Math.max(0, Math.min(DEFAULT_START_HOUR, ...startHours));
   const endHour = Math.min(23, Math.max(DEFAULT_END_HOUR, ...endHours));
 
   return Array.from({ length: endHour - startHour + 1 }, (_, index) => startHour + index);
+}
+
+function getTimedTimeBlocksForSlot(todos: Todo[], dateValue: string, hour: number): TodoTimeBlockEntry[] {
+  return todos
+    .flatMap(todo => (todo.timeBlocks || [])
+      .filter(timeBlock => timeBlock.date === dateValue && getTodoStartHour(timeBlock) === hour)
+      .map(timeBlock => ({ timeBlock, todo })))
+    .sort((firstEntry, secondEntry) =>
+      firstEntry.timeBlock.startTime.localeCompare(secondEntry.timeBlock.startTime) ||
+      firstEntry.todo.order - secondEntry.todo.order
+    );
 }
 
 function getTimedTodosForSlot(todos: Todo[], dateValue: string, hour: number): Todo[] {
@@ -269,6 +301,10 @@ function TodoWeekCalendar({
   const weekDays = React.useMemo(() => getWeekDays(anchorDate), [anchorDate]);
   const hourSlots = React.useMemo(() => getHourSlots(visibleTodos, weekDays), [visibleTodos, weekDays]);
   const timedTodos = React.useMemo(() => getWeekTimedTodos(visibleTodos, weekDays), [visibleTodos, weekDays]);
+  const timedTimeBlocks = React.useMemo(
+    () => getWeekTimeBlockEntries(visibleTodos, weekDays),
+    [visibleTodos, weekDays]
+  );
   const untimedTodos = React.useMemo(() => getUntimedWeekTodos(visibleTodos, weekDays), [visibleTodos, weekDays]);
   const untimedTodosByDay = React.useMemo(() => getUntimedTodosByDay(untimedTodos, weekDays), [untimedTodos, weekDays]);
   const unscheduledTodos = React.useMemo(() => getUnscheduledTodos(visibleTodos), [visibleTodos]);
@@ -428,6 +464,7 @@ function TodoWeekCalendar({
                   </div>
                   {weekDays.map(day => {
                     const slotTodos = getTimedTodosForSlot(visibleTodos, day.dateValue, hour);
+                    const slotTimeBlocks = getTimedTimeBlocksForSlot(visibleTodos, day.dateValue, hour);
 
                     return (
                       <div
@@ -470,6 +507,28 @@ function TodoWeekCalendar({
                             </button>
                           );
                         })}
+                        {slotTimeBlocks.map(({ timeBlock, todo }) => {
+                          const hasConflict = conflictingTodoKeys.has(`${day.dateValue}:${todo.id}`);
+
+                          return (
+                            <button
+                              aria-label={`${timeBlock.startTime} a ${timeBlock.endTime} Trabajo ${todo.text}${hasConflict ? ' Conflicto de horario' : ''}`}
+                              className={[
+                                'TodoWeekCalendar-event',
+                                'TodoWeekCalendar-event--timeBlock',
+                                hasConflict ? 'TodoWeekCalendar-event--conflict' : '',
+                              ].filter(Boolean).join(' ')}
+                              key={`${todo.id}-${timeBlock.id}`}
+                              onClick={() => onEditTodo(todo.id)}
+                              type="button"
+                            >
+                              <small>{timeBlock.startTime} a {timeBlock.endTime}</small>
+                              <span>Trabajo</span>
+                              {hasConflict && <span className="TodoWeekCalendar-conflictBadge">Conflicto</span>}
+                              {todo.text}
+                            </button>
+                          );
+                        })}
                       </div>
                     );
                   })}
@@ -478,7 +537,7 @@ function TodoWeekCalendar({
             </div>
           </div>
 
-          {timedTodos.length === 0 && (
+          {timedTodos.length === 0 && timedTimeBlocks.length === 0 && (
             <p className="TodoWeekCalendar-emptyWeek">
               No hay elementos con horario esta semana.
             </p>
@@ -509,6 +568,7 @@ export {
   formatHourSlot,
   getHourSlots,
   getTimedTodosForSlot,
+  getTimedTimeBlocksForSlot,
   getUntimedTodosByDay,
   getUntimedWeekTodos,
   getWeekDays,

@@ -125,6 +125,46 @@
   margin: 0;
 }
 
+.TodoDetail-timeBlocks {
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.TodoDetail-timeBlocks h3 {
+  color: var(--color-text-strong);
+  font-size: 13px;
+  margin: 0;
+}
+
+.TodoDetail-timeBlocks ul {
+  display: grid;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.TodoDetail-timeBlocks li {
+  align-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  display: flex;
+  font-size: 12px;
+  font-weight: 800;
+  justify-content: space-between;
+  padding: 8px 10px;
+}
+
+.TodoDetail-timeBlocks time {
+  color: var(--color-text-strong);
+}
+
 .TodoDetail-subtasks {
   border: 1px solid var(--color-border);
   border-radius: 8px;

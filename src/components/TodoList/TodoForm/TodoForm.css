@@ -246,6 +246,109 @@
   margin: 8px 0 0;
 }
 
+.TodoForm-timeBlocks {
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 0;
+  padding: 14px;
+}
+
+.TodoForm-timeBlocks legend {
+  color: var(--color-text-strong);
+  font-size: 14px;
+  font-weight: 900;
+  padding: 0 6px;
+}
+
+.TodoForm-timeBlocks > p {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.TodoForm-timeBlockFields {
+  align-items: end;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(130px, 1.3fr) repeat(2, minmax(90px, 1fr)) auto;
+}
+
+.TodoForm-timeBlockFields label {
+  display: grid;
+  font-size: 12px;
+  gap: 6px;
+  margin: 0;
+}
+
+.TodoForm-timeBlockFields input {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  color: var(--color-text);
+  font: inherit;
+  min-height: 42px;
+  padding: 0 10px;
+}
+
+.TodoForm-timeBlockFields button,
+.TodoForm-timeBlocks li button {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.TodoForm-timeBlockFields input:focus-visible,
+.TodoForm-timeBlockFields button:focus-visible,
+.TodoForm-timeBlocks li button:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-focus);
+  outline: none;
+}
+
+.TodoForm-timeBlocks ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.TodoForm-timeBlocks li {
+  align-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text);
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  gap: 6px;
+  min-height: 34px;
+  padding-left: 11px;
+}
+
+.TodoForm-timeBlocks li button {
+  border: 0;
+  border-radius: 999px;
+  color: var(--color-danger-hover);
+  min-height: 28px;
+  min-width: 28px;
+  padding: 0;
+}
+
 .TodoForm-preview {
   background: var(--color-surface-muted);
   border: 1px solid var(--color-border);
@@ -440,6 +543,15 @@
 
   .TodoForm-subtaskControls {
     flex-direction: column;
+  }
+
+  .TodoForm-timeBlockFields {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .TodoForm-timeBlockFields label:first-child,
+  .TodoForm-timeBlockFields button {
+    grid-column: 1 / -1;
   }
 }
 

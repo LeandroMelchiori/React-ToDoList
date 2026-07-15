@@ -344,6 +344,21 @@
   color: #99f6e4;
 }
 
+.TodoWeekCalendar-event--timeBlock {
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
+  border-style: dashed;
+  color: var(--color-text);
+}
+
+.TodoWeekCalendar-event--timeBlock span {
+  color: var(--color-accent-hover);
+  display: block;
+  font-size: 9px;
+  font-weight: 900;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+}
+
 .TodoWeekCalendar-event--completed {
   opacity: 0.62;
   text-decoration: line-through;

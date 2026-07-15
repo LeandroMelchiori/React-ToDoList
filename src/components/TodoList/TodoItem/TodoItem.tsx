@@ -18,6 +18,7 @@ import {
   TodoRecurrence,
   TodoWeekday,
   TodoSubtask,
+  TodoTimeBlock,
   getTodoNextOccurrenceDate,
   isTodoOccurrenceCompleted,
 } from '../../../App/todoModel';
@@ -178,6 +179,7 @@ interface TodoItemProps {
   archivedAt?: string | null;
   project?: string | null;
   tags?: string[];
+  timeBlocks?: TodoTimeBlock[];
   subtasks?: TodoSubtask[];
   isDragging?: boolean;
   dropPosition?: 'before' | 'after' | null;
@@ -245,6 +247,7 @@ function TodoItem(props: TodoItemProps) {
     : false;
   const displayCompleted = isRecurringTask ? occurrenceCompleted : props.completed;
   const tags = Array.isArray(props.tags) ? props.tags : [];
+  const timeBlocks = Array.isArray(props.timeBlocks) ? props.timeBlocks : [];
   const subtasks = Array.isArray(props.subtasks) ? props.subtasks : [];
   const completedSubtasks = subtasks.filter(subtask => subtask.completed).length;
   const hasSubtasks = isTaskKind && subtasks.length > 0;
@@ -405,6 +408,11 @@ function TodoItem(props: TodoItemProps) {
           {scheduleLabel && (
             <span className="TodoItem-dueDate">
               {scheduleLabel}
+            </span>
+          )}
+          {timeBlocks.length > 0 && (
+            <span className="TodoItem-timeBlocks">
+              {timeBlocks.length === 1 ? '1 bloque de trabajo' : `${timeBlocks.length} bloques de trabajo`}
             </span>
           )}
           {recurrenceLabel && (

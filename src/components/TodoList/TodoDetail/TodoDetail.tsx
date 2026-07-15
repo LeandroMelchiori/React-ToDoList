@@ -166,6 +166,9 @@ function TodoDetail({
   const occurrenceCompleted = isTodoOccurrenceCompleted(todo, occurrenceDate);
   const isRecurringTask = isTask && isRecurring;
   const completedOccurrences = [...todo.completedOccurrences].sort().reverse();
+  const sortedTimeBlocks = [...todo.timeBlocks].sort((firstBlock, secondBlock) =>
+    firstBlock.date.localeCompare(secondBlock.date) || firstBlock.startTime.localeCompare(secondBlock.startTime)
+  );
   const [areSubtasksOpen, setAreSubtasksOpen] = React.useState(todo.subtasks.length <= 5);
   const completedSubtasks = todo.subtasks.filter(subtask => subtask.completed).length;
   const hasSubtasks = isTask && todo.subtasks.length > 0;
@@ -263,6 +266,22 @@ function TodoDetail({
           </div>
         )}
       </dl>
+
+      {isTask && sortedTimeBlocks.length > 0 && (
+        <section className="TodoDetail-timeBlocks" aria-labelledby="todo-detail-time-blocks-title">
+          <h3 id="todo-detail-time-blocks-title">Bloques de trabajo</h3>
+          <ul>
+            {sortedTimeBlocks.map(timeBlock => (
+              <li key={timeBlock.id}>
+                <time dateTime={`${timeBlock.date}T${timeBlock.startTime}`}>
+                  {formatDateValue(timeBlock.date)}
+                </time>
+                <span>{timeBlock.startTime} a {timeBlock.endTime}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {todo.excludedOccurrences.length > 0 && (
         <section className="TodoDetail-exceptions" aria-labelledby="todo-detail-exceptions-title">

@@ -11,6 +11,7 @@ import {
     TodoRecurrence,
     TodoWeekday,
     TodoSubtask,
+    TodoTimeBlock,
     TodoDetails,
 } from '../../../App/todoModel';
 import type { TodoScheduleConflictMatch } from '../../../App/todoScheduleConflicts';
@@ -103,6 +104,7 @@ interface TodoFormProps {
     initialProject?: string | null;
     initialTags?: string[];
     initialSubtasks?: TodoSubtask[];
+    initialTimeBlocks?: TodoTimeBlock[];
     label?: string;
     lockedProject?: string | null;
     lockRecurrence?: boolean;
@@ -249,6 +251,7 @@ function TodoForm({
     initialProject = '',
     initialTags = [],
     initialSubtasks = [],
+    initialTimeBlocks = [],
     label = 'Nueva tarea',
     lockedProject = null,
     lockRecurrence = false,
@@ -284,6 +287,12 @@ function TodoForm({
             : []
     );
     const [subtaskDraft, setSubtaskDraft] = React.useState('');
+    const [timeBlocksValue, setTimeBlocksValue] = React.useState<TodoTimeBlock[]>(
+        Array.isArray(initialTimeBlocks) ? initialTimeBlocks.map(timeBlock => ({ ...timeBlock })) : []
+    );
+    const [timeBlockDate, setTimeBlockDate] = React.useState('');
+    const [timeBlockStartTime, setTimeBlockStartTime] = React.useState('');
+    const [timeBlockEndTime, setTimeBlockEndTime] = React.useState('');
     const [formError, setFormError] = React.useState('');
     const [conflictMatches, setConflictMatches] = React.useState<TodoScheduleConflictMatch[]>([]);
     const [pendingConflictDetails, setPendingConflictDetails] = React.useState<TodoDetails | null>(null);
@@ -303,6 +312,9 @@ function TodoForm({
     const projectId = mode === 'edit' ? 'editTodoProject' : 'newTodoProject';
     const tagsId = mode === 'edit' ? 'editTodoTags' : 'newTodoTags';
     const subtasksId = mode === 'edit' ? 'editTodoSubtasks' : 'newTodoSubtasks';
+    const timeBlockDateId = mode === 'edit' ? 'editTodoTimeBlockDate' : 'newTodoTimeBlockDate';
+    const timeBlockStartId = mode === 'edit' ? 'editTodoTimeBlockStart' : 'newTodoTimeBlockStart';
+    const timeBlockEndId = mode === 'edit' ? 'editTodoTimeBlockEnd' : 'newTodoTimeBlockEnd';
     const isProjectLocked = Boolean(lockedProject && mode === 'create');
     const isTaskKind = kindValue === TODO_KINDS.task;
     const isEventKind = kindValue === TODO_KINDS.event;
@@ -391,6 +403,7 @@ function TodoForm({
             setEndTimeValue('');
             setSubtasksValue([]);
             setSubtaskDraft('');
+            setTimeBlocksValue([]);
             setRecurrenceValue(TODO_RECURRENCES.none);
             return;
         }
@@ -399,6 +412,7 @@ function TodoForm({
             setDueDateValue('');
             setSubtasksValue([]);
             setSubtaskDraft('');
+            setTimeBlocksValue([]);
             setRecurrenceValue(lockRecurrence ? TODO_RECURRENCES.none : TODO_RECURRENCES.weekly);
             return;
         }
@@ -406,7 +420,52 @@ function TodoForm({
         setDueDateValue('');
         setSubtasksValue([]);
         setSubtaskDraft('');
+        setTimeBlocksValue([]);
         setRecurrenceValue(TODO_RECURRENCES.none);
+    };
+
+    const addTimeBlock = () => {
+        if (!timeBlockDate || !timeBlockStartTime || !timeBlockEndTime) {
+            setFormError('Completa la fecha, el inicio y el fin del bloque de trabajo.');
+            return;
+        }
+
+        if (timeBlockEndTime <= timeBlockStartTime) {
+            setFormError('El bloque de trabajo debe terminar despues de comenzar.');
+            return;
+        }
+
+        const alreadyExists = timeBlocksValue.some(timeBlock =>
+            timeBlock.date === timeBlockDate &&
+            timeBlock.startTime === timeBlockStartTime &&
+            timeBlock.endTime === timeBlockEndTime
+        );
+
+        if (alreadyExists) {
+            setFormError('Ese bloque de trabajo ya esta agregado.');
+            return;
+        }
+
+        setTimeBlocksValue(currentTimeBlocks => [
+            ...currentTimeBlocks,
+            {
+                id: `time-block-${Date.now()}-${currentTimeBlocks.length}`,
+                date: timeBlockDate,
+                startTime: timeBlockStartTime,
+                endTime: timeBlockEndTime,
+            },
+        ]);
+        setTimeBlockDate('');
+        setTimeBlockStartTime('');
+        setTimeBlockEndTime('');
+        setFormError('');
+    };
+
+    const removeTimeBlock = (timeBlockId: string) => {
+        setTimeBlocksValue(currentTimeBlocks =>
+            currentTimeBlocks.filter(timeBlock => timeBlock.id !== timeBlockId)
+        );
+        setFormError('');
     };
 
     const addSubtask = () => {
@@ -550,6 +609,11 @@ function TodoForm({
             return;
         }
 
+        if (isTaskKind && (timeBlockDate || timeBlockStartTime || timeBlockEndTime)) {
+            setFormError('Agrega o limpia el bloque de trabajo que esta en preparacion.');
+            return;
+        }
+
         const submittedSubtasks = isTaskKind ? getSubmittedSubtasks() : [];
 
         if (!submittedSubtasks) {
@@ -573,6 +637,7 @@ function TodoForm({
             reminder: reminderValue,
             project: isProjectLocked ? lockedProject : projectValue,
             tags: tagsValue,
+            timeBlocks: isTaskKind ? timeBlocksValue : [],
             subtasks: submittedSubtasks,
         };
         const conflicts = onCheckConflicts?.(newTodoValue, details) || [];
@@ -901,6 +966,60 @@ function TodoForm({
                     />
                 </label>
             </div>
+            {isTaskKind && (
+                <fieldset className="TodoForm-timeBlocks">
+                    <legend>Bloques de trabajo</legend>
+                    <p>Reserva tiempo para avanzar. La tarea sigue siendo una sola y se completa por separado.</p>
+                    <div className="TodoForm-timeBlockFields">
+                        <label htmlFor={timeBlockDateId}>
+                            Fecha
+                            <input
+                                id={timeBlockDateId}
+                                type="date"
+                                value={timeBlockDate}
+                                onChange={event => setTimeBlockDate(event.target.value)}
+                            />
+                        </label>
+                        <label htmlFor={timeBlockStartId}>
+                            Inicio
+                            <input
+                                id={timeBlockStartId}
+                                type="time"
+                                value={timeBlockStartTime}
+                                onChange={event => setTimeBlockStartTime(event.target.value)}
+                            />
+                        </label>
+                        <label htmlFor={timeBlockEndId}>
+                            Fin
+                            <input
+                                id={timeBlockEndId}
+                                type="time"
+                                value={timeBlockEndTime}
+                                onChange={event => setTimeBlockEndTime(event.target.value)}
+                            />
+                        </label>
+                        <button type="button" onClick={addTimeBlock}>Agregar bloque</button>
+                    </div>
+                    {timeBlocksValue.length > 0 && (
+                        <ul aria-label="Bloques de trabajo agregados">
+                            {timeBlocksValue.map(timeBlock => (
+                                <li key={timeBlock.id}>
+                                    <span>
+                                        {formatDateValue(timeBlock.date)} · {timeBlock.startTime} a {timeBlock.endTime}
+                                    </span>
+                                    <button
+                                        aria-label={`Quitar bloque del ${formatDateValue(timeBlock.date)} de ${timeBlock.startTime} a ${timeBlock.endTime}`}
+                                        onClick={() => removeTimeBlock(timeBlock.id)}
+                                        type="button"
+                                    >
+                                        x
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </fieldset>
+            )}
             <aside className="TodoForm-preview" aria-label="Vista previa del elemento" aria-live="polite">
                 <span>Vista previa</span>
                 <strong>{TODO_KIND_PREVIEW_TITLES[kindValue]}</strong>

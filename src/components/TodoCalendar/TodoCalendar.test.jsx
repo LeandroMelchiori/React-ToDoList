@@ -3,6 +3,7 @@ import {
   getTodoCalendarTypeLabel,
   getTodoScheduleRange,
   getTodoTimeLabel,
+  getTodoTimeBlocksForDay,
   getUnscheduledTodos,
   isCompactRecurringTodo,
   isTodoVisibleOnDay,
@@ -72,6 +73,24 @@ describe('TodoCalendar helpers', () => {
     ])).toEqual([
       expect.objectContaining({ id: 'todo-1' }),
     ]);
+  });
+
+  test('projects task work blocks independently from their deadline', () => {
+    const task = {
+      id: 'task-1',
+      text: 'Preparar entrega',
+      order: 0,
+      dateType: 'due',
+      dueDate: '2026-08-15',
+      timeBlocks: [
+        { id: 'block-1', date: '2026-08-10', startTime: '10:00', endTime: '12:00' },
+      ],
+    };
+
+    expect(getTodoTimeBlocksForDay([task], '2026-08-10')).toEqual([
+      { todo: task, timeBlock: task.timeBlocks[0] },
+    ]);
+    expect(getUnscheduledTodos([{ ...task, dueDate: null }])).toEqual([]);
   });
 
   test('projects recurring todos on matching calendar days', () => {

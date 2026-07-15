@@ -7,6 +7,7 @@ import {
   TodoDateType,
   TodoKind,
   TodoRecurrence,
+  TodoTimeBlock,
   isTodoRecurringOnDate,
 } from '../../App/todoModel';
 import './TodoCalendar.css';
@@ -40,6 +41,11 @@ type TodoScheduleRange = {
   startDate: string;
   startTime: string | null;
   type: TodoDateType;
+};
+
+type TodoTimeBlockEntry = {
+  timeBlock: TodoTimeBlock;
+  todo: Todo;
 };
 
 interface TodoCalendarProps {
@@ -158,8 +164,19 @@ function getSortedTodosForDay(todos: Todo[], dateValue: string): Todo[] {
     .sort((firstTodo, secondTodo) => firstTodo.order - secondTodo.order);
 }
 
+function getTodoTimeBlocksForDay(todos: Todo[], dateValue: string): TodoTimeBlockEntry[] {
+  return todos
+    .flatMap(todo => (todo.timeBlocks || [])
+      .filter(timeBlock => timeBlock.date === dateValue)
+      .map(timeBlock => ({ timeBlock, todo })))
+    .sort((firstEntry, secondEntry) =>
+      firstEntry.timeBlock.startTime.localeCompare(secondEntry.timeBlock.startTime) ||
+      firstEntry.todo.order - secondEntry.todo.order
+    );
+}
+
 function getUnscheduledTodos(todos: Todo[]): Todo[] {
-  return todos.filter(todo => !getTodoScheduleRange(todo));
+  return todos.filter(todo => !getTodoScheduleRange(todo) && !(todo.timeBlocks || []).length);
 }
 
 function getTodoRecurrenceLabel(todo: Todo): string {
@@ -215,7 +232,8 @@ function TodoCalendar({
   const unscheduledTodos = React.useMemo(() => getUnscheduledTodos(visibleTodos), [visibleTodos]);
   const scheduledTodosInMonth = calendarDays.reduce((count, day) => (
     day.isCurrentMonth
-      ? count + getSortedTodosForDay(visibleTodos, day.dateValue).length
+      ? count + getSortedTodosForDay(visibleTodos, day.dateValue).length +
+        getTodoTimeBlocksForDay(visibleTodos, day.dateValue).length
       : count
   ), 0);
 
@@ -269,6 +287,7 @@ function TodoCalendar({
           <div className="TodoCalendar-grid" role="grid" aria-label={`Calendario ${monthLabel}`}>
             {calendarDays.map(day => {
               const dayTodos = getSortedTodosForDay(visibleTodos, day.dateValue);
+              const timeBlockEntries = getTodoTimeBlocksForDay(visibleTodos, day.dateValue);
               const compactRecurringTodos = dayTodos.filter(isCompactRecurringTodo);
               const listedTodos = dayTodos.filter(todo => !isCompactRecurringTodo(todo));
               const className = [
@@ -293,6 +312,22 @@ function TodoCalendar({
                       </button>
                     )}
                   </div>
+                  {timeBlockEntries.length > 0 && (
+                    <ul className="TodoCalendar-timeBlocks" aria-label={`Bloques de trabajo del ${day.dateValue}`}>
+                      {timeBlockEntries.map(({ timeBlock, todo }) => (
+                        <li key={`${todo.id}-${timeBlock.id}`}>
+                          <button
+                            aria-label={`Trabajo ${timeBlock.startTime} a ${timeBlock.endTime} ${todo.text}`}
+                            onClick={() => onEditTodo(todo.id)}
+                            type="button"
+                          >
+                            <span>{timeBlock.startTime}-{timeBlock.endTime}</span>
+                            {todo.text}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                   {listedTodos.length > 0 && (
                     <ul className="TodoCalendar-events" aria-label={`Elementos del ${day.dateValue}`}>
                       {listedTodos.map(todo => {
@@ -400,6 +435,7 @@ export {
   getTodoCalendarTypeLabel,
   getTodoScheduleRange,
   getTodoTimeLabel,
+  getTodoTimeBlocksForDay,
   getUnscheduledTodos,
   isCompactRecurringTodo,
   isTodoVisibleOnDay,

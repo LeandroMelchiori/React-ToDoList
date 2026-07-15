@@ -101,6 +101,7 @@ describe('todo helpers', () => {
         reminder: TODO_REMINDERS.none,
         project: null,
         tags: [],
+        timeBlocks: [],
         subtasks: [],
         createdAt: null,
         completedAt: null,
@@ -129,6 +130,7 @@ describe('todo helpers', () => {
         reminder: TODO_REMINDERS.none,
         project: null,
         tags: [],
+        timeBlocks: [],
         subtasks: [],
         createdAt: null,
         completedAt: null,
@@ -140,6 +142,22 @@ describe('todo helpers', () => {
   test('normalizes invalid todo collections as an empty list', () => {
     expect(normalizeTodos(null)).toEqual([]);
     expect(normalizeTodos({ text: 'No es una lista' })).toEqual([]);
+  });
+
+  test('normalizes valid task time blocks and removes invalid duplicates', () => {
+    const [todo] = normalizeTodos([{
+      id: 'planned-task',
+      text: 'Preparar entrega',
+      timeBlocks: [
+        { id: 'block-1', date: '2026-08-10', startTime: '10:00', endTime: '12:00' },
+        { id: 'duplicate', date: '2026-08-10', startTime: '10:00', endTime: '12:00' },
+        { id: 'invalid', date: '2026-08-11', startTime: '12:00', endTime: '11:00' },
+      ],
+    }]);
+
+    expect(todo.timeBlocks).toEqual([
+      { id: 'block-1', date: '2026-08-10', startTime: '10:00', endTime: '12:00' },
+    ]);
   });
 
   test('sorts and reindexes todos by manual order', () => {

@@ -263,6 +263,7 @@
 .TodoItem-recurrence,
 .TodoItem-occurrence,
 .TodoItem-reminder,
+.TodoItem-timeBlocks,
 .TodoItem-archive,
 .TodoItem-project,
 .TodoItem-tag {
@@ -347,6 +348,11 @@
 .TodoItem-occurrence--complete {
   background-color: rgba(16, 185, 129, 0.14);
   color: var(--color-success);
+}
+
+.TodoItem-timeBlocks {
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
+  color: var(--color-accent-hover);
 }
 
 .TodoItem-reminder {

@@ -4,6 +4,7 @@ import {
   formatHourSlot,
   getHourSlots,
   getTimedTodosForSlot,
+  getTimedTimeBlocksForSlot,
   getUntimedTodosByDay,
   getUntimedWeekTodos,
   getWeekDays,
@@ -100,6 +101,23 @@ describe('TodoWeekCalendar helpers', () => {
     ]);
     expect(getUntimedTodosByDay(untimedTodos, weekDays).find(day => day.dateValue === '2026-08-11').todos).toEqual([
       expect.objectContaining({ id: 'reading' }),
+    ]);
+  });
+
+  test('places task work blocks in their weekly time slot', () => {
+    const task = {
+      id: 'task-1',
+      text: 'Preparar entrega',
+      order: 0,
+      timeBlocks: [
+        { id: 'block-1', date: '2026-08-11', startTime: '07:30', endTime: '09:00' },
+      ],
+    };
+    const weekDays = getWeekDays(new Date(2026, 7, 12));
+
+    expect(getHourSlots([task], weekDays)[0]).toBe(7);
+    expect(getTimedTimeBlocksForSlot([task], '2026-08-11', 7)).toEqual([
+      { todo: task, timeBlock: task.timeBlocks[0] },
     ]);
   });
 });

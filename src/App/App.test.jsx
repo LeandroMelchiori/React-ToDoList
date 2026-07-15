@@ -125,6 +125,36 @@ describe('App', () => {
     expect(screen.getByText('Organiza tu dia con una primera tarea')).toBeInTheDocument();
   });
 
+  test('plans work blocks without duplicating the task', async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    expect(await screen.findByText('Organiza tu dia con una primera tarea')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Crear nueva tarea' }));
+    await user.type(screen.getByLabelText('Nueva tarea'), 'Preparar entrega final');
+    fireEvent.change(screen.getByLabelText('Fecha', { exact: true }), { target: { value: '2026-08-10' } });
+    fireEvent.change(screen.getByLabelText('Inicio', { exact: true }), { target: { value: '10:00' } });
+    fireEvent.change(screen.getByLabelText('Fin', { exact: true }), { target: { value: '12:00' } });
+    await user.click(screen.getByRole('button', { name: 'Agregar bloque' }));
+
+    expect(screen.getByRole('list', { name: 'Bloques de trabajo agregados' })).toHaveTextContent('10/08/2026');
+    await user.click(screen.getByRole('button', { name: 'Agregar', exact: true }));
+
+    expect(screen.getByText('Preparar entrega final')).toBeInTheDocument();
+    expect(screen.getByText('1 bloque de trabajo')).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('TODOS_V1'))[0].timeBlocks).toEqual([
+      expect.objectContaining({ date: '2026-08-10', startTime: '10:00', endTime: '12:00' }),
+    ]);
+
+    await user.click(screen.getByRole('button', { name: 'Ver detalle' }));
+    const detailDialog = screen.getByRole('dialog', { name: 'Detalle del elemento' });
+    const timeBlockSection = within(detailDialog).getByRole('heading', { name: 'Bloques de trabajo' }).closest('section');
+
+    expect(within(timeBlockSection).getByText('10/08/2026')).toBeInTheDocument();
+    expect(within(timeBlockSection).getByText('10:00 a 12:00')).toBeInTheDocument();
+  });
+
   test('creates todos with descriptions, event days and periods', async () => {
     const user = userEvent.setup();
     renderApp();
@@ -2358,6 +2388,10 @@ describe('App', () => {
     const reminderSelect = within(dialog).getByLabelText('Recordatorio');
     const projectInput = within(dialog).getByLabelText('Proyecto');
     const tagsInput = within(dialog).getByLabelText('Etiquetas');
+    const timeBlockDateInput = within(dialog).getByLabelText('Fecha', { exact: true });
+    const timeBlockStartInput = within(dialog).getByLabelText('Inicio', { exact: true });
+    const timeBlockEndInput = within(dialog).getByLabelText('Fin', { exact: true });
+    const addTimeBlockButton = within(dialog).getByRole('button', { name: 'Agregar bloque' });
     const subtasksInput = within(dialog).getByLabelText('Subtareas');
     const addSubtaskButton = within(dialog).getByRole('button', { name: 'Agregar subtarea' });
     const cancelButton = within(dialog).getByRole('button', { name: 'Cancelar' });
@@ -2391,6 +2425,18 @@ describe('App', () => {
 
     await user.tab();
     expect(tagsInput).toHaveFocus();
+
+    await user.tab();
+    expect(timeBlockDateInput).toHaveFocus();
+
+    await user.tab();
+    expect(timeBlockStartInput).toHaveFocus();
+
+    await user.tab();
+    expect(timeBlockEndInput).toHaveFocus();
+
+    await user.tab();
+    expect(addTimeBlockButton).toHaveFocus();
 
     await user.tab();
     expect(subtasksInput).toHaveFocus();

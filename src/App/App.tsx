@@ -646,6 +646,7 @@ function App() {
                                 archivedAt={todo.archivedAt}
                                 project={todo.project}
                                 tags={todo.tags}
+                                timeBlocks={todo.timeBlocks}
                                 subtasks={todo.subtasks}
                                 canMoveUp={todo.order > 0}
                                 canMoveDown={todo.order < totalTodos - 1}
@@ -744,6 +745,7 @@ function App() {
                             initialProject={editingTodo?.project}
                             initialTags={editingTodo?.tags}
                             initialSubtasks={editingTodo?.subtasks}
+                            initialTimeBlocks={editingOccurrenceDate ? [] : editingTodo?.timeBlocks}
                             label={editingOccurrenceDate ? 'Editar esta fecha' : editingTodo ? 'Editar tarea' : 'Nueva tarea'}
                             lockedProject={!editingTodo ? activeProject : null}
                             lockRecurrence={Boolean(editingOccurrenceDate)}

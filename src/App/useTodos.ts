@@ -30,6 +30,7 @@ import {
     normalizeRecurrenceDays,
     normalizeReminder,
     normalizeTags,
+    normalizeTimeBlocks,
     normalizeTodoKind,
     normalizeTodoRecurrenceForKind,
     normalizeTodoSchedule,
@@ -720,8 +721,9 @@ function useTodos() {
             recurrenceEndDate: todoToDuplicate.recurrenceEndDate,
             recurrenceCount: todoToDuplicate.recurrenceCount,
             reminder: todoToDuplicate.reminder,
-                    project: todoToDuplicate.project,
+            project: todoToDuplicate.project,
             tags: todoToDuplicate.tags,
+            timeBlocks: todoToDuplicate.timeBlocks,
             subtasks: todoToDuplicate.subtasks.map(subtask => subtask.text),
             order: normalizedTodos.length,
         });
@@ -804,6 +806,7 @@ function useTodos() {
                     reminder: normalizeReminder(details.reminder),
                     project: normalizeProject(details.project),
                     tags: normalizeTags(details.tags),
+                    timeBlocks: kind === TODO_KINDS.task ? normalizeTimeBlocks(details.timeBlocks) : [],
                     subtasks: kind === TODO_KINDS.task ? mergeSubtasks(todo.subtasks, details.subtasks) : [],
                     completed: kind === TODO_KINDS.task && recurrence === TODO_RECURRENCES.none
                         ? todo.completed

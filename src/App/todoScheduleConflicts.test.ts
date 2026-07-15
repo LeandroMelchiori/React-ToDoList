@@ -94,4 +94,28 @@ describe('todoScheduleConflicts', () => {
     ]);
     expect(getTodoScheduleConflictMatches([candidate], candidate, candidate.id)).toEqual([]);
   });
+
+  test('detects task work blocks that overlap agenda items', () => {
+    const course = createSchedule('cursada', '10:00', '12:00');
+    const task = {
+      ...createTodo('Preparar entrega', {
+        timeBlocks: [
+          { id: 'block-1', date: '2026-08-10', startTime: '11:00', endTime: '13:00' },
+        ],
+      }),
+      id: 'entrega',
+    };
+
+    expect(getTodoScheduleConflicts([course, task], ['2026-08-10'])).toEqual([
+      { dateValue: '2026-08-10', todoIds: ['cursada', 'entrega'] },
+    ]);
+    expect(getTodoScheduleConflictMatches([course], task)).toEqual([
+      {
+        firstDate: '2026-08-10',
+        occurrences: 1,
+        text: 'cursada',
+        todoId: 'cursada',
+      },
+    ]);
+  });
 });

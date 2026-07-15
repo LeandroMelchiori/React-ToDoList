@@ -31,6 +31,13 @@ type TodoSubtask = {
     completed: boolean;
 };
 
+type TodoTimeBlock = {
+    id: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+};
+
 type Todo = {
     id: string;
     text: string;
@@ -54,6 +61,7 @@ type Todo = {
     reminder: TodoReminder;
     project: string | null;
     tags: string[];
+    timeBlocks: TodoTimeBlock[];
     subtasks: TodoSubtask[];
     createdAt: string | null;
     completedAt: string | null;
@@ -143,6 +151,7 @@ type TodoDetails = {
     reminder?: unknown;
     project?: unknown;
     tags?: unknown;
+    timeBlocks?: unknown;
     subtasks?: unknown;
 };
 
@@ -639,6 +648,51 @@ function createLegacySubtaskId(subtask: { text?: unknown }, index: number): stri
     return `subtask-${index}-${text || 'item'}`;
 }
 
+function createLegacyTimeBlockId(date: string, startTime: string, index: number): string {
+    return `time-block-${index}-${date}-${startTime.replace(':', '')}`;
+}
+
+function normalizeTimeBlocks(timeBlocks: unknown): TodoTimeBlock[] {
+    if (!Array.isArray(timeBlocks)) {
+        return [];
+    }
+
+    const seenBlocks = new Set<string>();
+
+    return timeBlocks
+        .map((timeBlock, index) => {
+            if (!isRecord(timeBlock)) {
+                return null;
+            }
+
+            const date = normalizeDueDate(timeBlock.date);
+            const startTime = normalizeTimeValue(timeBlock.startTime);
+            const endTime = normalizeTimeValue(timeBlock.endTime);
+
+            if (!date || !startTime || !endTime || endTime <= startTime) {
+                return null;
+            }
+
+            const blockKey = `${date}:${startTime}:${endTime}`;
+
+            if (seenBlocks.has(blockKey)) {
+                return null;
+            }
+
+            seenBlocks.add(blockKey);
+
+            return {
+                id: typeof timeBlock.id === 'string' && timeBlock.id
+                    ? timeBlock.id
+                    : createLegacyTimeBlockId(date, startTime, index),
+                date,
+                startTime,
+                endTime,
+            };
+        })
+        .filter((timeBlock): timeBlock is TodoTimeBlock => Boolean(timeBlock));
+}
+
 function normalizeSubtasks(subtasks: unknown): TodoSubtask[] {
     const rawSubtasks = Array.isArray(subtasks)
         ? subtasks
@@ -744,6 +798,9 @@ function createTodo(text: string, details: TodoDetails = {}): Todo {
         reminder: normalizeReminder('reminder' in details ? details.reminder : undefined),
         project: normalizeProject('project' in details ? details.project : undefined),
         tags: normalizeTags('tags' in details ? details.tags : undefined),
+        timeBlocks: kind === TODO_KINDS.task
+            ? normalizeTimeBlocks('timeBlocks' in details ? details.timeBlocks : undefined)
+            : [],
         subtasks: kind === TODO_KINDS.task
             ? normalizeSubtasks('subtasks' in details ? details.subtasks : undefined)
             : [],
@@ -822,6 +879,7 @@ function normalizeTodos(todos: unknown): Todo[] {
                 reminder: normalizeReminder(todo.reminder),
                 project: normalizeProject(todo.project),
                 tags: normalizeTags(todo.tags),
+                timeBlocks: kind === TODO_KINDS.task ? normalizeTimeBlocks(todo.timeBlocks) : [],
                 subtasks: kind === TODO_KINDS.task ? normalizeSubtasks(todo.subtasks) : [],
                 createdAt: normalizeDateTime(todo.createdAt),
                 completedAt: kind === TODO_KINDS.task && recurrence === TODO_RECURRENCES.none
@@ -2078,6 +2136,7 @@ export {
     normalizeTodoRecurrenceForKind,
     normalizeSubtasks,
     normalizeTags,
+    normalizeTimeBlocks,
     normalizeTodoSchedule,
     normalizeTodoTimes,
     normalizeTodos,
@@ -2106,5 +2165,6 @@ export type {
     TodoReminder,
     TodoRecurrence,
     TodoSubtask,
+    TodoTimeBlock,
     TodoWeekday,
 };

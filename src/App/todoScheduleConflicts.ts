@@ -72,6 +72,24 @@ function getTodoTimeInterval(todo: Todo, dateValue: string): TodoTimeInterval | 
   return { startMinutes, endMinutes, todoId: todo.id };
 }
 
+function getTodoTimeIntervals(todo: Todo, dateValue: string): TodoTimeInterval[] {
+  const scheduledInterval = getTodoTimeInterval(todo, dateValue);
+  const timeBlockIntervals = (todo.timeBlocks || []).flatMap((timeBlock) => {
+    if (timeBlock.date !== dateValue) {
+      return [];
+    }
+
+    const startMinutes = getTimeMinutes(timeBlock.startTime);
+    const endMinutes = getTimeMinutes(timeBlock.endTime);
+
+    return startMinutes !== null && endMinutes !== null && endMinutes > startMinutes
+      ? [{ startMinutes, endMinutes, todoId: todo.id }]
+      : [];
+  });
+
+  return scheduledInterval ? [scheduledInterval, ...timeBlockIntervals] : timeBlockIntervals;
+}
+
 function parseDateValue(dateValue: string): Date | null {
   const [year, month, day] = dateValue.split('-').map(Number);
 
@@ -91,13 +109,14 @@ function toDateValue(date: Date): string {
 }
 
 function getCandidateDateValues(todo: Todo, maximumDays = 366): string[] {
+  const dateValues = new Set((todo.timeBlocks || []).map(timeBlock => timeBlock.date));
   const startDateValue = todo.dateType === TODO_DATE_TYPES.due
     ? todo.dueDate
     : todo.startDate;
   const startDate = startDateValue ? parseDateValue(startDateValue) : null;
 
   if (!startDate || !todo.startTime || !todo.endTime) {
-    return [];
+    return [...dateValues].sort();
   }
 
   const explicitEndDateValue = todo.recurrence !== TODO_RECURRENCES.none
@@ -111,20 +130,19 @@ function getCandidateDateValues(todo: Todo, maximumDays = 366): string[] {
     : todo.recurrence === TODO_RECURRENCES.none
       ? explicitEndDate || startDate
       : fallbackEndDate;
-  const dateValues: string[] = [];
   const currentDate = new Date(startDate);
 
-  while (currentDate <= endDate && dateValues.length < maximumDays) {
+  while (currentDate <= endDate && dateValues.size < maximumDays) {
     const dateValue = toDateValue(currentDate);
 
     if (isTodoScheduledOnDate(todo, dateValue)) {
-      dateValues.push(dateValue);
+      dateValues.add(dateValue);
     }
 
     currentDate.setDate(currentDate.getDate() + 1);
   }
 
-  return dateValues;
+  return [...dateValues].sort();
 }
 
 function getTodoScheduleConflictMatches(
@@ -135,9 +153,9 @@ function getTodoScheduleConflictMatches(
   const matches = new Map<string, TodoScheduleConflictMatch>();
 
   getCandidateDateValues(candidate).forEach((dateValue) => {
-    const candidateInterval = getTodoTimeInterval(candidate, dateValue);
+    const candidateIntervals = getTodoTimeIntervals(candidate, dateValue);
 
-    if (!candidateInterval) {
+    if (candidateIntervals.length === 0) {
       return;
     }
 
@@ -146,13 +164,13 @@ function getTodoScheduleConflictMatches(
         return;
       }
 
-      const interval = getTodoTimeInterval(todo, dateValue);
-
-      if (
-        !interval ||
+      const intervals = getTodoTimeIntervals(todo, dateValue);
+      const overlaps = candidateIntervals.some(candidateInterval => intervals.some(interval => !(
         candidateInterval.startMinutes >= interval.endMinutes ||
         interval.startMinutes >= candidateInterval.endMinutes
-      ) {
+      )));
+
+      if (!overlaps) {
         return;
       }
 
@@ -170,8 +188,7 @@ function getTodoScheduleConflictMatches(
 function getTodoScheduleConflicts(todos: Todo[], dateValues: string[]): TodoScheduleConflict[] {
   return dateValues.flatMap((dateValue) => {
     const intervals = todos
-      .map(todo => getTodoTimeInterval(todo, dateValue))
-      .filter((interval): interval is TodoTimeInterval => interval !== null)
+      .flatMap(todo => getTodoTimeIntervals(todo, dateValue))
       .sort((first, second) => (
         first.startMinutes - second.startMinutes || first.endMinutes - second.endMinutes
       ));
