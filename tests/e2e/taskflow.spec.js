@@ -368,6 +368,29 @@ test('keeps the primary mobile shell inside the viewport', async ({ page }) => {
   expect(hasHorizontalOverflow).toBe(false);
 });
 
+test('reuses one IndexedDB connection across local changes', async ({ page }) => {
+  await page.addInitScript(() => {
+    const originalOpen = IDBFactory.prototype.open;
+
+    window.__taskflowIndexedDbOpenCount = 0;
+    IDBFactory.prototype.open = function open(...args) {
+      window.__taskflowIndexedDbOpenCount += 1;
+      return originalOpen.apply(this, args);
+    };
+  });
+  await page.goto('/');
+  await expect(page.getByText('Organiza tu dia con una primera tarea')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Crear nueva tarea' }).click();
+  const createDialog = page.getByRole('dialog', { name: 'Crear tarea' });
+  await createDialog.getByRole('textbox', { name: 'Nueva tarea' }).fill('Medir persistencia local');
+  await createDialog.getByRole('button', { name: 'Agregar', exact: true }).click();
+  await expect(page.getByText('Medir persistencia local')).toBeVisible();
+  await page.getByRole('button', { name: 'Marcar tarea como completada' }).click();
+
+  await expect.poll(() => page.evaluate(() => window.__taskflowIndexedDbOpenCount)).toBe(1);
+});
+
 test('reloads the application shell while offline', async ({ context, page }) => {
   await page.goto('/');
   await page.evaluate(async () => {

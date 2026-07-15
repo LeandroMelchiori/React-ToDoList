@@ -52,6 +52,7 @@ function useLocalStorage<T>(
     reducer<T>,
     initialState(initialValue)
   );
+  const serializedItemRef = React.useRef<string | null>(null);
   const {
     synchronizedItem,
     error,
@@ -86,7 +87,12 @@ function useLocalStorage<T>(
         const { item, shouldRepair } = parseStoredItem(storedItem, initialValue, isValidItem);
 
         if (shouldRepair) {
-          await setStoredItem(itemName, JSON.stringify(initialValue));
+          const serializedInitialValue = JSON.stringify(initialValue);
+
+          await setStoredItem(itemName, serializedInitialValue);
+          serializedItemRef.current = serializedInitialValue;
+        } else {
+          serializedItemRef.current = storedItem;
         }
 
         if (isMounted) {
@@ -108,7 +114,22 @@ function useLocalStorage<T>(
 
   const saveItem = (newItem: T) => {
     try {
-      setStoredItem(itemName, JSON.stringify(newItem)).catch(onError);
+      const serializedItem = JSON.stringify(newItem);
+
+      if (serializedItem === serializedItemRef.current) {
+        onSave(newItem);
+        return;
+      }
+
+      const previousSerializedItem = serializedItemRef.current;
+      serializedItemRef.current = serializedItem;
+      setStoredItem(itemName, serializedItem).catch(error => {
+        if (serializedItemRef.current === serializedItem) {
+          serializedItemRef.current = previousSerializedItem;
+        }
+
+        onError(error);
+      });
       onSave(newItem);
     } catch (error) {onError(error);}
   }

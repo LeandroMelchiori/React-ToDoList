@@ -102,6 +102,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 | Tests unitarios/integracion | `npm test` cubre hooks y flujos principales de UI. |
 | Typecheck | `npm run typecheck` valida las capas migradas a TypeScript. |
 | Tests E2E | `npm run test:e2e` valida el flujo completo sobre el build de produccion local. |
+| Persistencia | `npm run benchmark:storage` mide serializacion local con workspaces de hasta 5000 elementos. |
 | Lighthouse | `npm run audit:lighthouse` genera reporte del sitio publicado. Ultima medicion: 100/100/100/100. |
 | CI | GitHub Actions ejecuta audit, tests, Playwright y build en cada push/PR a `main`. |
 
@@ -110,7 +111,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - Cada tarea usa un `id` unico para evitar depender del texto como key o identificador.
 - Los datos antiguos se normalizan para mantener compatibilidad con tareas sin `id`, prioridad, proyecto o etiquetas.
 - Las operaciones sobre tareas son inmutables: completar, borrar, agregar, editar y reordenar generan nuevas referencias.
-- El modelo puro de tareas vive en `todoModel.ts`; ahi se normalizan datos, filtros, grupos, backups, recurrencias, calendario ICS y reordenamiento.
+- El modelo puro de tareas vive en `todoModel.ts`; la exportacion e importacion de calendarios se aisla en `todoCalendarIcs.ts`.
 - Los modelos de tableros, filtros guardados y backups completos viven en archivos de dominio separados.
 - La logica principal vive en hooks (`useTodos`, `useLocalStorage`) para separar estado y presentacion.
 - IndexedDB es la persistencia principal y `localStorage` queda como compatibilidad, migracion y puente para eventos `storage`.
@@ -230,6 +231,12 @@ Ejecutar E2E sobre el build de produccion:
 
 ```bash
 npm run test:e2e
+```
+
+Medir el costo de serializacion del almacenamiento local:
+
+```bash
+npm run benchmark:storage
 ```
 
 Generar auditoria Lighthouse del sitio publicado:

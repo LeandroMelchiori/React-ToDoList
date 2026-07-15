@@ -1,13 +1,23 @@
 const DATABASE_NAME = 'taskflow-db';
 const DATABASE_VERSION = 1;
 const STORE_NAME = 'keyValue';
+let databaseConnection: IDBDatabase | null = null;
+let pendingDatabaseConnection: Promise<IDBDatabase> | null = null;
 
 function canUseIndexedDB(): boolean {
   return typeof indexedDB !== 'undefined';
 }
 
 function openDatabase(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
+  if (databaseConnection) {
+    return Promise.resolve(databaseConnection);
+  }
+
+  if (pendingDatabaseConnection) {
+    return pendingDatabaseConnection;
+  }
+
+  pendingDatabaseConnection = new Promise((resolve, reject) => {
     const request = indexedDB.open(DATABASE_NAME, DATABASE_VERSION);
 
     request.onupgradeneeded = () => {
@@ -18,9 +28,34 @@ function openDatabase(): Promise<IDBDatabase> {
       }
     };
 
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      const database = request.result;
+
+      databaseConnection = database;
+      pendingDatabaseConnection = null;
+
+      database.addEventListener('versionchange', () => {
+        database.close();
+
+        if (databaseConnection === database) {
+          databaseConnection = null;
+        }
+      });
+      database.addEventListener('close', () => {
+        if (databaseConnection === database) {
+          databaseConnection = null;
+        }
+      });
+
+      resolve(database);
+    };
+    request.onerror = () => {
+      pendingDatabaseConnection = null;
+      reject(request.error);
+    };
   });
+
+  return pendingDatabaseConnection;
 }
 
 async function readFromIndexedDB(itemName: string): Promise<string | null> {
@@ -30,10 +65,13 @@ async function readFromIndexedDB(itemName: string): Promise<string | null> {
     const transaction = database.transaction(STORE_NAME, 'readonly');
     const store = transaction.objectStore(STORE_NAME);
     const request = store.get(itemName);
+    let storedItem: string | null = null;
 
-    request.onsuccess = () => resolve(request.result ?? null);
+    request.onsuccess = () => {
+      storedItem = request.result ?? null;
+    };
     request.onerror = () => reject(request.error);
-    transaction.oncomplete = () => database.close();
+    transaction.oncomplete = () => resolve(storedItem);
     transaction.onerror = () => reject(transaction.error);
   });
 }
@@ -46,9 +84,8 @@ async function writeToIndexedDB(itemName: string, value: string): Promise<void> 
     const store = transaction.objectStore(STORE_NAME);
     const request = store.put(value, itemName);
 
-    request.onsuccess = () => resolve();
     request.onerror = () => reject(request.error);
-    transaction.oncomplete = () => database.close();
+    transaction.oncomplete = () => resolve();
     transaction.onerror = () => reject(transaction.error);
   });
 }
