@@ -2423,6 +2423,7 @@ describe('App', () => {
     const recurrenceSelect = within(dialog).getByLabelText('Repeticion');
     const dueDateInput = within(dialog).getByLabelText('Fecha limite');
     const dueTimeInput = within(dialog).getByLabelText('Hora limite');
+    const advancedSummary = within(dialog).getByText('Mas opciones').closest('summary');
     const reminderSelect = within(dialog).getByLabelText('Recordatorio');
     const projectInput = within(dialog).getByLabelText('Proyecto');
     const tagsInput = within(dialog).getByLabelText('Etiquetas');
@@ -2453,13 +2454,14 @@ describe('App', () => {
     expect(dueTimeInput).toHaveFocus();
 
     await user.tab();
+    expect(projectInput).toHaveFocus();
+
+    await user.click(advancedSummary);
+    recurrenceSelect.focus();
     expect(recurrenceSelect).toHaveFocus();
 
     await user.tab();
     expect(reminderSelect).toHaveFocus();
-
-    await user.tab();
-    expect(projectInput).toHaveFocus();
 
     await user.tab();
     expect(tagsInput).toHaveFocus();

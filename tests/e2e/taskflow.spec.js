@@ -42,6 +42,7 @@ test('manages a todo through the production flow', async ({ page }) => {
   await createDialog.getByRole('textbox', { name: 'Nueva tarea' }).fill('Preparar demo del proyecto');
   await createDialog.getByLabel('Descripcion').fill('Ensayar historia del producto y decisiones tecnicas');
   await createDialog.getByLabel('Prioridad').selectOption('high');
+  await createDialog.getByText('Mas opciones', { exact: true }).click();
   await createDialog.getByLabel('Repeticion').selectOption('weekly');
   await createDialog.getByLabel('Fecha limite', { exact: true }).fill('2026-07-20');
   await createDialog.getByLabel('Proyecto').fill('TaskFlow');
@@ -68,6 +69,7 @@ test('manages a todo through the production flow', async ({ page }) => {
   await page.getByRole('tab', { name: 'Lista' }).click();
 
   await page.getByRole('button', { name: 'Filtrar por etiqueta frontend' }).click();
+  await page.getByRole('button', { name: /Resumen/ }).click();
   await expect(page.getByRole('button', { name: 'Limpiar filtros' })).toBeVisible();
   await expect(page.getByText('Preparar demo del proyecto')).toBeVisible();
   await page.getByRole('button', { name: 'Limpiar filtros' }).click();
@@ -244,8 +246,10 @@ test('restores a full workspace backup', async ({ page }) => {
 
   await expect(page.getByText('Preparar workspace')).toBeVisible();
   await expect(getBoardSwitcher(page).getByRole('button', { name: /Trabajo/ })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Trabajo activo', exact: true })).toBeVisible();
   await expect(page.getByText('Backup restaurado: 2 tableros, 2 tareas y 1 filtro guardado.')).toBeVisible();
+  await page.getByRole('button', { name: 'Volver a opciones' }).click();
+  await page.getByRole('button', { name: /Tableros y filtros/ }).click();
+  await expect(page.getByRole('button', { name: 'Trabajo activo', exact: true })).toBeVisible();
 
   await expect.poll(async () => page.evaluate(() => ({
     activeBoardId: JSON.parse(localStorage.getItem('ACTIVE_TODO_BOARD_V1') || 'null'),
@@ -277,22 +281,27 @@ test('keeps local boards and saved views in the production flow', async ({ page 
   await page.getByRole('button', { name: 'Crear nueva tarea' }).click();
   dialog = page.getByRole('dialog', { name: 'Crear tarea' });
   await dialog.getByRole('textbox', { name: 'Nueva tarea' }).fill('Preparar taller');
+  await dialog.getByText('Mas opciones', { exact: true }).click();
   await dialog.getByLabel('Proyecto').fill('Talleres');
   await dialog.getByLabel('Etiquetas').fill('formacion');
   await dialog.getByRole('button', { name: 'Agregar', exact: true }).click();
   await expect(page.getByText('Preparar taller')).toBeVisible();
 
+  await openTools(page, 'Tableros y filtros');
   await page.getByLabel('Nombre del tablero actual').fill('Capacitaciones');
   await page.getByRole('button', { name: 'Renombrar' }).click();
   await expect(page.getByText('Tablero actualizado.')).toBeVisible();
   await expect(getBoardSwitcher(page).getByRole('button', { name: /Capacitaciones/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Cerrar opciones' }).click();
 
   await page.getByLabel('Buscar tareas').fill('taller');
   await page.getByRole('button', { name: 'Filtrar por etiqueta formacion' }).click();
+  await openTools(page, 'Tableros y filtros');
   await page.getByLabel('Nombre para estos filtros').fill('Taller activo');
   await page.getByRole('button', { name: 'Guardar filtros' }).click();
   await expect(page.getByText('Filtros guardados.')).toBeVisible();
 
+  await page.getByRole('button', { name: /Resumen/ }).click();
   await page.getByRole('button', { name: 'Limpiar filtros' }).click();
   await page.getByLabel('Buscar tareas').fill('');
   await getBoardSwitcher(page).getByRole('button', { name: /Personal/ }).click();
@@ -303,6 +312,7 @@ test('keeps local boards and saved views in the production flow', async ({ page 
   await page.getByLabel('Buscar tareas').fill('sin coincidencias');
   await expect(page.getByText('No hay tareas que coincidan con tu busqueda.')).toBeVisible();
 
+  await openTools(page, 'Tableros y filtros');
   await page.getByRole('button', { name: 'Taller activo', exact: true }).click();
   await expect(page.getByText('Preparar taller')).toBeVisible();
   await expect(page.getByText('Plan personal')).not.toBeVisible();
@@ -358,7 +368,7 @@ test('keeps the primary mobile shell inside the viewport', async ({ page }) => {
   await expect(mobileSummary).toBeVisible();
   await expect(page.getByLabel('Agregar rapido')).toBeVisible();
   await mobileSummary.click();
-  await expect(page.getByText('Progreso')).toBeVisible();
+  await expect(mobileSummary).toHaveAttribute('aria-expanded', 'true');
   await expect(page.getByRole('button', { name: 'Crear nueva tarea' })).toBeVisible();
   await expect(page.getByRole('tablist', { name: 'Cambiar vista' })).toBeVisible();
 
@@ -454,7 +464,7 @@ test('creates schedules from the week grid and warns about overlaps', async ({ p
   await page.getByRole('button', { name: 'Crear nueva tarea' }).click();
   dialog = page.getByRole('dialog', { name: 'Crear tarea' });
   await dialog.getByRole('textbox', { name: 'Nueva tarea' }).fill('Consulta de algebra');
-  await dialog.getByRole('radio', { name: /Horario/ }).click();
+  await dialog.getByText('Horario', { exact: true }).click();
   await dialog.getByLabel('Primer dia').fill(slotDate);
   await dialog.getByLabel('Ultimo dia').fill(slotDate);
   await dialog.getByLabel('Hora de inicio').fill('10:30');

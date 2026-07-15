@@ -39,7 +39,15 @@
 .ModalContent--side {
   animation: modalSideEnter var(--transition-fast) ease-out;
   max-height: 100dvh;
-  width: min(100%, 460px);
+  width: min(100%, 560px);
+}
+
+.ModalContent--side .TodoForm {
+  border-bottom: 0;
+  border-radius: 0;
+  border-top: 0;
+  max-width: none;
+  min-height: 100%;
 }
 
 @keyframes modalSideEnter {

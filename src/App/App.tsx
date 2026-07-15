@@ -850,7 +850,7 @@ function App() {
                 <Modal
                     label={modalLabel}
                     onClose={closeModal}
-                    variant={detailTodo ? 'side' : 'center'}
+                    variant={deletingTodo ? 'center' : 'side'}
                 >
                     {deletingTodo ? (
                         <DeleteTodoDialog

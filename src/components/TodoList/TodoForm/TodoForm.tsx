@@ -120,6 +120,14 @@ function TodoForm({
     const [formError, setFormError] = React.useState('');
     const [conflictMatches, setConflictMatches] = React.useState<TodoScheduleConflictMatch[]>([]);
     const [pendingConflictDetails, setPendingConflictDetails] = React.useState<TodoDetails | null>(null);
+    const [isAdvancedOpen, setIsAdvancedOpen] = React.useState(() => (
+        mode === 'edit' && Boolean(
+            initialRecurrence !== TODO_RECURRENCES.none ||
+            initialReminder !== TODO_REMINDERS.none ||
+            initialTags.length > 0 ||
+            initialTimeBlocks.length > 0
+        )
+    ));
     const startTimeInputRef = React.useRef<HTMLInputElement>(null);
     const inputId = mode === 'edit' ? 'editTodo' : 'newTodo';
     const descriptionId = mode === 'edit' ? 'editTodoDescription' : 'newTodoDescription';
@@ -206,7 +214,7 @@ function TodoForm({
         startTimeValue,
     ]);
 
-    const onChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    const onChange = (event: ChangeEvent<HTMLInputElement>) => {
         setNewTodoValue(event.target.value);
         setFormError('');
     }
@@ -478,10 +486,11 @@ function TodoForm({
     return (
         <form className="TodoForm" onSubmit={onSubmit}>
             <label htmlFor={inputId}>{label}</label>
-            <textarea
+            <input
                 className="TodoForm-mainInput"
                 id={inputId}
                 placeholder="Ej: repasar preguntas tecnicas"
+                type="text"
                 value={newTodoValue}
                 onChange={onChange}
                 aria-invalid={Boolean(formError)}
@@ -673,6 +682,36 @@ function TodoForm({
                     </>
                 )}
                 <div className="TodoForm-field">
+                    <label htmlFor={projectId}>
+                        Proyecto
+                    </label>
+                    <input
+                        id={projectId}
+                        type="text"
+                        placeholder="Ej: TaskFlow"
+                        value={projectValue}
+                        readOnly={isProjectLocked}
+                        aria-describedby={isProjectLocked ? `${projectId}-hint` : undefined}
+                        onChange={event => setProjectValue(event.target.value)}
+                    />
+                    {isProjectLocked && (
+                        <span className="TodoForm-fieldHint" id={`${projectId}-hint`}>
+                            Fijado por el proyecto filtrado actualmente.
+                        </span>
+                    )}
+                </div>
+            </div>
+            <details className="TodoForm-advanced" open={isAdvancedOpen}>
+                <summary onClick={(event) => {
+                    event.preventDefault();
+                    setIsAdvancedOpen(currentValue => !currentValue);
+                }}>
+                    <span>Mas opciones</span>
+                    <small>Repeticion, recordatorios, etiquetas y bloques</small>
+                </summary>
+                <div className="TodoForm-advancedContent">
+                <div className="TodoForm-fields TodoForm-fields--advanced">
+                <div className="TodoForm-field">
                     <label htmlFor={recurrenceId}>
                         Repeticion
                     </label>
@@ -760,25 +799,6 @@ function TodoForm({
                         Usa la hora indicada o 09:00 si solo hay fecha.
                     </span>
                 </div>
-                <div className="TodoForm-field">
-                    <label htmlFor={projectId}>
-                        Proyecto
-                    </label>
-                    <input
-                        id={projectId}
-                        type="text"
-                        placeholder="Ej: TaskFlow"
-                        value={projectValue}
-                        readOnly={isProjectLocked}
-                        aria-describedby={isProjectLocked ? `${projectId}-hint` : undefined}
-                        onChange={event => setProjectValue(event.target.value)}
-                    />
-                    {isProjectLocked && (
-                        <span className="TodoForm-fieldHint" id={`${projectId}-hint`}>
-                            Fijado por el proyecto filtrado actualmente.
-                        </span>
-                    )}
-                </div>
                 <label htmlFor={tagsId}>
                     Etiquetas
                     <input
@@ -853,6 +873,8 @@ function TodoForm({
                     ))}
                 </ul>
             </aside>
+                </div>
+            </details>
             {isTaskKind && (
                 <div className="TodoForm-subtasks">
                     <label htmlFor={subtasksId}>

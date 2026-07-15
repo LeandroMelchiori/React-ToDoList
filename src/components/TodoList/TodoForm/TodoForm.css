@@ -19,6 +19,7 @@
 }
 
 .TodoForm textarea,
+.TodoForm-mainInput,
 .TodoForm-subtaskControls input {
   background-color: var(--color-surface-muted);
   border: 1px solid var(--color-border-strong);
@@ -35,11 +36,14 @@
 }
 
 .TodoForm-mainInput {
-  min-height: 96px;
+  min-height: 52px;
+  resize: none;
 }
 
 .TodoForm textarea:focus,
 .TodoForm textarea:focus-visible,
+.TodoForm-mainInput:focus,
+.TodoForm-mainInput:focus-visible,
 .TodoForm-subtaskControls input:focus,
 .TodoForm-subtaskControls input:focus-visible {
   border-color: var(--color-accent);
@@ -47,7 +51,8 @@
   outline: none;
 }
 
-.TodoForm textarea[aria-invalid="true"] {
+.TodoForm textarea[aria-invalid="true"],
+.TodoForm-mainInput[aria-invalid="true"] {
   border-color: var(--color-danger);
 }
 
@@ -61,7 +66,7 @@
 
 .TodoForm-description textarea {
   font-size: 15px;
-  min-height: 74px;
+  min-height: 62px;
 }
 
 .TodoForm-fields {
@@ -88,11 +93,11 @@
 .TodoForm-kindOptions {
   display: grid;
   gap: 8px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .TodoForm-kindOptions label {
-  align-items: flex-start;
+  align-items: center;
   background: var(--color-surface-muted);
   border: 1px solid var(--color-border);
   border-radius: 8px;
@@ -100,8 +105,10 @@
   display: flex;
   gap: 9px;
   margin: 0;
-  min-height: 72px;
-  padding: 10px;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px;
+  text-align: center;
 }
 
 .TodoForm-kindOptions label:hover {
@@ -119,16 +126,18 @@
 }
 
 .TodoForm-kindOptions input {
-  accent-color: var(--color-accent);
-  flex: 0 0 auto;
-  height: 18px;
-  margin: 2px 0 0;
-  width: 18px;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
 }
 
 .TodoForm-kindOptions span {
   display: grid;
-  gap: 3px;
+  gap: 0;
 }
 
 .TodoForm-kindOptions strong {
@@ -137,10 +146,7 @@
 }
 
 .TodoForm-kindOptions small {
-  color: var(--color-text-muted);
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.3;
+  display: none;
 }
 
 .TodoForm-fields label,
@@ -246,6 +252,61 @@
   margin: 8px 0 0;
 }
 
+.TodoForm-advanced {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  margin-top: 16px;
+}
+
+.TodoForm-advanced > summary {
+  align-items: center;
+  color: var(--color-text-strong);
+  cursor: pointer;
+  display: flex;
+  font-size: 14px;
+  font-weight: 900;
+  gap: 10px;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 0 14px;
+}
+
+.TodoForm-advanced > summary::after {
+  color: var(--color-accent);
+  content: "+";
+  font-size: 18px;
+}
+
+.TodoForm-advanced[open] > summary::after {
+  content: "-";
+}
+
+.TodoForm-advanced > summary::marker {
+  content: "";
+}
+
+.TodoForm-advanced > summary:focus-visible {
+  border-radius: 8px;
+  box-shadow: var(--shadow-focus);
+  outline: none;
+}
+
+.TodoForm-advanced > summary small {
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: auto;
+}
+
+.TodoForm-advancedContent {
+  border-top: 1px solid var(--color-border);
+  padding: 0 14px 14px;
+}
+
+.TodoForm-fields--advanced {
+  margin-top: 14px;
+}
+
 .TodoForm-timeBlocks {
   background: var(--color-surface-muted);
   border: 1px solid var(--color-border);
@@ -275,7 +336,7 @@
   align-items: end;
   display: grid;
   gap: 8px;
-  grid-template-columns: minmax(130px, 1.3fr) repeat(2, minmax(90px, 1fr)) auto;
+  grid-template-columns: minmax(120px, 1.3fr) repeat(2, minmax(86px, 1fr));
 }
 
 .TodoForm-timeBlockFields label {
@@ -307,6 +368,10 @@
   font-weight: 800;
   min-height: 42px;
   padding: 0 12px;
+}
+
+.TodoForm-timeBlockFields > button {
+  grid-column: 1 / -1;
 }
 
 .TodoForm-timeBlockFields input:focus-visible,
@@ -481,10 +546,16 @@
 }
 
 .TodoForm-buttonContainer {
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  bottom: 0;
   display: flex;
   gap: 12px;
   justify-content: flex-end;
-  margin-top: 24px;
+  margin: 20px -28px -28px;
+  padding: 14px 28px;
+  position: sticky;
+  z-index: 2;
 }
 
 .TodoForm-button {
@@ -531,6 +602,8 @@
 
   .TodoForm-buttonContainer {
     flex-direction: column-reverse;
+    margin: 20px -16px calc(-1 * max(18px, env(safe-area-inset-bottom)));
+    padding: 12px 16px max(18px, env(safe-area-inset-bottom));
   }
 
   .TodoForm-fields {
@@ -538,7 +611,7 @@
   }
 
   .TodoForm-kindOptions {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .TodoForm-subtaskControls {
@@ -552,6 +625,10 @@
   .TodoForm-timeBlockFields label:first-child,
   .TodoForm-timeBlockFields button {
     grid-column: 1 / -1;
+  }
+
+  .TodoForm-advanced > summary small {
+    display: none;
   }
 }
 
