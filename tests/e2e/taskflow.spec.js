@@ -353,6 +353,10 @@ test('keeps the primary mobile shell inside the viewport', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
 
+  const mobileSummary = page.getByRole('button', { name: /Resumen y carga rapida/ });
+  await expect(mobileSummary).toBeVisible();
+  await expect(page.getByLabel('Agregar rapido')).not.toBeVisible();
+  await mobileSummary.click();
   await expect(page.getByLabel('Agregar rapido')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Crear nueva tarea' })).toBeVisible();
   await expect(page.getByRole('tablist', { name: 'Cambiar vista' })).toBeVisible();

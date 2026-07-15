@@ -55,12 +55,17 @@
 }
 
 @media (max-width: 640px) {
+  .TodoHeaderTools {
+    margin-top: 14px;
+  }
+
   .TodoHeaderTools-summary {
     align-items: flex-start;
     flex-direction: column;
     gap: 2px;
     justify-content: center;
-    padding: 10px 14px;
+    min-height: 46px;
+    padding: 8px 12px;
   }
 
   .TodoHeaderTools-summary span {

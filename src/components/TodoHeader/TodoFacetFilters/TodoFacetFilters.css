@@ -79,18 +79,25 @@
 
 @media (max-width: 640px) {
   .TodoFacetFilters {
+    gap: 8px;
     justify-items: stretch;
+    margin-top: 12px;
   }
 
   .TodoFacetFilters-group {
+    flex-wrap: nowrap;
     justify-content: flex-start;
+    overflow-x: auto;
+    padding-bottom: 3px;
+    scrollbar-width: thin;
   }
 
   .TodoFacetFilters-group > span {
-    flex-basis: 100%;
+    flex: 0 0 auto;
   }
 
   .TodoFacetFilters-button {
+    flex: 0 0 auto;
     justify-content: space-between;
   }
 }

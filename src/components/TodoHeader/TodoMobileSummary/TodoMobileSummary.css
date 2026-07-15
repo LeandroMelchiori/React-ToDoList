@@ -1,0 +1,45 @@
+.TodoMobileSummary {
+  margin: 12px auto 0;
+  max-width: 960px;
+}
+
+.TodoMobileSummary > button {
+  align-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text);
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 900;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 7px 11px;
+  text-align: left;
+  width: 100%;
+}
+
+.TodoMobileSummary > button::after {
+  color: var(--color-accent);
+  content: "+";
+  font-size: 18px;
+  line-height: 1;
+  margin-left: 8px;
+}
+
+.TodoMobileSummary > button[aria-expanded="true"]::after {
+  content: "-";
+}
+
+.TodoMobileSummary small {
+  color: var(--color-text-muted);
+  font-size: 11px;
+  margin-left: auto;
+}
+
+.TodoMobileSummary-panel {
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 12px;
+}

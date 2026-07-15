@@ -116,21 +116,23 @@
 
 @media (max-width: 640px) {
   .App {
-    padding: 12px 12px 40px;
+    padding: 12px 12px 88px;
   }
 
   .App header {
-    margin-bottom: 16px;
-    padding-bottom: 16px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
   }
 
   .App-viewControls {
     align-items: stretch;
     flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
     width: 100%;
   }
 
   .App-commandButton {
-    justify-content: center;
+    display: none;
   }
 }

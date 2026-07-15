@@ -54,7 +54,11 @@ function TodoQuickAdd({ loading = false, onAddTodo }: TodoQuickAddProps) {
             setError('');
           }}
         />
-        <button type="submit" disabled={loading}>Agregar rapido</button>
+        <button type="submit" disabled={loading}>
+          <span className="TodoQuickAdd-buttonLabel" aria-hidden="true">Agregar rapido</span>
+          <span className="TodoQuickAdd-buttonSymbol" aria-hidden="true">+</span>
+          <span className="TodoQuickAdd-buttonAccessible">Agregar rapido</span>
+        </button>
       </div>
       <div className="TodoQuickAdd-feedback" id="todo-quick-add-feedback" aria-live="polite">
         {error ? (

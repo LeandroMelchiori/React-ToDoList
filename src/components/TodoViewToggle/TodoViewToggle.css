@@ -37,13 +37,14 @@
     box-sizing: border-box;
     flex-wrap: nowrap;
     max-width: 100%;
-    overflow-x: auto;
-    scrollbar-width: thin;
+    overflow: visible;
     width: 100%;
   }
 
   .TodoViewToggle-button {
-    flex: 0 0 auto;
+    flex: 1 1 auto;
+    font-size: 12px;
     min-height: 44px;
+    padding: 0 7px;
   }
 }

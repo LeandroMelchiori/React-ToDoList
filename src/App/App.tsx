@@ -43,7 +43,9 @@ import { TodoDataCenter } from '../components/TodoHeader/TodoDataCenter/TodoData
 import { CommandPalette } from '../components/CommandPalette/CommandPalette';
 import type { CommandPaletteItem } from '../components/CommandPalette/CommandPalette';
 import { TodoSettings, useTodoSettings } from './useTodoSettings';
+import { useMediaQuery } from './useMediaQuery';
 import type { TodoKind, TodoRecurrence } from './todoModel';
+import { TodoMobileSummary } from '../components/TodoHeader/TodoMobileSummary/TodoMobileSummary';
 
 type CreateTodoDefaults = {
     kind?: TodoKind;
@@ -74,6 +76,7 @@ function App() {
     const { states, stateUpdaters } = useTodos();
     const { isDarkTheme, toggleTheme } = useTheme();
     const { settings, updateSettings } = useTodoSettings();
+    const isMobileLayout = useMediaQuery('(max-width: 640px)');
     const {
         applyUpdate,
         hasUpdate,
@@ -478,7 +481,7 @@ function App() {
                     onSelectBoard={selectTodoBoard}
                     showCreateForm={false}
                 />
-                {settings.showQuickAdd && <TodoQuickAdd onAddTodo={addTodo} />}
+                {settings.showQuickAdd && !isMobileLayout && <TodoQuickAdd onAddTodo={addTodo} />}
                 <TodoSearch
                     ref={searchInputRef}
                     searchValue={searchValue}
@@ -489,16 +492,36 @@ function App() {
                     setFilter={setFilter}
                     filterCounts={filterCounts}
                 />
-                <TodoInsights insights={insights} />
-                <TodoFacetFilters
-                    projectOptions={projectOptions}
-                    tagOptions={tagOptions}
-                    activeProject={activeProject}
-                    activeTag={activeTag}
-                    onSelectProject={selectProjectFilter}
-                    onSelectTag={selectTagFilter}
-                    onClearFacetFilters={clearFacetFilters}
-                />
+                {isMobileLayout ? (
+                    <TodoMobileSummary
+                        summary={`${totalTodos} elementos - ${insights?.completionRate || 0}%`}
+                    >
+                        {settings.showQuickAdd && <TodoQuickAdd onAddTodo={addTodo} />}
+                        <TodoInsights insights={insights} />
+                        <TodoFacetFilters
+                            projectOptions={projectOptions}
+                            tagOptions={tagOptions}
+                            activeProject={activeProject}
+                            activeTag={activeTag}
+                            onSelectProject={selectProjectFilter}
+                            onSelectTag={selectTagFilter}
+                            onClearFacetFilters={clearFacetFilters}
+                        />
+                    </TodoMobileSummary>
+                ) : (
+                    <>
+                        <TodoInsights insights={insights} />
+                        <TodoFacetFilters
+                            projectOptions={projectOptions}
+                            tagOptions={tagOptions}
+                            activeProject={activeProject}
+                            activeTag={activeTag}
+                            onSelectProject={selectProjectFilter}
+                            onSelectTag={selectTagFilter}
+                            onClearFacetFilters={clearFacetFilters}
+                        />
+                    </>
+                )}
                 <TodoHeaderTools>
                     <TodoReminderStatus
                         isSupported={reminderStatus.isSupported}

@@ -32,19 +32,30 @@
 
 @media (max-width: 720px) {
   .TodoInsights {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+  }
+
+  .TodoInsights-card {
+    flex: 0 0 138px;
+    min-height: 68px;
+    padding: 10px;
+    scroll-snap-align: start;
   }
 }
 
 @media (max-width: 420px) {
   .TodoInsights {
     gap: 8px;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .TodoInsights-card {
-    min-height: 72px;
-    padding: 10px;
+    min-height: 68px;
   }
 
   .TodoInsights-card strong {

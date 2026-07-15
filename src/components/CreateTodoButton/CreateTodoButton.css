@@ -44,16 +44,17 @@
 
 @media (max-width: 640px) {
   .CreateTodoButton {
-    border-radius: 8px;
+    border-radius: 50%;
     bottom: auto;
     box-shadow: 0 10px 22px rgba(14, 165, 233, 0.22);
-    font-size: 18px;
-    gap: 8px;
-    height: 46px;
-    margin: 18px 0 0;
-    position: static;
-    right: auto;
-    width: 100%;
+    font-size: 26px;
+    height: 54px;
+    margin: 0;
+    position: absolute;
+    right: 16px;
+    top: 28px;
+    width: 54px;
+    z-index: 12;
   }
 
   .CreateTodoButton:hover:not(:disabled),
@@ -66,8 +67,6 @@
   }
 
   .CreateTodoButton-label {
-    display: inline;
-    font-size: 14px;
-    font-weight: 900;
+    display: none;
   }
 }
