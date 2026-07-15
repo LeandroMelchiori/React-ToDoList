@@ -370,7 +370,7 @@ describe('App', () => {
 
     expect(await screen.findByText('Rendir parcial')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Calendario' }));
+    await user.click(screen.getByRole('tab', { name: 'Calendario' }));
 
     expect(screen.getByRole('grid', { name: /Calendario/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Evento 10:00 Rendir parcial/ })).toBeInTheDocument();
@@ -383,7 +383,7 @@ describe('App', () => {
     await user.click(dailySummary);
     expect(within(dailySummary.closest('details')).getByRole('button', { name: 'Tomar medicacion' })).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Semana' }));
+    await user.click(screen.getByRole('tab', { name: 'Semana' }));
 
     expect(screen.getByRole('grid', { name: /Agenda semanal/ })).toBeInTheDocument();
     expect(within(screen.getByRole('group', { name: 'Elementos sin horario por dia' })).getAllByRole('button', { name: /Limite Semanal Pagar cuota/ }).length).toBeGreaterThan(0);
@@ -462,7 +462,7 @@ describe('App', () => {
 
     expect(await screen.findByText('Enviar tramite vencido')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Tablero' }));
+    await user.click(screen.getByRole('tab', { name: 'Tablero' }));
 
     expect(screen.getByRole('heading', { name: 'Planificacion por estado' })).toBeInTheDocument();
     expect(within(screen.getByRole('region', { name: 'Columna Vencidas' })).getByText('Enviar tramite vencido')).toBeInTheDocument();
@@ -488,14 +488,14 @@ describe('App', () => {
 
     expect(await screen.findByText('Tarea existente')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Calendario' }));
+    await user.click(screen.getByRole('tab', { name: 'Calendario' }));
     await user.click(screen.getByRole('button', { name: `Crear elemento el ${today}` }));
 
     expect(screen.getByRole('radio', { name: /Evento/ })).toBeChecked();
     expect(screen.getByLabelText('Dia del evento')).toHaveValue(today);
 
     await user.click(screen.getByRole('button', { name: 'Cancelar' }));
-    await user.click(screen.getByRole('button', { name: 'Semana' }));
+    await user.click(screen.getByRole('tab', { name: 'Semana' }));
     await user.click(screen.getByRole('button', { name: `Crear bloque el ${today} a las 10:00` }));
 
     expect(screen.getByRole('radio', { name: /Horario/ })).toBeChecked();
@@ -526,7 +526,7 @@ describe('App', () => {
 
     expect(await screen.findByText('Cursar algebra')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Calendario' }));
+    await user.click(screen.getByRole('tab', { name: 'Calendario' }));
     let todayCell = screen.getByRole('gridcell', { name: today });
     await user.click(within(todayCell).getByRole('button', { name: /Horario Diaria 10:00 a 12:00 Cursar algebra/ }));
 
@@ -628,7 +628,7 @@ describe('App', () => {
 
     expect(await screen.findByText('Preparar entrega')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Hoy' }));
+    await user.click(screen.getByRole('tab', { name: 'Hoy' }));
 
     expect(screen.getByRole('heading', { name: 'Tu dia en foco' })).toBeInTheDocument();
     expect(within(screen.getByRole('region', { name: 'Tareas para completar' })).getByText('Preparar entrega')).toBeInTheDocument();
@@ -669,7 +669,7 @@ describe('App', () => {
 
     expect(await screen.findByText('Rendir parcial')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Hoy' }));
+    await user.click(screen.getByRole('tab', { name: 'Hoy' }));
 
     const reminder = screen.getByRole('button', { name: `Ahora: ${startTime} Rendir parcial` });
     expect(reminder).toBeInTheDocument();
@@ -1582,7 +1582,7 @@ describe('App', () => {
     expect(screen.queryByLabelText('Agregar rapido')).not.toBeInTheDocument();
 
     await user.selectOptions(screen.getByLabelText('Vista inicial'), 'calendar');
-    expect(screen.getByRole('button', { name: 'Calendario' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('tab', { name: 'Calendario' })).toHaveAttribute('aria-selected', 'true');
     expect(JSON.parse(localStorage.getItem('TODO_SETTINGS_V1'))).toEqual({
       defaultView: 'calendar',
       density: 'compact',
@@ -1628,7 +1628,7 @@ describe('App', () => {
     await waitFor(() => {
       expect(screen.queryByRole('dialog', { name: 'Paleta de comandos' })).not.toBeInTheDocument();
     });
-    expect(screen.getByRole('button', { name: 'Semana' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('tab', { name: 'Semana' })).toHaveAttribute('aria-selected', 'true');
   });
 
   test('exposes keyboard skip link and named task region', async () => {
@@ -1638,10 +1638,14 @@ describe('App', () => {
 
     const skipLink = screen.getByRole('link', { name: 'Saltar a la lista de tareas' });
     const taskRegion = screen.getByRole('region', { name: 'Tareas' });
+    const activeView = screen.getByRole('tab', { name: 'Lista' });
+    const viewPanel = screen.getByRole('tabpanel');
 
     expect(skipLink).toHaveAttribute('href', '#todo-list');
     expect(taskRegion).toHaveAttribute('id', 'todo-list');
     expect(taskRegion).toHaveAttribute('tabindex', '-1');
+    expect(activeView).toHaveAttribute('aria-controls', 'todo-view-panel');
+    expect(viewPanel).toHaveAttribute('aria-labelledby', activeView.id);
   });
 
   test('shows PWA offline and update status messages', async () => {

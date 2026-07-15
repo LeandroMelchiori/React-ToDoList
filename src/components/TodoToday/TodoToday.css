@@ -57,11 +57,11 @@
 
 .TodoToday-reminder {
   align-items: center;
-  background: linear-gradient(135deg, var(--color-text-strong), var(--color-active));
+  background: linear-gradient(135deg, var(--color-active), var(--color-accent-hover));
   border: 0;
   border-radius: 8px;
   box-shadow: 0 18px 35px rgba(15, 23, 42, 0.16);
-  color: #ffffff;
+  color: var(--color-active-text);
   cursor: pointer;
   display: grid;
   gap: 4px;
@@ -97,13 +97,14 @@
 }
 
 .TodoToday-reminder small {
-  color: rgba(255, 255, 255, 0.82);
+  color: inherit;
   font-size: 12px;
   font-weight: 800;
+  opacity: 0.82;
 }
 
 .TodoToday-reminder--next {
-  background: linear-gradient(135deg, #0f766e, var(--color-accent-hover));
+  background: linear-gradient(135deg, var(--color-accent-hover), var(--color-active));
 }
 
 .TodoToday-grid {

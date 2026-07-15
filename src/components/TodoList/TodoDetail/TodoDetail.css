@@ -312,13 +312,13 @@
 .TodoDetail-button--primary {
   background: var(--color-accent);
   border-color: var(--color-accent);
-  color: #ffffff;
+  color: var(--color-active-text);
 }
 
 .TodoDetail-button--success {
   background: var(--color-success);
   border-color: var(--color-success);
-  color: #ffffff;
+  color: var(--color-success-text);
 }
 
 .TodoDetail-button--danger {

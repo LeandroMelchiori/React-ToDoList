@@ -67,7 +67,7 @@
 .DeleteTodoDialog-button-delete {
   background-color: var(--color-danger);
   border: 1px solid var(--color-danger);
-  color: #ffffff;
+  color: var(--color-danger-text);
 }
 
 .DeleteTodoDialog-button-delete:hover {

@@ -573,6 +573,13 @@ function App() {
                 </button>
             </div>
 
+            <div
+                aria-labelledby={`todo-view-tab-${todoViewMode}`}
+                className="App-viewPanel"
+                id="todo-view-panel"
+                role="tabpanel"
+                tabIndex={0}
+            >
             {todoViewMode === 'today' ? (
                 <TodoToday
                     error={error}
@@ -765,6 +772,7 @@ function App() {
                 />
                 </>
             )}
+            </div>
             </main>
 
             {isCommandPaletteOpen && (

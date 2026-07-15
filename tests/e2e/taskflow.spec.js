@@ -48,10 +48,10 @@ test('manages a todo through the production flow', async ({ page }) => {
   await expect(page.getByLabel('Revisar copy')).toBeVisible();
   await expect(page.getByLabel('Validar responsive')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Calendario' }).click();
+  await page.getByRole('tab', { name: 'Calendario' }).click();
   await expect(page.getByRole('grid', { name: /Calendario/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /Limite Semanal Preparar demo del proyecto/ }).first()).toBeVisible();
-  await page.getByRole('button', { name: 'Lista' }).click();
+  await page.getByRole('tab', { name: 'Lista' }).click();
 
   await page.getByRole('button', { name: 'Filtrar por etiqueta frontend' }).click();
   await expect(page.getByRole('button', { name: 'Limpiar filtros' })).toBeVisible();
@@ -342,7 +342,7 @@ test('keeps the primary mobile shell inside the viewport', async ({ page }) => {
 
   await expect(page.getByLabel('Agregar rapido')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Crear nueva tarea' })).toBeVisible();
-  await expect(page.getByRole('group', { name: 'Cambiar vista' })).toBeVisible();
+  await expect(page.getByRole('tablist', { name: 'Cambiar vista' })).toBeVisible();
 
   const hasHorizontalOverflow = await page.evaluate(() => (
     document.documentElement.scrollWidth > document.documentElement.clientWidth

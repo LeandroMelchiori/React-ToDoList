@@ -107,6 +107,13 @@
   padding: 3px 5px;
 }
 
+.App-viewPanel:focus-visible {
+  border-radius: 8px;
+  box-shadow: var(--shadow-focus);
+  outline: 3px solid var(--color-accent);
+  outline-offset: 5px;
+}
+
 @media (max-width: 640px) {
   .App {
     padding: 12px 12px 40px;

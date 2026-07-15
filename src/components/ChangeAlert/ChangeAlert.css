@@ -35,7 +35,7 @@
   background-color: var(--color-accent);
   border: none;
   border-radius: 10px;
-  color: #ffffff;
+  color: var(--color-active-text);
   cursor: pointer;
   flex: 0 0 auto;
   font-family: inherit;

@@ -47,7 +47,7 @@
 .TodoQuickAdd button {
   background: var(--color-accent);
   border-color: var(--color-accent);
-  color: white;
+  color: var(--color-active-text);
   cursor: pointer;
   font-weight: 900;
   padding: 0 18px;

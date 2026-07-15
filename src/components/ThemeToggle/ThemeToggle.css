@@ -29,7 +29,7 @@
 .ThemeToggle[aria-pressed="true"] {
   background: var(--color-active);
   border-color: var(--color-active);
-  color: #ffffff;
+  color: var(--color-active-text);
 }
 
 @media (max-width: 560px) {

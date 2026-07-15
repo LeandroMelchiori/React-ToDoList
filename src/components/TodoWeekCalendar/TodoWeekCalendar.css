@@ -383,7 +383,7 @@
 .TodoWeekCalendar-conflictBadge {
   background: var(--color-danger);
   border-radius: 999px;
-  color: #fff;
+  color: var(--color-danger-text);
   display: inline-block;
   font-size: 9px;
   font-weight: 900;

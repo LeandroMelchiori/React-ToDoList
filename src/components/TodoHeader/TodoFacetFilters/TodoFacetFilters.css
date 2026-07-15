@@ -70,7 +70,7 @@
 
 .TodoFacetFilters-button--active span {
   background: var(--color-accent);
-  color: #082f49;
+  color: var(--color-active-text);
 }
 
 .TodoFacetFilters-clear {
