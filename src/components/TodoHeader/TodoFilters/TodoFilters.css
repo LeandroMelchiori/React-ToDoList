@@ -169,7 +169,7 @@
   }
 
   .TodoFilters-total {
-    align-self: center;
+    display: none;
   }
 
   .TodoFilters-menu {

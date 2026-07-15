@@ -11,8 +11,8 @@
 .TodoBoards--compact {
   border-bottom: 1px solid var(--color-border);
   border-top: 1px solid var(--color-border);
-  margin: 18px auto 0;
-  padding: 12px 0;
+  margin: 12px auto 0;
+  padding: 8px 0;
 }
 
 .TodoBoards-list,
@@ -204,7 +204,7 @@
 
   .TodoBoards-button {
     flex: 0 0 auto;
-    min-height: 44px;
+    min-height: 38px;
   }
 
   .TodoBoards-form input,

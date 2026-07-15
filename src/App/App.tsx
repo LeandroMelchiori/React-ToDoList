@@ -490,25 +490,27 @@ function App() {
                     searchValue={searchValue}
                     setSearchValue={setSearchValue}
                 />
-                <TodoFilters
-                    filter={filter}
-                    setFilter={setFilter}
-                    filterCounts={filterCounts}
-                />
-                <TodoMobileSummary
-                    summary={`${totalTodos} elementos - ${insights?.completionRate || 0}%`}
-                >
-                    <TodoInsights insights={insights} />
-                    <TodoFacetFilters
-                        projectOptions={projectOptions}
-                        tagOptions={tagOptions}
-                        activeProject={activeProject}
-                        activeTag={activeTag}
-                        onSelectProject={selectProjectFilter}
-                        onSelectTag={selectTagFilter}
-                        onClearFacetFilters={clearFacetFilters}
+                <div className="App-filterRow">
+                    <TodoFilters
+                        filter={filter}
+                        setFilter={setFilter}
+                        filterCounts={filterCounts}
                     />
-                </TodoMobileSummary>
+                    <TodoMobileSummary
+                        summary={`${totalTodos} elementos - ${insights?.completionRate || 0}%`}
+                    >
+                        <TodoInsights insights={insights} />
+                        <TodoFacetFilters
+                            projectOptions={projectOptions}
+                            tagOptions={tagOptions}
+                            activeProject={activeProject}
+                            activeTag={activeTag}
+                            onSelectProject={selectProjectFilter}
+                            onSelectTag={selectTagFilter}
+                            onClearFacetFilters={clearFacetFilters}
+                        />
+                    </TodoMobileSummary>
+                </div>
             </TodoHeader>
 
             <CreateTodoButton
