@@ -251,16 +251,12 @@
 }
 
 .TodoWeekCalendar-slot {
-  display: grid;
-  gap: 6px;
   min-height: 78px;
-  padding: 8px;
   position: relative;
 }
 
 .TodoWeekCalendar-add {
   align-items: center;
-  align-self: start;
   background: transparent;
   border: 1px solid transparent;
   border-radius: 6px;
@@ -272,9 +268,12 @@
   font-weight: 900;
   height: 24px;
   justify-content: center;
-  justify-self: end;
   opacity: 0;
+  position: absolute;
+  right: 4px;
+  top: 4px;
   width: 24px;
+  z-index: 6;
 }
 
 .TodoWeekCalendar-slot:hover .TodoWeekCalendar-add,
@@ -311,6 +310,18 @@
   font-weight: 900;
   margin-bottom: 3px;
   opacity: 0.72;
+}
+
+.TodoWeekCalendar-event--positioned {
+  overflow: hidden;
+  position: absolute;
+  z-index: 2;
+}
+
+.TodoWeekCalendar-event--positioned:hover,
+.TodoWeekCalendar-event--positioned:focus-visible {
+  overflow: visible;
+  z-index: 5;
 }
 
 .TodoWeekCalendar-event:hover,

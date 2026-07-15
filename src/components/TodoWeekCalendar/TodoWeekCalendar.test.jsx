@@ -5,6 +5,7 @@ import {
   getHourSlots,
   getTimedTodosForSlot,
   getTimedTimeBlocksForSlot,
+  getTimedLayoutEntriesForDay,
   getUntimedTodosByDay,
   getUntimedWeekTodos,
   getWeekDays,
@@ -120,6 +121,57 @@ describe('TodoWeekCalendar helpers', () => {
       { todo: task, timeBlock: task.timeBlocks[0] },
     ]);
   });
+
+  test('assigns side-by-side lanes to overlapping timed items', () => {
+    const todos = [
+      {
+        id: 'course',
+        text: 'Cursar algebra',
+        order: 0,
+        dateType: 'period',
+        startDate: '2026-08-10',
+        endDate: '2026-08-10',
+        startTime: '10:00',
+        endTime: '12:00',
+      },
+      {
+        id: 'consultation',
+        text: 'Consulta',
+        order: 1,
+        dateType: 'event',
+        startDate: '2026-08-10',
+        startTime: '11:00',
+        endTime: '11:30',
+      },
+      {
+        id: 'review',
+        text: 'Repaso',
+        order: 2,
+        dateType: 'event',
+        startDate: '2026-08-10',
+        startTime: '11:30',
+        endTime: '12:30',
+      },
+      {
+        id: 'later',
+        text: 'Actividad posterior',
+        order: 3,
+        dateType: 'event',
+        startDate: '2026-08-10',
+        startTime: '13:00',
+        endTime: '14:00',
+      },
+    ];
+
+    const entries = getTimedLayoutEntriesForDay(todos, '2026-08-10');
+
+    expect(entries.map(entry => ({ id: entry.todo.id, lane: entry.lane, laneCount: entry.laneCount }))).toEqual([
+      { id: 'course', lane: 0, laneCount: 2 },
+      { id: 'consultation', lane: 1, laneCount: 2 },
+      { id: 'review', lane: 1, laneCount: 2 },
+      { id: 'later', lane: 0, laneCount: 1 },
+    ]);
+  });
 });
 
 describe('TodoWeekCalendar conflicts', () => {
@@ -166,8 +218,13 @@ describe('TodoWeekCalendar conflicts', () => {
     );
 
     expect(screen.getByRole('status', { name: 'Conflictos de horario' })).toHaveTextContent('1 conflicto de horario');
-    expect(screen.getByRole('button', { name: /Cursar algebra Conflicto de horario/ })).toHaveClass('TodoWeekCalendar-event--conflict');
-    expect(screen.getByRole('button', { name: /Consulta previa Conflicto de horario/ })).toHaveClass('TodoWeekCalendar-event--conflict');
+    const courseButton = screen.getByRole('button', { name: /Cursar algebra Conflicto de horario/ });
+    const consultationButton = screen.getByRole('button', { name: /Consulta previa Conflicto de horario/ });
+
+    expect(courseButton).toHaveClass('TodoWeekCalendar-event--conflict');
+    expect(consultationButton).toHaveClass('TodoWeekCalendar-event--conflict');
+    expect(courseButton).toHaveStyle({ height: '150px', left: 'calc(0% + 4px)', width: 'calc(50% - 8px)' });
+    expect(consultationButton).toHaveStyle({ height: '36px', left: 'calc(50% + 4px)', width: 'calc(50% - 8px)' });
 
     vi.useRealTimers();
   });

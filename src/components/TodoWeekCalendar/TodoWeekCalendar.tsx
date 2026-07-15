@@ -21,6 +21,7 @@ import './TodoWeekCalendar.css';
 const WEEK_DAYS = ['Lun', 'Mar', 'Mier', 'Jue', 'Vie', 'Sab', 'Dom'];
 const DEFAULT_START_HOUR = 8;
 const DEFAULT_END_HOUR = 20;
+const HOUR_SLOT_HEIGHT = 78;
 
 const TODO_DATE_TYPE_LABELS: Record<TodoDateType, string> = {
   [TODO_DATE_TYPES.due]: 'Limite',
@@ -66,6 +67,19 @@ type UntimedWeekDayGroup = {
 
 type TodoTimeBlockEntry = {
   timeBlock: TodoTimeBlock;
+  todo: Todo;
+};
+
+type TodoTimedLayoutEntry = {
+  endMinutes: number;
+  endTime: string;
+  id: string;
+  lane: number;
+  laneCount: number;
+  source: 'agenda' | 'timeBlock';
+  startMinutes: number;
+  startTime: string;
+  timeBlock: TodoTimeBlock | null;
   todo: Todo;
 };
 
@@ -211,6 +225,108 @@ function getTimedTimeBlocksForSlot(todos: Todo[], dateValue: string, hour: numbe
       firstEntry.timeBlock.startTime.localeCompare(secondEntry.timeBlock.startTime) ||
       firstEntry.todo.order - secondEntry.todo.order
     );
+}
+
+function getTimeMinutes(timeValue: string): number | null {
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(timeValue)) {
+    return null;
+  }
+
+  const [hour, minute] = timeValue.split(':').map(Number);
+
+  return (hour * 60) + minute;
+}
+
+function getTimedLayoutEntriesForDay(todos: Todo[], dateValue: string): TodoTimedLayoutEntry[] {
+  const rawEntries = todos.flatMap(todo => {
+    const agendaEntries: Omit<TodoTimedLayoutEntry, 'lane' | 'laneCount'>[] = [];
+
+    if (todo.startTime && isTodoVisibleOnDay(todo, dateValue)) {
+      const startMinutes = getTimeMinutes(todo.startTime);
+      const parsedEndMinutes = todo.endTime ? getTimeMinutes(todo.endTime) : null;
+
+      if (startMinutes !== null) {
+        const endMinutes = parsedEndMinutes !== null && parsedEndMinutes > startMinutes
+          ? parsedEndMinutes
+          : Math.min(startMinutes + 60, 24 * 60);
+
+        agendaEntries.push({
+          endMinutes,
+          endTime: todo.endTime || '',
+          id: `${todo.id}:agenda`,
+          source: 'agenda',
+          startMinutes,
+          startTime: todo.startTime,
+          timeBlock: null,
+          todo,
+        });
+      }
+    }
+
+    const timeBlockEntries = (todo.timeBlocks || []).flatMap(timeBlock => {
+      if (timeBlock.date !== dateValue) {
+        return [];
+      }
+
+      const startMinutes = getTimeMinutes(timeBlock.startTime);
+      const endMinutes = getTimeMinutes(timeBlock.endTime);
+
+      return startMinutes !== null && endMinutes !== null && endMinutes > startMinutes
+        ? [{
+            endMinutes,
+            endTime: timeBlock.endTime,
+            id: `${todo.id}:${timeBlock.id}`,
+            source: 'timeBlock' as const,
+            startMinutes,
+            startTime: timeBlock.startTime,
+            timeBlock,
+            todo,
+          }]
+        : [];
+    });
+
+    return [...agendaEntries, ...timeBlockEntries];
+  }).sort((firstEntry, secondEntry) =>
+    firstEntry.startMinutes - secondEntry.startMinutes ||
+    firstEntry.endMinutes - secondEntry.endMinutes ||
+    firstEntry.todo.order - secondEntry.todo.order
+  );
+  const positionedEntries: TodoTimedLayoutEntry[] = [];
+  let currentGroup: typeof rawEntries = [];
+  let currentGroupEnd = -1;
+
+  const closeGroup = () => {
+    if (currentGroup.length === 0) {
+      return;
+    }
+
+    const laneEnds: number[] = [];
+    const assignedEntries = currentGroup.map(entry => {
+      const reusableLane = laneEnds.findIndex(laneEnd => laneEnd <= entry.startMinutes);
+      const lane = reusableLane >= 0 ? reusableLane : laneEnds.length;
+
+      laneEnds[lane] = entry.endMinutes;
+
+      return { ...entry, lane };
+    });
+    const laneCount = laneEnds.length;
+
+    positionedEntries.push(...assignedEntries.map(entry => ({ ...entry, laneCount })));
+    currentGroup = [];
+    currentGroupEnd = -1;
+  };
+
+  rawEntries.forEach(entry => {
+    if (currentGroup.length > 0 && entry.startMinutes >= currentGroupEnd) {
+      closeGroup();
+    }
+
+    currentGroup.push(entry);
+    currentGroupEnd = Math.max(currentGroupEnd, entry.endMinutes);
+  });
+  closeGroup();
+
+  return positionedEntries;
 }
 
 function getTimedTodosForSlot(todos: Todo[], dateValue: string, hour: number): Todo[] {
@@ -463,8 +579,8 @@ function TodoWeekCalendar({
                     {formatHourSlot(hour)}
                   </div>
                   {weekDays.map(day => {
-                    const slotTodos = getTimedTodosForSlot(visibleTodos, day.dateValue, hour);
-                    const slotTimeBlocks = getTimedTimeBlocksForSlot(visibleTodos, day.dateValue, hour);
+                    const slotEntries = getTimedLayoutEntriesForDay(visibleTodos, day.dateValue)
+                      .filter(entry => Math.floor(entry.startMinutes / 60) === hour);
 
                     return (
                       <div
@@ -484,46 +600,56 @@ function TodoWeekCalendar({
                             +
                           </button>
                         )}
-                        {slotTodos.map(todo => {
+                        {slotEntries.map(entry => {
+                          const { timeBlock, todo } = entry;
                           const hasConflict = conflictingTodoKeys.has(`${day.dateValue}:${todo.id}`);
+                          const eventStyle: React.CSSProperties = {
+                            height: Math.max(36, ((entry.endMinutes - entry.startMinutes) / 60) * HOUR_SLOT_HEIGHT - 6),
+                            left: `calc(${(entry.lane * 100) / entry.laneCount}% + 4px)`,
+                            top: ((entry.startMinutes % 60) / 60) * HOUR_SLOT_HEIGHT + 3,
+                            width: `calc(${100 / entry.laneCount}% - 8px)`,
+                          };
+
+                          if (entry.source === 'timeBlock' && timeBlock) {
+                            return (
+                              <button
+                                aria-label={`${timeBlock.startTime} a ${timeBlock.endTime} Trabajo ${todo.text}${hasConflict ? ' Conflicto de horario' : ''}`}
+                                className={[
+                                  'TodoWeekCalendar-event',
+                                  'TodoWeekCalendar-event--positioned',
+                                  'TodoWeekCalendar-event--timeBlock',
+                                  hasConflict ? 'TodoWeekCalendar-event--conflict' : '',
+                                ].filter(Boolean).join(' ')}
+                                key={entry.id}
+                                onClick={() => onEditTodo(todo.id)}
+                                style={eventStyle}
+                                type="button"
+                              >
+                                <small>{timeBlock.startTime} a {timeBlock.endTime}</small>
+                                <span>Trabajo</span>
+                                {hasConflict && <span className="TodoWeekCalendar-conflictBadge">Conflicto</span>}
+                                {todo.text}
+                              </button>
+                            );
+                          }
 
                           return (
                             <button
                               type="button"
                               className={[
                                 'TodoWeekCalendar-event',
+                                'TodoWeekCalendar-event--positioned',
                                 `TodoWeekCalendar-event--${getTodoScheduleRange(todo)?.type || TODO_DATE_TYPES.due}`,
                                 `TodoWeekCalendar-event--kind-${todo.kind || TODO_KINDS.task}`,
                                 todo.completed ? 'TodoWeekCalendar-event--completed' : '',
                                 hasConflict ? 'TodoWeekCalendar-event--conflict' : '',
                               ].filter(Boolean).join(' ')}
                               aria-label={`${getTodoWeekAriaLabel(todo)}${hasConflict ? ' Conflicto de horario' : ''}`}
-                              key={todo.id}
+                              key={entry.id}
                               onClick={() => onEditTodo(todo.id, day.dateValue)}
+                              style={eventStyle}
                             >
                               <small>{getTodoTimeLabel(todo)}</small>
-                              {hasConflict && <span className="TodoWeekCalendar-conflictBadge">Conflicto</span>}
-                              {todo.text}
-                            </button>
-                          );
-                        })}
-                        {slotTimeBlocks.map(({ timeBlock, todo }) => {
-                          const hasConflict = conflictingTodoKeys.has(`${day.dateValue}:${todo.id}`);
-
-                          return (
-                            <button
-                              aria-label={`${timeBlock.startTime} a ${timeBlock.endTime} Trabajo ${todo.text}${hasConflict ? ' Conflicto de horario' : ''}`}
-                              className={[
-                                'TodoWeekCalendar-event',
-                                'TodoWeekCalendar-event--timeBlock',
-                                hasConflict ? 'TodoWeekCalendar-event--conflict' : '',
-                              ].filter(Boolean).join(' ')}
-                              key={`${todo.id}-${timeBlock.id}`}
-                              onClick={() => onEditTodo(todo.id)}
-                              type="button"
-                            >
-                              <small>{timeBlock.startTime} a {timeBlock.endTime}</small>
-                              <span>Trabajo</span>
                               {hasConflict && <span className="TodoWeekCalendar-conflictBadge">Conflicto</span>}
                               {todo.text}
                             </button>
@@ -569,6 +695,7 @@ export {
   getHourSlots,
   getTimedTodosForSlot,
   getTimedTimeBlocksForSlot,
+  getTimedLayoutEntriesForDay,
   getUntimedTodosByDay,
   getUntimedWeekTodos,
   getWeekDays,
