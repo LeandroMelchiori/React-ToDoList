@@ -117,7 +117,9 @@ function App() {
         visibleTodoGroups,
         openModal,
         detailTodo,
+        detailOccurrenceDate,
         editingTodo,
+        editingOccurrenceDate,
         deletingTodo,
         recentlyDeletedTodo,
     } = states;
@@ -149,6 +151,9 @@ function App() {
         openCreateModal,
         startViewingTodo,
         startEditingTodo,
+        startEditingTodoOccurrence,
+        skipTodoOccurrence,
+        restoreTodoOccurrence,
         startDeletingTodo,
         confirmDeleteTodo,
         undoDeleteTodo,
@@ -158,6 +163,7 @@ function App() {
         duplicateTodo,
         deleteTodos,
         updateTodo,
+        updateTodoOccurrence,
         exportTodos,
         exportCalendar,
         previewTodosImport,
@@ -188,7 +194,9 @@ function App() {
     const formMode = editingTodo ? 'edit' : 'create';
     const modalLabel = deletingTodo
         ? 'Eliminar tarea'
-        : editingTodo
+        : editingOccurrenceDate
+            ? 'Editar ocurrencia'
+            : editingTodo
             ? 'Editar tarea'
             : detailTodo
                 ? 'Detalle del elemento'
@@ -631,6 +639,7 @@ function App() {
                                 recurrenceEndDate={todo.recurrenceEndDate}
                                 recurrenceCount={todo.recurrenceCount}
                                 completedOccurrences={todo.completedOccurrences}
+                                excludedOccurrences={todo.excludedOccurrences}
                                 selectionMode={isSelectionMode}
                                 selected={selectedTodoIds.has(todo.id)}
                                 reminder={todo.reminder}
@@ -687,11 +696,19 @@ function App() {
                         />
                     ) : detailTodo ? (
                         <TodoDetail
+                            occurrenceDate={detailOccurrenceDate}
                             todo={detailTodo}
                             onClose={closeModal}
                             onDelete={() => startDeletingTodo(detailTodo.id)}
                             onDuplicate={() => duplicateTodo(detailTodo.id)}
                             onEdit={() => startEditingTodo(detailTodo.id)}
+                            onEditOccurrence={detailOccurrenceDate
+                                ? () => startEditingTodoOccurrence(detailTodo.id, detailOccurrenceDate)
+                                : undefined}
+                            onSkipOccurrence={detailOccurrenceDate
+                                ? () => skipTodoOccurrence(detailTodo.id, detailOccurrenceDate)
+                                : undefined}
+                            onRestoreOccurrence={(dateValue) => restoreTodoOccurrence(detailTodo.id, dateValue)}
                             onArchive={() => {
                                 const result = archiveTodo(detailTodo.id);
 
@@ -714,12 +731,12 @@ function App() {
                             initialKind={editingTodo?.kind || createTodoDefaults.kind}
                             initialDescription={editingTodo?.description}
                             initialPriority={editingTodo?.priority}
-                            initialDueDate={editingTodo?.dueDate}
-                            initialStartDate={editingTodo?.startDate || createTodoDefaults.startDate}
-                            initialEndDate={editingTodo?.endDate || createTodoDefaults.endDate}
+                            initialDueDate={editingOccurrenceDate || editingTodo?.dueDate}
+                            initialStartDate={editingOccurrenceDate || editingTodo?.startDate || createTodoDefaults.startDate}
+                            initialEndDate={editingOccurrenceDate || editingTodo?.endDate || createTodoDefaults.endDate}
                             initialStartTime={editingTodo?.startTime || createTodoDefaults.startTime}
                             initialEndTime={editingTodo?.endTime || createTodoDefaults.endTime}
-                            initialRecurrence={editingTodo?.recurrence || createTodoDefaults.recurrence}
+                            initialRecurrence={editingOccurrenceDate ? 'none' : editingTodo?.recurrence || createTodoDefaults.recurrence}
                             initialRecurrenceDays={editingTodo?.recurrenceDays}
                             initialRecurrenceEndDate={editingTodo?.recurrenceEndDate}
                             initialRecurrenceCount={editingTodo?.recurrenceCount}
@@ -727,15 +744,20 @@ function App() {
                             initialProject={editingTodo?.project}
                             initialTags={editingTodo?.tags}
                             initialSubtasks={editingTodo?.subtasks}
-                            label={editingTodo ? 'Editar tarea' : 'Nueva tarea'}
+                            label={editingOccurrenceDate ? 'Editar esta fecha' : editingTodo ? 'Editar tarea' : 'Nueva tarea'}
                             lockedProject={!editingTodo ? activeProject : null}
+                            lockRecurrence={Boolean(editingOccurrenceDate)}
                             mode={formMode}
                             onCancel={closeModal}
                             onCheckConflicts={(text, details) => (
                                 checkTodoScheduleConflicts(text, details, editingTodo?.id || null)
                             )}
                             onSubmitTodo={(text, details) => (
-                                editingTodo ? updateTodo(editingTodo.id, text, details) : addTodo(text, details)
+                                editingTodo && editingOccurrenceDate
+                                    ? updateTodoOccurrence(editingTodo.id, editingOccurrenceDate, text, details)
+                                    : editingTodo
+                                        ? updateTodo(editingTodo.id, text, details)
+                                        : addTodo(text, details)
                             )}
                             submitLabel={editingTodo ? 'Guardar' : 'Agregar'}
                         />

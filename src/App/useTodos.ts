@@ -13,6 +13,7 @@ import {
     getTodoGroups,
     getTodoInsights,
     getTodoNextOccurrenceDate,
+    getTodoNextRecurringDate,
     getTodosDateCounts,
     getVisibleTodos,
     isTodoArchived,
@@ -37,6 +38,7 @@ import {
     readTodosCalendarImport,
     reindexTodos,
     setTodoOccurrenceCompletion,
+    setTodoOccurrenceExcluded,
     toggleTodoOccurrence,
 } from './todoModel';
 import {
@@ -187,10 +189,16 @@ function useTodos() {
     const [editingTodoId, setEditingTodoId] =
      React.useState<string | null>(null);
 
+    const [editingOccurrenceDate, setEditingOccurrenceDate] =
+     React.useState<string | null>(null);
+
     const [deletingTodoId, setDeletingTodoId] =
      React.useState<string | null>(null);
 
     const [detailTodoId, setDetailTodoId] =
+     React.useState<string | null>(null);
+
+    const [detailOccurrenceDate, setDetailOccurrenceDate] =
      React.useState<string | null>(null);
 
     const [recentlyDeletedTodo, setRecentlyDeletedTodo] =
@@ -316,7 +324,9 @@ function useTodos() {
         }
 
         setDetailTodoId(null);
+        setDetailOccurrenceDate(null);
         setEditingTodoId(null);
+        setEditingOccurrenceDate(null);
         setDeletingTodoId(null);
         setRecentlyDeletedTodo(null);
     }
@@ -787,6 +797,10 @@ function useTodos() {
                         todo.recurrence !== TODO_RECURRENCES.none
                         ? todo.completedOccurrences
                         : [],
+                    excludedOccurrences: recurrence !== TODO_RECURRENCES.none &&
+                        todo.recurrence !== TODO_RECURRENCES.none
+                        ? todo.excludedOccurrences
+                        : [],
                     reminder: normalizeReminder(details.reminder),
                     project: normalizeProject(details.project),
                     tags: normalizeTags(details.tags),
@@ -805,6 +819,49 @@ function useTodos() {
         setEditingTodoId(null);
         return { ok: true };
     }
+
+    const updateTodoOccurrence = (
+        id: string,
+        dateValue: string,
+        text: string,
+        details: TodoDetails = {}
+    ): TodoActionResult => {
+        const todo = normalizedTodos.find(item => item.id === id);
+        const trimmedText = text.trim();
+
+        if (!todo || todo.recurrence === TODO_RECURRENCES.none) {
+            return { ok: false, error: 'No encontramos esa serie recurrente.' };
+        }
+
+        if (!trimmedText) {
+            return { ok: false, error: 'Escribe un titulo antes de guardar los cambios.' };
+        }
+
+        const kind = normalizeTodoKind(details.kind, details.dateType);
+        const detachedOccurrence = createTodo(trimmedText, {
+            ...details,
+            kind,
+            dueDate: kind === TODO_KINDS.task ? dateValue : null,
+            startDate: kind === TODO_KINDS.task ? null : dateValue,
+            endDate: kind === TODO_KINDS.schedule || kind === TODO_KINDS.period ? dateValue : null,
+            recurrence: TODO_RECURRENCES.none,
+            recurrenceDays: [],
+            recurrenceEndDate: null,
+            recurrenceCount: null,
+            excludedOccurrences: [],
+            order: normalizedTodos.length,
+        });
+        const nextTodos = normalizedTodos.map(item => (
+            item.id === id ? setTodoOccurrenceExcluded(item, dateValue, true) : item
+        ));
+
+        saveActiveTodos([...nextTodos, detachedOccurrence]);
+        resetTodoView({ preserveProject: Boolean(activeProject) });
+        setEditingOccurrenceDate(null);
+        setOpenModal(false);
+
+        return { ok: true };
+    };
 
     const selectProjectFilter = (project: string | null) => {
         setActiveProject(currentProject => currentProject === project ? null : project);
@@ -903,24 +960,79 @@ function useTodos() {
 
     const openCreateModal = () => {
         setDetailTodoId(null);
+        setDetailOccurrenceDate(null);
         setEditingTodoId(null);
+        setEditingOccurrenceDate(null);
         setDeletingTodoId(null);
         setOpenModal(true);
     }
 
-    const startViewingTodo = (id: string) => {
+    const startViewingTodo = (id: string, occurrenceDate: string | null = null) => {
+        const todo = normalizedTodos.find(item => item.id === id);
+
         setDetailTodoId(id);
+        setDetailOccurrenceDate(todo && todo.recurrence !== TODO_RECURRENCES.none
+            ? occurrenceDate || getTodoNextRecurringDate(todo)
+            : null);
         setEditingTodoId(null);
+        setEditingOccurrenceDate(null);
         setDeletingTodoId(null);
         setOpenModal(true);
     }
 
     const startEditingTodo = (id: string) => {
         setEditingTodoId(id);
+        setEditingOccurrenceDate(null);
         setDetailTodoId(null);
+        setDetailOccurrenceDate(null);
         setDeletingTodoId(null);
         setOpenModal(true);
     }
+
+    const startEditingTodoOccurrence = (id: string, dateValue: string): TodoActionResult => {
+        const todo = normalizedTodos.find(item => item.id === id);
+
+        if (!todo || todo.recurrence === TODO_RECURRENCES.none) {
+            return { ok: false, error: 'No encontramos esa ocurrencia.' };
+        }
+
+        setEditingTodoId(id);
+        setEditingOccurrenceDate(dateValue);
+        setDetailTodoId(null);
+        setDetailOccurrenceDate(null);
+        setDeletingTodoId(null);
+        setOpenModal(true);
+
+        return { ok: true };
+    };
+
+    const skipTodoOccurrence = (id: string, dateValue: string): TodoActionResult => {
+        const todo = normalizedTodos.find(item => item.id === id);
+
+        if (!todo || todo.recurrence === TODO_RECURRENCES.none) {
+            return { ok: false, error: 'No encontramos esa ocurrencia.' };
+        }
+
+        const updatedTodo = setTodoOccurrenceExcluded(todo, dateValue, true);
+        saveActiveTodos(normalizedTodos.map(item => item.id === id ? updatedTodo : item));
+        setDetailOccurrenceDate(getTodoNextRecurringDate(updatedTodo, dateValue));
+
+        return { ok: true };
+    };
+
+    const restoreTodoOccurrence = (id: string, dateValue: string): TodoActionResult => {
+        const todo = normalizedTodos.find(item => item.id === id);
+
+        if (!todo || !todo.excludedOccurrences.includes(dateValue)) {
+            return { ok: false, error: 'No encontramos esa fecha omitida.' };
+        }
+
+        saveActiveTodos(normalizedTodos.map(item => (
+            item.id === id ? setTodoOccurrenceExcluded(item, dateValue, false) : item
+        )));
+
+        return { ok: true };
+    };
 
     const startDeletingTodo = (id: string) => {
         setDeletingTodoId(id);
@@ -937,6 +1049,7 @@ function useTodos() {
         deleteTodo(deletingTodoId);
         setDeletingTodoId(null);
         setDetailTodoId(null);
+        setDetailOccurrenceDate(null);
         setOpenModal(false);
     }
 
@@ -964,7 +1077,9 @@ function useTodos() {
     const closeModal = () => {
         setOpenModal(false);
         setDetailTodoId(null);
+        setDetailOccurrenceDate(null);
         setEditingTodoId(null);
+        setEditingOccurrenceDate(null);
         setDeletingTodoId(null);
     }
 
@@ -1208,7 +1323,9 @@ function useTodos() {
         visibleTodoGroups,
         openModal,
         detailTodo,
+        detailOccurrenceDate,
         editingTodo,
+        editingOccurrenceDate,
         deletingTodo,
         recentlyDeletedTodo,
     }
@@ -1243,6 +1360,9 @@ function useTodos() {
         openCreateModal,
         startViewingTodo,
         startEditingTodo,
+        startEditingTodoOccurrence,
+        skipTodoOccurrence,
+        restoreTodoOccurrence,
         startDeletingTodo,
         confirmDeleteTodo,
         undoDeleteTodo,
@@ -1250,6 +1370,7 @@ function useTodos() {
         closeModal,
         addTodo,
         updateTodo,
+        updateTodoOccurrence,
         exportTodos,
         exportCalendar,
         previewTodosImport,

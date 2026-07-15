@@ -105,6 +105,7 @@ interface TodoFormProps {
     initialSubtasks?: TodoSubtask[];
     label?: string;
     lockedProject?: string | null;
+    lockRecurrence?: boolean;
     mode?: 'create' | 'edit';
     onCancel: () => void;
     onCheckConflicts?: (text: string, details: TodoDetails) => TodoScheduleConflictMatch[];
@@ -250,6 +251,7 @@ function TodoForm({
     initialSubtasks = [],
     label = 'Nueva tarea',
     lockedProject = null,
+    lockRecurrence = false,
     mode = 'create',
     onCancel,
     onCheckConflicts,
@@ -313,10 +315,12 @@ function TodoForm({
             : TODO_DATE_TYPES.due;
     const recurrenceHintId = `${recurrenceId}-hint`;
     const recurrenceOptions = React.useMemo(() => (
-        TODO_RECURRENCE_OPTIONS.filter(option =>
+        lockRecurrence
+            ? TODO_RECURRENCE_OPTIONS.filter(option => option.value === TODO_RECURRENCES.none)
+            : TODO_RECURRENCE_OPTIONS.filter(option =>
             getAllowedRecurrencesForTodoKind(kindValue, dateTypeForKind).includes(option.value)
         )
-    ), [dateTypeForKind, kindValue]);
+    ), [dateTypeForKind, kindValue, lockRecurrence]);
     const isRecurrenceDisabled = recurrenceOptions.length === 1;
     const hasRecurrence = recurrenceValue !== TODO_RECURRENCES.none;
     const isWeeklyRecurrence = recurrenceValue === TODO_RECURRENCES.weekly;
@@ -395,7 +399,7 @@ function TodoForm({
             setDueDateValue('');
             setSubtasksValue([]);
             setSubtaskDraft('');
-            setRecurrenceValue(TODO_RECURRENCES.weekly);
+            setRecurrenceValue(lockRecurrence ? TODO_RECURRENCES.none : TODO_RECURRENCES.weekly);
             return;
         }
 
@@ -797,7 +801,9 @@ function TodoForm({
                         ))}
                     </select>
                     <span className="TodoForm-fieldHint" id={recurrenceHintId}>
-                        {TODO_RECURRENCE_HINTS[kindValue]}
+                        {lockRecurrence
+                            ? 'Esta fecha sera independiente de la serie.'
+                            : TODO_RECURRENCE_HINTS[kindValue]}
                     </span>
                 </div>
                 {isWeeklyRecurrence && (

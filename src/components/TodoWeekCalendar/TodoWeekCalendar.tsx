@@ -66,7 +66,7 @@ type UntimedWeekDayGroup = {
 interface TodoWeekCalendarProps {
   error?: boolean;
   loading?: boolean;
-  onEditTodo: (id: string) => void;
+  onEditTodo: (id: string, occurrenceDate?: string) => void;
   onCreateTodoForSlot?: (dateValue: string, hour: number) => void;
   onEmptySearchResults: () => ReactNode;
   onEmptyTodos: () => ReactNode;
@@ -365,7 +365,7 @@ function TodoWeekCalendar({
                                     getTodoRecurrenceLabel(todo),
                                     todo.text,
                                   ].filter(Boolean).join(' ')}
-                                  onClick={() => onEditTodo(todo.id)}
+                                  onClick={() => onEditTodo(todo.id, group.dateValue)}
                                 >
                                   <small>{getTodoTypeLabel(todo)}</small>
                                   {todo.text}
@@ -387,7 +387,7 @@ function TodoWeekCalendar({
                                   <button
                                     type="button"
                                     className="TodoWeekCalendar-allDayItem"
-                                    onClick={() => onEditTodo(todo.id)}
+                                    onClick={() => onEditTodo(todo.id, group.dateValue)}
                                   >
                                     {todo.text}
                                   </button>
@@ -462,7 +462,7 @@ function TodoWeekCalendar({
                               ].filter(Boolean).join(' ')}
                               aria-label={`${getTodoWeekAriaLabel(todo)}${hasConflict ? ' Conflicto de horario' : ''}`}
                               key={todo.id}
-                              onClick={() => onEditTodo(todo.id)}
+                              onClick={() => onEditTodo(todo.id, day.dateValue)}
                             >
                               <small>{getTodoTimeLabel(todo)}</small>
                               {hasConflict && <span className="TodoWeekCalendar-conflictBadge">Conflicto</span>}

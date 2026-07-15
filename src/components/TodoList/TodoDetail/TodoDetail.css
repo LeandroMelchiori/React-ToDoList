@@ -202,6 +202,60 @@
   bottom: -28px;
 }
 
+.TodoDetail-exceptions {
+  border-top: 1px solid var(--color-border);
+  display: grid;
+  gap: 8px;
+  padding-top: 14px;
+}
+
+.TodoDetail-exceptions h3 {
+  color: var(--color-text-strong);
+  font-size: 13px;
+  margin: 0;
+}
+
+.TodoDetail-exceptions ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.TodoDetail-exceptions li {
+  align-items: center;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  display: flex;
+  font-size: 12px;
+  font-weight: 800;
+  gap: 5px;
+  min-height: 32px;
+  padding-left: 10px;
+}
+
+.TodoDetail-exceptions button {
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  color: var(--color-accent-hover);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 900;
+  min-height: 28px;
+  padding: 0 9px;
+}
+
+.TodoDetail-exceptions button:focus-visible {
+  box-shadow: var(--shadow-focus);
+  outline: none;
+}
+
 .TodoDetail-button {
   background: var(--color-surface);
   border: 1px solid var(--color-border-strong);

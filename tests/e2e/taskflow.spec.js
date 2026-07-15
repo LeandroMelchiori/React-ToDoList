@@ -68,7 +68,7 @@ test('manages a todo through the production flow', async ({ page }) => {
   const detailDialog = page.getByRole('dialog', { name: 'Detalle del elemento' });
   await expect(detailDialog.getByText('Preparar demo del proyecto')).toBeVisible();
   await expect(detailDialog.getByText('Limite 20/07/2026')).toBeVisible();
-  await detailDialog.getByRole('button', { name: 'Editar' }).click();
+  await detailDialog.getByRole('button', { name: 'Editar serie' }).click();
   const editDialog = page.getByRole('dialog', { name: 'Editar tarea' });
   await expect(editDialog.getByRole('textbox', { name: 'Editar tarea' })).toHaveValue('Preparar demo del proyecto');
   await expect(editDialog.getByLabel('Descripcion')).toHaveValue('Ensayar historia del producto y decisiones tecnicas');

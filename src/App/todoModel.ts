@@ -50,6 +50,7 @@ type Todo = {
     recurrenceEndDate: string | null;
     recurrenceCount: number | null;
     completedOccurrences: string[];
+    excludedOccurrences: string[];
     reminder: TodoReminder;
     project: string | null;
     tags: string[];
@@ -138,6 +139,7 @@ type TodoDetails = {
     recurrenceEndDate?: unknown;
     recurrenceCount?: unknown;
     completedOccurrences?: unknown;
+    excludedOccurrences?: unknown;
     reminder?: unknown;
     project?: unknown;
     tags?: unknown;
@@ -163,7 +165,8 @@ type TodoOccurrenceState = Pick<Todo,
     'recurrenceDays' |
     'recurrenceEndDate' |
     'recurrenceCount' |
-    'completedOccurrences'
+    'completedOccurrences' |
+    'excludedOccurrences'
 >;
 
 const TODO_FILTERS = {
@@ -381,6 +384,10 @@ function normalizeCompletedOccurrences(completedOccurrences: unknown): string[] 
         .map(normalizeDueDate)
         .filter((dateValue): dateValue is string => Boolean(dateValue))))
         .sort();
+}
+
+function normalizeExcludedOccurrences(excludedOccurrences: unknown): string[] {
+    return normalizeCompletedOccurrences(excludedOccurrences);
 }
 
 function getAllowedRecurrencesForDateType(dateType: unknown): TodoRecurrence[] {
@@ -731,6 +738,9 @@ function createTodo(text: string, details: TodoDetails = {}): Todo {
             ? normalizeRecurrenceCount('recurrenceCount' in details ? details.recurrenceCount : undefined)
             : null,
         completedOccurrences: [],
+        excludedOccurrences: recurrence !== TODO_RECURRENCES.none
+            ? normalizeExcludedOccurrences('excludedOccurrences' in details ? details.excludedOccurrences : undefined)
+            : [],
         reminder: normalizeReminder('reminder' in details ? details.reminder : undefined),
         project: normalizeProject('project' in details ? details.project : undefined),
         tags: normalizeTags('tags' in details ? details.tags : undefined),
@@ -805,6 +815,9 @@ function normalizeTodos(todos: unknown): Todo[] {
                         ...(Array.isArray(todo.completedOccurrences) ? todo.completedOccurrences : []),
                         legacyOccurrence,
                     ])
+                    : [],
+                excludedOccurrences: recurrence !== TODO_RECURRENCES.none
+                    ? normalizeExcludedOccurrences(todo.excludedOccurrences)
                     : [],
                 reminder: normalizeReminder(todo.reminder),
                 project: normalizeProject(todo.project),
@@ -1710,6 +1723,7 @@ function getTodoReminderTarget(todo: Todo, now = new Date()): Date | null {
 function isTodoRecurringOnDate(
     todo: Pick<Todo, 'dateType' | 'dueDate' | 'startDate' | 'recurrence'> & {
         endDate?: string | null;
+        excludedOccurrences?: string[];
         recurrenceCount?: number | null;
         recurrenceDays?: TodoWeekday[];
         recurrenceEndDate?: string | null;
@@ -1719,6 +1733,10 @@ function isTodoRecurringOnDate(
     const recurrence = normalizeRecurrence(todo.recurrence);
 
     if (recurrence === TODO_RECURRENCES.none) {
+        return false;
+    }
+
+    if (normalizeExcludedOccurrences(todo.excludedOccurrences).includes(dateValue)) {
         return false;
     }
 
@@ -1744,8 +1762,8 @@ function isTodoRecurringOnDate(
     return true;
 }
 
-function getTodoNextOccurrenceDate(todo: TodoOccurrenceState, fromDate = getTodayDateValue()): string | null {
-    if (todo.kind !== TODO_KINDS.task || normalizeRecurrence(todo.recurrence) === TODO_RECURRENCES.none) {
+function getTodoNextRecurringDate(todo: TodoOccurrenceState, fromDate = getTodayDateValue()): string | null {
+    if (normalizeRecurrence(todo.recurrence) === TODO_RECURRENCES.none) {
         return null;
     }
 
@@ -1760,6 +1778,12 @@ function getTodoNextOccurrenceDate(todo: TodoOccurrenceState, fromDate = getToda
     }
 
     return null;
+}
+
+function getTodoNextOccurrenceDate(todo: TodoOccurrenceState, fromDate = getTodayDateValue()): string | null {
+    return todo.kind === TODO_KINDS.task
+        ? getTodoNextRecurringDate(todo, fromDate)
+        : null;
 }
 
 function isTodoOccurrenceCompleted(todo: Pick<TodoOccurrenceState, 'completedOccurrences'>, dateValue: string | null): boolean {
@@ -1789,6 +1813,23 @@ function toggleTodoOccurrence(todo: Todo, dateValue = getTodoNextOccurrenceDate(
         dateValue,
         !isTodoOccurrenceCompleted(todo, dateValue)
     );
+}
+
+function setTodoOccurrenceExcluded(todo: Todo, dateValue: string | null, excluded = true): Todo {
+    const normalizedDate = normalizeDueDate(dateValue);
+
+    if (!normalizedDate || normalizeRecurrence(todo.recurrence) === TODO_RECURRENCES.none) {
+        return todo;
+    }
+
+    const excludedOccurrences = normalizeExcludedOccurrences(todo.excludedOccurrences);
+
+    return {
+        ...todo,
+        excludedOccurrences: excluded
+            ? normalizeExcludedOccurrences([...excludedOccurrences, normalizedDate])
+            : excludedOccurrences.filter(occurrence => occurrence !== normalizedDate),
+    };
 }
 
 function getTodosDateCounts(
@@ -2009,6 +2050,7 @@ export {
     getTodoInsights,
     getTodoReminderTarget,
     getTodoNextOccurrenceDate,
+    getTodoNextRecurringDate,
     getTodoRecurrenceAnchorDate,
     getTodosDateCounts,
     getVisibleTodos,
@@ -2029,6 +2071,7 @@ export {
     normalizeRecurrenceCount,
     normalizeRecurrenceDays,
     normalizeCompletedOccurrences,
+    normalizeExcludedOccurrences,
     normalizeReminder,
     normalizeTodoKind,
     normalizeTodoRecurrence,
@@ -2043,6 +2086,7 @@ export {
     readTodosBackup,
     reindexTodos,
     setTodoOccurrenceCompletion,
+    setTodoOccurrenceExcluded,
     toggleTodoOccurrence,
 };
 

@@ -45,7 +45,7 @@ type TodoScheduleRange = {
 interface TodoCalendarProps {
   error?: boolean;
   loading?: boolean;
-  onEditTodo: (id: string) => void;
+  onEditTodo: (id: string, occurrenceDate?: string) => void;
   onCreateTodoForDate?: (dateValue: string) => void;
   onEmptySearchResults: () => ReactNode;
   onEmptyTodos: () => ReactNode;
@@ -320,7 +320,7 @@ function TodoCalendar({
                                 recurrenceLabel ? 'TodoCalendar-event--recurring' : '',
                                 todo.completed ? 'TodoCalendar-event--completed' : '',
                               ].filter(Boolean).join(' ')}
-                              onClick={() => onEditTodo(todo.id)}
+                              onClick={() => onEditTodo(todo.id, day.dateValue)}
                             >
                               <span>{typeLabel}</span>
                               {recurrenceLabel && <small>{recurrenceLabel}</small>}
@@ -353,7 +353,7 @@ function TodoCalendar({
                                 'TodoCalendar-dailyTodo',
                                 todo.completed ? 'TodoCalendar-dailyTodo--completed' : '',
                               ].filter(Boolean).join(' ')}
-                              onClick={() => onEditTodo(todo.id)}
+                              onClick={() => onEditTodo(todo.id, day.dateValue)}
                             >
                               {todo.text}
                             </button>

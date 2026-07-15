@@ -20,6 +20,7 @@ import {
   getTodoGroups,
   getTodoInsights,
   getTodoNextOccurrenceDate,
+  getTodoNextRecurringDate,
   getTodoReminderTarget,
   getTodosDateCounts,
   getVisibleTodos,
@@ -45,6 +46,7 @@ import {
   readTodosCalendarImport,
   readTodosBackup,
   toggleTodoOccurrence,
+  setTodoOccurrenceExcluded,
 } from './todoModel';
 import {
   DEFAULT_TODO_BOARD_ID,
@@ -95,6 +97,7 @@ describe('todo helpers', () => {
         recurrenceEndDate: null,
         recurrenceCount: null,
         completedOccurrences: [],
+        excludedOccurrences: [],
         reminder: TODO_REMINDERS.none,
         project: null,
         tags: [],
@@ -122,6 +125,7 @@ describe('todo helpers', () => {
         recurrenceEndDate: null,
         recurrenceCount: null,
         completedOccurrences: [],
+        excludedOccurrences: [],
         reminder: TODO_REMINDERS.none,
         project: null,
         tags: [],
@@ -177,6 +181,7 @@ describe('todo helpers', () => {
       startTime: '10:30',
       recurrence: TODO_RECURRENCES.weekly,
       completedOccurrences: [],
+      excludedOccurrences: [],
       description: 'Caso tecnico para entrevista',
       project: 'TaskFlow',
       tags: 'React, testing, React',
@@ -300,6 +305,27 @@ describe('todo helpers', () => {
     expect(completedOccurrence.completedOccurrences).toEqual(['2026-07-13']);
     expect(isTodoOccurrenceCompleted(completedOccurrence, occurrenceDate)).toBe(true);
     expect(toggleTodoOccurrence(completedOccurrence, occurrenceDate).completedOccurrences).toEqual([]);
+  });
+
+  test('skips and restores individual recurrence dates', () => {
+    const schedule = createTodo('Cursar algebra', {
+      kind: TODO_KINDS.schedule,
+      dateType: TODO_DATE_TYPES.period,
+      startDate: '2026-08-03',
+      endDate: '2026-08-31',
+      startTime: '10:00',
+      endTime: '12:00',
+      recurrence: TODO_RECURRENCES.weekly,
+      recurrenceDays: [1],
+    });
+    const skippedSchedule = setTodoOccurrenceExcluded(schedule, '2026-08-10');
+
+    expect(skippedSchedule.excludedOccurrences).toEqual(['2026-08-10']);
+    expect(isTodoRecurringOnDate(skippedSchedule, '2026-08-10')).toBe(false);
+    expect(getTodoNextRecurringDate(skippedSchedule, '2026-08-10')).toBe('2026-08-17');
+
+    const restoredSchedule = setTodoOccurrenceExcluded(skippedSchedule, '2026-08-10', false);
+    expect(isTodoRecurringOnDate(restoredSchedule, '2026-08-10')).toBe(true);
   });
 
   test('migrates a completed recurring task into a dated occurrence', () => {

@@ -173,6 +173,7 @@ interface TodoItemProps {
   recurrenceEndDate?: string | null;
   recurrenceCount?: number | null;
   completedOccurrences?: string[];
+  excludedOccurrences?: string[];
   reminder?: TodoReminder;
   archivedAt?: string | null;
   project?: string | null;
@@ -234,6 +235,7 @@ function TodoItem(props: TodoItemProps) {
     recurrenceEndDate: props.recurrenceEndDate || null,
     recurrenceCount: props.recurrenceCount || null,
     completedOccurrences: props.completedOccurrences || [],
+    excludedOccurrences: props.excludedOccurrences || [],
   };
   const occurrenceDate = isRecurringTask
     ? getTodoNextOccurrenceDate(occurrenceTodo)

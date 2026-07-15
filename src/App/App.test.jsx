@@ -475,6 +475,67 @@ describe('App', () => {
     expect(screen.getByLabelText('Hora de fin')).toHaveValue('11:00');
   });
 
+  test('skips, restores and edits one recurring occurrence', async () => {
+    const user = userEvent.setup();
+    const today = getRelativeDateInputValue(0);
+    const formattedToday = today.split('-').reverse().join('/');
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      {
+        id: 'daily-course',
+        text: 'Cursar algebra',
+        kind: 'schedule',
+        dateType: 'period',
+        startDate: today,
+        endDate: getRelativeDateInputValue(30),
+        startTime: '10:00',
+        endTime: '12:00',
+        recurrence: 'daily',
+      },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Cursar algebra')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Calendario' }));
+    let todayCell = screen.getByRole('gridcell', { name: today });
+    await user.click(within(todayCell).getByRole('button', { name: /Horario Diaria 10:00 a 12:00 Cursar algebra/ }));
+
+    let detailDialog = screen.getByRole('dialog', { name: 'Detalle del elemento' });
+    expect(detailDialog).toHaveTextContent(formattedToday);
+    await user.click(within(detailDialog).getByRole('button', { name: `Omitir ${formattedToday}` }));
+
+    expect(within(detailDialog).getByRole('heading', { name: 'Fechas omitidas' })).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('TODOS_V1'))[0].excludedOccurrences).toEqual([today]);
+
+    await user.click(within(detailDialog).getByRole('button', { name: 'Restaurar' }));
+    expect(within(detailDialog).queryByRole('heading', { name: 'Fechas omitidas' })).not.toBeInTheDocument();
+
+    await user.click(within(detailDialog).getByRole('button', { name: 'Cerrar detalle' }));
+    todayCell = screen.getByRole('gridcell', { name: today });
+    await user.click(within(todayCell).getByRole('button', { name: /Horario Diaria 10:00 a 12:00 Cursar algebra/ }));
+
+    detailDialog = screen.getByRole('dialog', { name: 'Detalle del elemento' });
+    await user.click(within(detailDialog).getByRole('button', { name: 'Editar esta fecha' }));
+
+    const occurrenceDialog = screen.getByRole('dialog', { name: 'Editar ocurrencia' });
+    expect(within(occurrenceDialog).getByLabelText('Editar esta fecha')).toHaveValue('Cursar algebra');
+    expect(within(occurrenceDialog).getByLabelText('Repeticion')).toBeDisabled();
+    expect(within(occurrenceDialog).getByLabelText('Primer dia')).toHaveValue(today);
+    await user.clear(within(occurrenceDialog).getByLabelText('Editar esta fecha'));
+    await user.type(within(occurrenceDialog).getByLabelText('Editar esta fecha'), 'Clase especial de algebra');
+    await user.click(within(occurrenceDialog).getByRole('button', { name: 'Guardar' }));
+
+    const storedTodos = JSON.parse(localStorage.getItem('TODOS_V1'));
+    expect(storedTodos).toHaveLength(2);
+    expect(storedTodos[0].excludedOccurrences).toEqual([today]);
+    expect(storedTodos[1]).toEqual(expect.objectContaining({
+      text: 'Clase especial de algebra',
+      recurrence: 'none',
+      startDate: today,
+      endDate: today,
+    }));
+  });
+
   test('shows a focused today view separated by tasks and agenda items', async () => {
     const user = userEvent.setup();
     const yesterday = getRelativeDateInputValue(-1);
@@ -2051,7 +2112,7 @@ describe('App', () => {
     expect(within(detailDialog).getByText('Actualizar portfolio')).toBeInTheDocument();
     expect(within(detailDialog).getByText('Limite 20/07/2026')).toBeInTheDocument();
     expect(within(detailDialog).getByText('#portfolio')).toBeInTheDocument();
-    await user.click(within(detailDialog).getByRole('button', { name: 'Editar' }));
+    await user.click(within(detailDialog).getByRole('button', { name: 'Editar serie' }));
 
     const dialog = screen.getByRole('dialog', { name: 'Editar tarea' });
     const textarea = within(dialog).getByLabelText('Editar tarea');

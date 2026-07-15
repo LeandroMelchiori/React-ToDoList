@@ -55,11 +55,15 @@ const TODO_WEEKDAY_LABELS: Record<TodoWeekday, string> = {
 };
 
 interface TodoDetailProps {
+  occurrenceDate?: string | null;
   onArchive: () => void;
   onClose: () => void;
   onDelete: () => void;
   onDuplicate: () => void;
   onEdit: () => void;
+  onEditOccurrence?: () => void;
+  onRestoreOccurrence?: (dateValue: string) => void;
+  onSkipOccurrence?: () => void;
   onToggleComplete: () => void;
   onUnarchive: () => void;
   todo: Todo;
@@ -137,11 +141,15 @@ function getRecurrenceLabel(todo: Todo): string | null {
 }
 
 function TodoDetail({
+  occurrenceDate: selectedOccurrenceDate,
   onArchive,
   onClose,
   onDelete,
   onDuplicate,
   onEdit,
+  onEditOccurrence,
+  onRestoreOccurrence,
+  onSkipOccurrence,
   onToggleComplete,
   onUnarchive,
   todo,
@@ -153,9 +161,10 @@ function TodoDetail({
     ? TODO_REMINDER_LABELS[todo.reminder]
     : null;
   const scheduleLabel = getScheduleLabel(todo);
-  const occurrenceDate = getTodoNextOccurrenceDate(todo);
+  const isRecurring = todo.recurrence !== TODO_RECURRENCES.none;
+  const occurrenceDate = selectedOccurrenceDate || getTodoNextOccurrenceDate(todo);
   const occurrenceCompleted = isTodoOccurrenceCompleted(todo, occurrenceDate);
-  const isRecurringTask = isTask && todo.recurrence !== TODO_RECURRENCES.none;
+  const isRecurringTask = isTask && isRecurring;
   const completedOccurrences = [...todo.completedOccurrences].sort().reverse();
   const [areSubtasksOpen, setAreSubtasksOpen] = React.useState(todo.subtasks.length <= 5);
   const completedSubtasks = todo.subtasks.filter(subtask => subtask.completed).length;
@@ -209,7 +218,7 @@ function TodoDetail({
         )}
         {occurrenceDate && (
           <div>
-            <dt>Proxima ocurrencia</dt>
+            <dt>{selectedOccurrenceDate ? 'Fecha seleccionada' : 'Proxima ocurrencia'}</dt>
             <dd>
               {formatDateValue(occurrenceDate)} · {occurrenceCompleted ? 'Realizada' : 'Pendiente'}
             </dd>
@@ -254,6 +263,22 @@ function TodoDetail({
           </div>
         )}
       </dl>
+
+      {todo.excludedOccurrences.length > 0 && (
+        <section className="TodoDetail-exceptions" aria-labelledby="todo-detail-exceptions-title">
+          <h3 id="todo-detail-exceptions-title">Fechas omitidas</h3>
+          <ul>
+            {todo.excludedOccurrences.map(dateValue => (
+              <li key={dateValue}>
+                <span>{formatDateValue(dateValue)}</span>
+                <button type="button" onClick={() => onRestoreOccurrence?.(dateValue)}>
+                  Restaurar
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {hasSubtasks && (
         <details
@@ -308,8 +333,18 @@ function TodoDetail({
             Restaurar
           </button>
         )}
+        {isRecurring && occurrenceDate && onEditOccurrence && (
+          <button type="button" className="TodoDetail-button TodoDetail-button--primary" onClick={onEditOccurrence}>
+            Editar esta fecha
+          </button>
+        )}
+        {isRecurring && occurrenceDate && onSkipOccurrence && (
+          <button type="button" className="TodoDetail-button" onClick={onSkipOccurrence}>
+            Omitir {formatDateValue(occurrenceDate)}
+          </button>
+        )}
         <button type="button" className="TodoDetail-button TodoDetail-button--primary" onClick={onEdit}>
-          Editar
+          {isRecurring ? 'Editar serie' : 'Editar'}
         </button>
         <button type="button" className="TodoDetail-button" onClick={onDuplicate}>
           Duplicar
