@@ -39,6 +39,7 @@ import { useTheme } from './useTheme';
 import { useTodoReminders } from './useTodoReminders';
 import { TodoSettings as TodoSettingsPanel } from '../components/TodoHeader/TodoSettings/TodoSettings';
 import { TodoSnapshots } from '../components/TodoHeader/TodoSnapshots/TodoSnapshots';
+import { TodoDataCenter } from '../components/TodoHeader/TodoDataCenter/TodoDataCenter';
 import { CommandPalette } from '../components/CommandPalette/CommandPalette';
 import type { CommandPaletteItem } from '../components/CommandPalette/CommandPalette';
 import { TodoSettings, useTodoSettings } from './useTodoSettings';
@@ -138,6 +139,7 @@ function App() {
         applySavedView,
         deleteSavedView,
         checkTodoScheduleConflicts,
+        createManualTodoSnapshot,
         deleteTodoSnapshot,
         restoreTodoSnapshot,
         selectProjectFilter,
@@ -528,6 +530,16 @@ function App() {
                         onPreviewCalendarImport={previewCalendarImport}
                         onImportTodos={importTodos}
                         onImportCalendar={importCalendar}
+                    />
+                    <TodoDataCenter
+                        agendaCount={totalTodos - totalTasks}
+                        archivedCount={filterCounts.archived}
+                        boardCount={todoBoards.length}
+                        lastSnapshot={todoSnapshots[0] || null}
+                        onCreateSnapshot={createManualTodoSnapshot}
+                        savedViewCount={savedViews.length}
+                        snapshotCount={todoSnapshots.length}
+                        taskCount={totalTasks}
                     />
                     <TodoSnapshots
                         snapshots={todoSnapshots}

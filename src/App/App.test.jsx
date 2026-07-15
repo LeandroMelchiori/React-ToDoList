@@ -2510,6 +2510,29 @@ describe('App', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Copia restaurada.');
   });
 
+  test('summarizes local data and creates a manual snapshot', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      { id: 'todo-data-center', text: 'Preparar respaldo', completed: false },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Preparar respaldo')).toBeInTheDocument();
+    await openTools(user);
+
+    expect(screen.getByRole('heading', { name: 'Datos locales' })).toBeInTheDocument();
+    expect(screen.getByText('Sin backend')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Crear copia ahora' }));
+
+    expect(screen.getByText('Copia local creada.')).toBeInTheDocument();
+    await waitFor(() => {
+      const snapshots = JSON.parse(localStorage.getItem('TODO_SNAPSHOTS_V1'));
+
+      expect(snapshots[0]).toEqual(expect.objectContaining({ reason: 'Copia manual' }));
+      expect(snapshots[0].backup.todos[0].text).toBe('Preparar respaldo');
+    });
+  });
+
   test('closes the modal when the backdrop is clicked', async () => {
     const user = userEvent.setup();
     renderApp();

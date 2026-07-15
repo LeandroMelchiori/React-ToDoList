@@ -314,6 +314,12 @@ function useTodos() {
         return true;
     };
 
+    const createManualTodoSnapshot = (): TodoActionResult => (
+        createAutomaticSnapshot('Copia manual')
+            ? { ok: true }
+            : { ok: false, error: 'Agrega datos antes de crear una copia local.' }
+    );
+
     const resetTodoView = ({ preserveProject = false }: { preserveProject?: boolean } = {}) => {
         setSearchValue('');
         setFilter(TODO_FILTERS.all);
@@ -1347,6 +1353,7 @@ function useTodos() {
         applySavedView,
         deleteSavedView,
         deleteTodoSnapshot,
+        createManualTodoSnapshot,
         restoreTodoSnapshot,
         completeTodo,
         completeTodos,
