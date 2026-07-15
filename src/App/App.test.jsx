@@ -1610,6 +1610,27 @@ describe('App', () => {
     expect(screen.getByLabelText('Nueva tarea')).toHaveFocus();
   });
 
+  test('opens the command palette and changes views from the keyboard', async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    expect(await screen.findByText('Organiza tu dia con una primera tarea')).toBeInTheDocument();
+
+    await user.keyboard('{Control>}k{/Control}');
+    const commandDialog = screen.getByRole('dialog', { name: 'Paleta de comandos' });
+    const commandSearch = within(commandDialog).getByRole('combobox', { name: 'Buscar comando' });
+
+    expect(commandSearch).toHaveFocus();
+    await user.type(commandSearch, 'semana');
+    expect(within(commandDialog).getByRole('option', { name: /Abrir Semana/ })).toHaveAttribute('aria-selected', 'true');
+    await user.keyboard('{Enter}');
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Paleta de comandos' })).not.toBeInTheDocument();
+    });
+    expect(screen.getByRole('button', { name: 'Semana' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
   test('exposes keyboard skip link and named task region', async () => {
     renderApp();
 

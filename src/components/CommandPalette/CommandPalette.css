@@ -1,0 +1,137 @@
+.CommandPalette {
+  display: grid;
+  gap: 12px;
+  width: min(560px, calc(100vw - 32px));
+}
+
+.CommandPalette header {
+  align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+}
+
+.CommandPalette header div {
+  display: grid;
+  gap: 2px;
+}
+
+.CommandPalette header span,
+.CommandPalette > label {
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.CommandPalette h2 {
+  color: var(--color-text-strong);
+  font-size: 21px;
+  margin: 0;
+}
+
+.CommandPalette kbd {
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 4px 6px;
+}
+
+.CommandPalette > input {
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 16px;
+  min-height: 48px;
+  padding: 0 14px;
+}
+
+.CommandPalette > input:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-focus);
+  outline: none;
+}
+
+.CommandPalette-results {
+  display: grid;
+  gap: 4px;
+  max-height: min(420px, 55vh);
+  overflow-y: auto;
+}
+
+.CommandPalette-command {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--color-text);
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  gap: 12px;
+  justify-content: space-between;
+  min-height: 58px;
+  padding: 9px 11px;
+  text-align: left;
+  width: 100%;
+}
+
+.CommandPalette-command > span {
+  display: grid;
+  gap: 3px;
+}
+
+.CommandPalette-command strong {
+  color: var(--color-text-strong);
+  font-size: 14px;
+}
+
+.CommandPalette-command small {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.CommandPalette-command--active,
+.CommandPalette-command:hover,
+.CommandPalette-command:focus-visible {
+  background: var(--color-accent-soft);
+  border-color: color-mix(in srgb, var(--color-accent) 42%, var(--color-border));
+  outline: none;
+}
+
+.CommandPalette-empty {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0;
+  padding: 24px 12px;
+  text-align: center;
+}
+
+.CommandPalette footer {
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-soft);
+  display: flex;
+  font-size: 11px;
+  font-weight: 800;
+  gap: 14px;
+  padding-top: 10px;
+}
+
+.CommandPalette footer span {
+  align-items: center;
+  display: inline-flex;
+  gap: 4px;
+}
+
+@media (max-width: 480px) {
+  .CommandPalette footer {
+    display: none;
+  }
+}

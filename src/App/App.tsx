@@ -39,6 +39,8 @@ import { useTheme } from './useTheme';
 import { useTodoReminders } from './useTodoReminders';
 import { TodoSettings as TodoSettingsPanel } from '../components/TodoHeader/TodoSettings/TodoSettings';
 import { TodoSnapshots } from '../components/TodoHeader/TodoSnapshots/TodoSnapshots';
+import { CommandPalette } from '../components/CommandPalette/CommandPalette';
+import type { CommandPaletteItem } from '../components/CommandPalette/CommandPalette';
 import { TodoSettings, useTodoSettings } from './useTodoSettings';
 import type { TodoKind, TodoRecurrence } from './todoModel';
 
@@ -83,6 +85,7 @@ function App() {
     const [selectedTodoIds, setSelectedTodoIds] = React.useState<Set<string>>(() => new Set());
     const [bulkActionMessage, setBulkActionMessage] = React.useState('');
     const [isBulkDeleteOpen, setIsBulkDeleteOpen] = React.useState(false);
+    const [isCommandPaletteOpen, setIsCommandPaletteOpen] = React.useState(false);
     const [createTodoDefaults, setCreateTodoDefaults] = React.useState<CreateTodoDefaults>({});
     const [dragState, setDragState] = React.useState<{
         draggedTodoId: string | null;
@@ -220,6 +223,59 @@ function App() {
             closeSelectionMode();
         }
     };
+    const closeCommandPaletteAndRun = (action: () => void) => {
+        setIsCommandPaletteOpen(false);
+        window.setTimeout(action, 0);
+    };
+    const commandPaletteItems: CommandPaletteItem[] = [
+        {
+            id: 'create',
+            label: 'Crear tarea',
+            description: 'Abre el formulario de un nuevo elemento.',
+            keywords: ['nuevo', 'agregar'],
+            shortcut: 'N',
+            onSelect: () => closeCommandPaletteAndRun(() => launchCreateTodo()),
+        },
+        {
+            id: 'search',
+            label: 'Buscar tareas',
+            description: 'Lleva el foco al buscador principal.',
+            keywords: ['encontrar', 'filtrar'],
+            shortcut: '/',
+            onSelect: () => closeCommandPaletteAndRun(() => searchInputRef.current?.focus()),
+        },
+        {
+            id: 'clear-filters',
+            label: 'Limpiar busqueda y filtros',
+            description: 'Vuelve a mostrar todos los elementos.',
+            keywords: ['restablecer', 'todos'],
+            onSelect: () => closeCommandPaletteAndRun(() => {
+                setSearchValue('');
+                setFilter('all');
+                clearFacetFilters();
+            }),
+        },
+        ...([
+            ['list', 'Abrir Lista', 'Muestra las tareas agrupadas.'],
+            ['today', 'Abrir Hoy', 'Muestra el foco del dia.'],
+            ['board', 'Abrir Tablero', 'Muestra la planificacion por columnas.'],
+            ['calendar', 'Abrir Calendario', 'Muestra la agenda mensual.'],
+            ['week', 'Abrir Semana', 'Muestra la grilla semanal por horario.'],
+        ] as Array<[TodoViewMode, string, string]>).map(([view, label, description]) => ({
+            id: `view-${view}`,
+            label,
+            description,
+            keywords: ['vista', view],
+            onSelect: () => closeCommandPaletteAndRun(() => changeTodoView(view)),
+        })),
+        {
+            id: 'theme',
+            label: isDarkTheme ? 'Usar tema claro' : 'Usar tema oscuro',
+            description: 'Cambia la apariencia de toda la aplicacion.',
+            keywords: ['color', 'apariencia'],
+            onSelect: () => closeCommandPaletteAndRun(toggleTheme),
+        },
+    ];
     const toggleTodoSelection = (todoId: string) => {
         setSelectedTodoIds(currentIds => {
             const nextIds = new Set(currentIds);
@@ -344,11 +400,27 @@ function App() {
 
     React.useEffect(() => {
         const handleKeyboardShortcuts = (event: KeyboardEvent) => {
+            const isCommandPaletteShortcut =
+                !event.altKey &&
+                (event.ctrlKey || event.metaKey) &&
+                event.key.toLowerCase() === 'k';
+
+            if (isCommandPaletteShortcut) {
+                event.preventDefault();
+
+                if (!openModal && !isBulkDeleteOpen) {
+                    setIsCommandPaletteOpen(currentValue => !currentValue);
+                }
+
+                return;
+            }
+
             if (
                 event.defaultPrevented ||
                 event.altKey ||
                 event.ctrlKey ||
                 event.metaKey ||
+                isCommandPaletteOpen ||
                 isEditableTarget(event.target)
             ) {
                 return;
@@ -370,7 +442,7 @@ function App() {
         return () => {
             window.removeEventListener('keydown', handleKeyboardShortcuts);
         };
-    }, [launchCreateTodo]);
+    }, [isBulkDeleteOpen, isCommandPaletteOpen, launchCreateTodo, openModal]);
 
     return (
         <>
@@ -474,10 +546,20 @@ function App() {
                 loading={loading}
              />
 
-            <TodoViewToggle
-                activeView={todoViewMode}
-                onChangeView={changeTodoView}
-            />
+            <div className="App-viewControls">
+                <TodoViewToggle
+                    activeView={todoViewMode}
+                    onChangeView={changeTodoView}
+                />
+                <button
+                    aria-keyshortcuts="Control+K Meta+K"
+                    className="App-commandButton"
+                    onClick={() => setIsCommandPaletteOpen(true)}
+                    type="button"
+                >
+                    Comandos <kbd>Ctrl K</kbd>
+                </button>
+            </div>
 
             {todoViewMode === 'today' ? (
                 <TodoToday
@@ -672,6 +754,12 @@ function App() {
                 </>
             )}
             </main>
+
+            {isCommandPaletteOpen && (
+                <Modal label="Paleta de comandos" onClose={() => setIsCommandPaletteOpen(false)}>
+                    <CommandPalette commands={commandPaletteItems} />
+                </Modal>
+            )}
 
             {isBulkDeleteOpen && (
                 <Modal label="Eliminar seleccion" onClose={() => setIsBulkDeleteOpen(false)}>
