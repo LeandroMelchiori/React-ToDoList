@@ -5,7 +5,7 @@
 ![Vite](https://img.shields.io/badge/Vite-build-646CFF?logo=vite&logoColor=white)
 ![Vitest](https://img.shields.io/badge/Vitest-tested-6E9F18?logo=vitest&logoColor=white)
 ![Playwright](https://img.shields.io/badge/Playwright-E2E-2EAD33?logo=playwright&logoColor=white)
-![Lighthouse](https://img.shields.io/badge/Lighthouse-100%2F100%2F100%2F100-0B57D0?logo=lighthouse&logoColor=white)
+![Lighthouse](https://img.shields.io/badge/Lighthouse-99%2F100%2F100%2F100-0B57D0?logo=lighthouse&logoColor=white)
 
 <p align="center">
   <a href="https://taskflow.sachadev.me">
@@ -103,7 +103,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 | Typecheck | `npm run typecheck` valida las capas migradas a TypeScript. |
 | Tests E2E | `npm run test:e2e` valida el flujo completo sobre el build de produccion local. |
 | Persistencia | `npm run benchmark:storage` mide serializacion local con workspaces de hasta 5000 elementos. |
-| Lighthouse | `npm run audit:lighthouse` genera reporte del sitio publicado. Ultima medicion: 100/100/100/100. |
+| Lighthouse | `npm run audit:lighthouse` genera reporte del sitio publicado. Ultima medicion: 99/100/100/100. |
 | CI | GitHub Actions ejecuta audit, tests, Playwright y build en cada push/PR a `main`. |
 
 ## Decisiones tecnicas
