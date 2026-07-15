@@ -368,6 +368,42 @@ test('keeps the primary mobile shell inside the viewport', async ({ page }) => {
   expect(hasHorizontalOverflow).toBe(false);
 });
 
+test('reloads the application shell while offline', async ({ context, page }) => {
+  await page.goto('/');
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+
+    if (!navigator.serviceWorker.controller) {
+      await new Promise(resolve => {
+        navigator.serviceWorker.addEventListener('controllerchange', resolve, { once: true });
+      });
+    }
+  });
+  await page.reload();
+
+  const cacheState = await page.evaluate(async () => {
+    const cacheNames = await caches.keys();
+    const shellCache = await caches.open('taskflow-shell-v2');
+    const cachedRequests = await shellCache.keys();
+
+    return {
+      cacheNames: cacheNames.filter(cacheName => cacheName.startsWith('taskflow-shell-')),
+      assets: cachedRequests.map(request => new URL(request.url).pathname),
+    };
+  });
+  expect(cacheState.cacheNames).toEqual(['taskflow-shell-v2']);
+  expect(cacheState.assets.filter(asset => asset.startsWith('/assets/')).length).toBeGreaterThanOrEqual(2);
+
+  await context.setOffline(true);
+  try {
+    await page.reload();
+    await expect(page.getByText('Organiza tu dia con una primera tarea')).toBeVisible();
+    await expect(page.getByText('Sin conexion. TaskFlow sigue disponible offline.')).toBeVisible();
+  } finally {
+    await context.setOffline(false);
+  }
+});
+
 test('creates schedules from the week grid and warns about overlaps', async ({ page }) => {
   await seedAnchorTodo(page);
   await page.goto('/');

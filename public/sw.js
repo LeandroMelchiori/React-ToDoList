@@ -1,4 +1,6 @@
-const CACHE_NAME = 'taskflow-shell-v1';
+const CACHE_PREFIX = 'taskflow-shell-';
+const CACHE_NAME = `${CACHE_PREFIX}v2`;
+const MANIFEST_CACHE_KEY = '/__taskflow_asset_manifest__';
 const CORE_ASSETS = [
   '/',
   '/manifest.json',
@@ -7,12 +9,85 @@ const CORE_ASSETS = [
   '/react512.png',
 ];
 
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches
-      .open(CACHE_NAME)
-      .then(cache => cache.addAll(CORE_ASSETS)),
+function getShellAssets(html) {
+  const assets = new Set(CORE_ASSETS);
+  const assetPattern = /(?:src|href)="([^"]+)"/g;
+  let match = assetPattern.exec(html);
+
+  while (match) {
+    const assetUrl = new URL(match[1], self.location.origin);
+
+    if (assetUrl.origin === self.location.origin) {
+      assets.add(`${assetUrl.pathname}${assetUrl.search}`);
+    }
+
+    match = assetPattern.exec(html);
+  }
+
+  return [...assets];
+}
+
+async function cacheCurrentShell() {
+  const shellResponse = await fetch('/', { cache: 'no-store' });
+
+  if (!shellResponse.ok) {
+    throw new Error('Could not load the TaskFlow shell.');
+  }
+
+  const shellHtml = await shellResponse.clone().text();
+  const shellAssets = getShellAssets(shellHtml);
+  const cache = await caches.open(CACHE_NAME);
+
+  await cache.put('/', shellResponse);
+  await Promise.all(shellAssets
+    .filter(asset => asset !== '/')
+    .map(async asset => {
+      const response = await fetch(asset, { cache: 'no-store' });
+
+      if (!response.ok) {
+        throw new Error(`Could not cache ${asset}.`);
+      }
+
+      await cache.put(asset, response);
+    }));
+  await cache.put(
+    MANIFEST_CACHE_KEY,
+    new Response(JSON.stringify(shellAssets), {
+      headers: { 'Content-Type': 'application/json' },
+    }),
   );
+}
+
+async function removeObsoleteCaches() {
+  const cacheNames = await caches.keys();
+
+  await Promise.all(cacheNames
+    .filter(cacheName => cacheName.startsWith(CACHE_PREFIX) && cacheName !== CACHE_NAME)
+    .map(cacheName => caches.delete(cacheName)));
+}
+
+async function removeObsoleteAssets() {
+  const cache = await caches.open(CACHE_NAME);
+  const manifestResponse = await cache.match(MANIFEST_CACHE_KEY);
+
+  if (!manifestResponse) {
+    return;
+  }
+
+  const currentAssets = new Set(await manifestResponse.json());
+  currentAssets.add(MANIFEST_CACHE_KEY);
+  const cachedRequests = await cache.keys();
+
+  await Promise.all(cachedRequests.map(request => {
+    const requestUrl = new URL(request.url);
+    const cacheKey = `${requestUrl.pathname}${requestUrl.search}`;
+
+    return currentAssets.has(cacheKey) ? false : cache.delete(request);
+  }));
+}
+
+self.addEventListener('install', event => {
+  event.waitUntil(cacheCurrentShell());
 });
 
 self.addEventListener('message', event => {
@@ -23,15 +98,10 @@ self.addEventListener('message', event => {
 
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches
-      .keys()
-      .then(cacheNames => (
-        Promise.all(
-          cacheNames
-            .filter(cacheName => cacheName !== CACHE_NAME)
-            .map(cacheName => caches.delete(cacheName)),
-        )
-      ))
+    Promise.all([
+      removeObsoleteCaches(),
+      removeObsoleteAssets(),
+    ])
       .then(() => self.clients.claim()),
   );
 });
@@ -67,8 +137,11 @@ self.addEventListener('fetch', event => {
       }
 
       return fetch(event.request).then(response => {
-        const responseClone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseClone));
+        if (response.ok && response.type === 'basic') {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseClone));
+        }
+
         return response;
       });
     }),
