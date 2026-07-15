@@ -29,8 +29,8 @@
     linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0)),
     transparent;
   border-bottom: 1px solid var(--color-border);
-  margin-bottom: 22px;
-  padding-bottom: 20px;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
 }
 
 .App--compact .TodoSearch {
@@ -65,13 +65,26 @@
 
 .App-viewControls {
   align-items: center;
-  display: flex;
+  display: grid;
   gap: 10px;
-  margin: 20px auto 0;
+  grid-template-columns: 1fr auto 1fr;
+  margin: 0 auto;
+  max-width: 960px;
 }
 
 .App-viewControls .TodoViewToggle {
+  grid-column: 2;
   margin: 0;
+}
+
+.App-viewControls .App-commandButton {
+  grid-column: 3;
+  justify-self: end;
+}
+
+.App-workspaceQuickAdd {
+  margin: 10px auto 0;
+  max-width: 960px;
 }
 
 .App-commandButton {
@@ -126,7 +139,7 @@
 
   .App-viewControls {
     align-items: stretch;
-    flex-direction: column;
+    display: block;
     gap: 8px;
     margin-top: 12px;
     width: 100%;

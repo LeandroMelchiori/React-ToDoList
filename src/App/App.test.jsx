@@ -20,6 +20,10 @@ async function openFilters(user) {
   return screen.getByRole('group', { name: 'Filtrar tareas' });
 }
 
+async function openSummary(user) {
+  await user.click(screen.getByRole('button', { name: /Resumen/ }));
+}
+
 function toDateInputValue(date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -1079,6 +1083,7 @@ describe('App', () => {
     ]));
     renderApp();
 
+    await openSummary(userEvent.setup());
     const metrics = await screen.findByRole('region', { name: 'Metricas locales' });
 
     expect(within(metrics).getByText('Progreso')).toBeInTheDocument();
@@ -1112,6 +1117,7 @@ describe('App', () => {
 
     expect(await screen.findByText('Preparar demo')).toBeInTheDocument();
     expect(screen.getByText('Ordenar apuntes')).toBeInTheDocument();
+    await openSummary(user);
 
     const projectsGroup = screen.getByRole('group', { name: 'Proyectos' });
     await user.click(within(projectsGroup).getByRole('button', { name: /TaskFlow/ }));
@@ -1169,6 +1175,7 @@ describe('App', () => {
     expect(await screen.findByText('Preparar demo')).toBeInTheDocument();
 
     await user.type(screen.getByLabelText('Buscar tareas'), 'demo');
+    await openSummary(user);
     await user.click(screen.getByRole('button', { name: 'Filtrar por etiqueta frontend' }));
     await openTools(user);
     await user.type(screen.getByLabelText('Nombre para estos filtros'), 'Demo frontend');
@@ -1284,6 +1291,7 @@ describe('App', () => {
     await user.keyboard('{ArrowLeft}');
     expect(scheduleFilter).toHaveFocus();
 
+    await openSummary(user);
     const projectsGroup = screen.getByRole('group', { name: 'Proyectos' });
     const docsProject = within(projectsGroup).getByRole('button', { name: /Docs/ });
     const taskFlowProject = within(projectsGroup).getByRole('button', { name: /TaskFlow/ });

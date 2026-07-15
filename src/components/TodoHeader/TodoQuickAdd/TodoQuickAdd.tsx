@@ -6,11 +6,12 @@ import './TodoQuickAdd.css';
 type TodoActionResult = { ok: true } | { ok: false; error: string };
 
 interface TodoQuickAddProps {
+  compact?: boolean;
   loading?: boolean;
   onAddTodo: (text: string, details: TodoDetails) => TodoActionResult;
 }
 
-function TodoQuickAdd({ loading = false, onAddTodo }: TodoQuickAddProps) {
+function TodoQuickAdd({ compact = false, loading = false, onAddTodo }: TodoQuickAddProps) {
   const [value, setValue] = React.useState('');
   const [error, setError] = React.useState('');
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -38,7 +39,7 @@ function TodoQuickAdd({ loading = false, onAddTodo }: TodoQuickAddProps) {
   };
 
   return (
-    <form className="TodoQuickAdd" onSubmit={handleSubmit}>
+    <form className={`TodoQuickAdd ${compact ? 'TodoQuickAdd--compact' : ''}`} onSubmit={handleSubmit}>
       <label htmlFor="todo-quick-add">Agregar rapido</label>
       <div className="TodoQuickAdd-row">
         <input
@@ -47,8 +48,8 @@ function TodoQuickAdd({ loading = false, onAddTodo }: TodoQuickAddProps) {
           type="text"
           value={value}
           disabled={loading}
-          placeholder="Ej: preparar parcial manana 10:30 #facultad !alta"
-          aria-describedby="todo-quick-add-help todo-quick-add-feedback"
+          placeholder={compact ? 'Agregar una tarea rapidamente...' : 'Ej: preparar parcial manana 10:30 #facultad !alta'}
+          aria-describedby={compact ? 'todo-quick-add-feedback' : 'todo-quick-add-help todo-quick-add-feedback'}
           onChange={(event) => {
             setValue(event.target.value);
             setError('');
@@ -67,7 +68,9 @@ function TodoQuickAdd({ loading = false, onAddTodo }: TodoQuickAddProps) {
           <span>Detectado: {parsedTodo.summary.join(' · ')}</span>
         ) : null}
       </div>
-      <p id="todo-quick-add-help">Usa hoy, manana, 18/07, 10:30, #etiqueta, !alta o cada semana.</p>
+      {!compact && (
+        <p id="todo-quick-add-help">Usa hoy, manana, 18/07, 10:30, #etiqueta, !alta o cada semana.</p>
+      )}
     </form>
   );
 }

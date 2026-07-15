@@ -95,9 +95,43 @@
   margin: 0;
 }
 
+.TodoQuickAdd--compact {
+  margin: 0;
+  max-width: none;
+}
+
+.TodoQuickAdd--compact > label {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  margin: 0;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.TodoQuickAdd--compact input,
+.TodoQuickAdd--compact button {
+  min-height: 42px;
+}
+
+.TodoQuickAdd--compact .TodoQuickAdd-feedback {
+  min-height: 0;
+  padding-top: 0;
+}
+
+.TodoQuickAdd--compact .TodoQuickAdd-feedback:not(:empty) {
+  padding-top: 5px;
+}
+
 @media (max-width: 640px) {
   .TodoQuickAdd {
     margin-top: 14px;
+  }
+
+  .TodoQuickAdd--compact {
+    margin-top: 0;
   }
 
   .TodoQuickAdd > label {

@@ -11,14 +11,14 @@ function TodoMobileSummary({ children, summary }: TodoMobileSummaryProps) {
   const panelId = 'todo-mobile-summary-panel';
 
   return (
-    <section className="TodoMobileSummary" aria-label="Resumen y carga rapida">
+    <section className="TodoMobileSummary" aria-label="Resumen de tareas">
       <button
         aria-controls={panelId}
         aria-expanded={isOpen}
         onClick={() => setIsOpen(currentValue => !currentValue)}
         type="button"
       >
-        <span>Resumen y carga rapida</span>
+        <span>Resumen</span>
         <small>{summary}</small>
       </button>
       {isOpen && (
