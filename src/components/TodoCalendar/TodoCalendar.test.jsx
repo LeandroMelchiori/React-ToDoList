@@ -1,4 +1,6 @@
+import { render, screen, within } from '@testing-library/react';
 import {
+  TodoCalendar,
   getCalendarDays,
   getTodoCalendarTypeLabel,
   getTodoScheduleRange,
@@ -10,6 +12,32 @@ import {
 } from './TodoCalendar';
 
 describe('TodoCalendar helpers', () => {
+  test('groups calendar cells into accessible week rows', () => {
+    render(
+      <TodoCalendar
+        onEditTodo={() => {}}
+        onEmptySearchResults={() => null}
+        onEmptyTodos={() => null}
+        onError={() => null}
+        onLoading={() => null}
+        totalTodos={1}
+        visibleTodos={[{
+          id: 'todo-1',
+          text: 'Preparar entrega',
+          order: 0,
+          dateType: 'due',
+          dueDate: '2026-07-20',
+        }]}
+      />
+    );
+
+    const calendar = screen.getByRole('grid', { name: /Calendario/ });
+    const rows = within(calendar).getAllByRole('row');
+
+    expect(rows).toHaveLength(6);
+    rows.forEach(row => expect(within(row).getAllByRole('gridcell')).toHaveLength(7));
+  });
+
   test('builds a six-week month grid starting on Monday', () => {
     const days = getCalendarDays(new Date(2026, 6, 1));
 

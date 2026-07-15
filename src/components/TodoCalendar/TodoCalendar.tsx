@@ -229,6 +229,11 @@ function TodoCalendar({
   });
   const monthLabel = getMonthLabel(monthDate);
   const calendarDays = React.useMemo(() => getCalendarDays(monthDate), [monthDate]);
+  const calendarWeeks = React.useMemo(() => (
+    Array.from({ length: 6 }, (_, weekIndex) => (
+      calendarDays.slice(weekIndex * 7, weekIndex * 7 + 7)
+    ))
+  ), [calendarDays]);
   const unscheduledTodos = React.useMemo(() => getUnscheduledTodos(visibleTodos), [visibleTodos]);
   const scheduledTodosInMonth = calendarDays.reduce((count, day) => (
     day.isCurrentMonth
@@ -285,19 +290,28 @@ function TodoCalendar({
           </div>
 
           <div className="TodoCalendar-grid" role="grid" aria-label={`Calendario ${monthLabel}`}>
-            {calendarDays.map(day => {
-              const dayTodos = getSortedTodosForDay(visibleTodos, day.dateValue);
-              const timeBlockEntries = getTodoTimeBlocksForDay(visibleTodos, day.dateValue);
-              const compactRecurringTodos = dayTodos.filter(isCompactRecurringTodo);
-              const listedTodos = dayTodos.filter(todo => !isCompactRecurringTodo(todo));
-              const className = [
-                'TodoCalendar-day',
-                day.isCurrentMonth ? '' : 'TodoCalendar-day--muted',
-                day.dateValue === todayDateValue ? 'TodoCalendar-day--today' : '',
-              ].filter(Boolean).join(' ');
+            {calendarWeeks.map((week, weekIndex) => (
+              <div
+                className={[
+                  'TodoCalendar-row',
+                  week.every(day => !day.isCurrentMonth) ? 'TodoCalendar-row--outsideMonth' : '',
+                ].filter(Boolean).join(' ')}
+                role="row"
+                key={weekIndex}
+              >
+                {week.map(day => {
+                  const dayTodos = getSortedTodosForDay(visibleTodos, day.dateValue);
+                  const timeBlockEntries = getTodoTimeBlocksForDay(visibleTodos, day.dateValue);
+                  const compactRecurringTodos = dayTodos.filter(isCompactRecurringTodo);
+                  const listedTodos = dayTodos.filter(todo => !isCompactRecurringTodo(todo));
+                  const className = [
+                    'TodoCalendar-day',
+                    day.isCurrentMonth ? '' : 'TodoCalendar-day--muted',
+                    day.dateValue === todayDateValue ? 'TodoCalendar-day--today' : '',
+                  ].filter(Boolean).join(' ');
 
-              return (
-                <div className={className} role="gridcell" key={day.dateValue} aria-label={day.dateValue}>
+                  return (
+                    <div className={className} role="gridcell" key={day.dateValue} aria-label={day.dateValue}>
                   <div className="TodoCalendar-dayHeading">
                     <time dateTime={day.dateValue}>{day.dayNumber}</time>
                     {onCreateTodoForDate && (
@@ -397,9 +411,11 @@ function TodoCalendar({
                       </ul>
                     </details>
                   )}
-                </div>
-              );
-            })}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
           </div>
 
           {scheduledTodosInMonth === 0 && (
