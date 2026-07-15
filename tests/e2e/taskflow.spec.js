@@ -9,6 +9,19 @@ function getBoardSwitcher(page) {
   return page.getByRole('group', { name: 'Cambiar tablero' });
 }
 
+async function seedAnchorTodo(page) {
+  await page.addInitScript(() => {
+    localStorage.setItem('TODOS_V1', JSON.stringify([{
+      id: 'e2e-anchor',
+      text: 'Tarea de referencia',
+      completed: false,
+      kind: 'task',
+      dateType: 'none',
+      recurrence: 'none',
+    }]));
+  });
+}
+
 test('manages a todo through the production flow', async ({ page }) => {
   await page.goto('/');
 
@@ -349,4 +362,116 @@ test('keeps the primary mobile shell inside the viewport', async ({ page }) => {
   ));
 
   expect(hasHorizontalOverflow).toBe(false);
+});
+
+test('creates schedules from the week grid and warns about overlaps', async ({ page }) => {
+  await seedAnchorTodo(page);
+  await page.goto('/');
+
+  await page.getByRole('tab', { name: 'Semana' }).click();
+  const initialSlot = page.getByRole('button', { name: /Crear bloque el \d{4}-\d{2}-\d{2} a las 10:00/ }).first();
+  const slotLabel = await initialSlot.getAttribute('aria-label');
+  const slotDate = slotLabel?.match(/\d{4}-\d{2}-\d{2}/)?.[0];
+
+  expect(slotDate).toBeTruthy();
+  await initialSlot.click();
+
+  let dialog = page.getByRole('dialog', { name: 'Crear tarea' });
+  await expect(dialog.getByRole('radio', { name: /Horario/ })).toBeChecked();
+  await expect(dialog.getByLabel('Primer dia')).toHaveValue(slotDate);
+  await dialog.getByRole('textbox', { name: 'Nueva tarea' }).fill('Clase de algebra');
+  await dialog.getByRole('button', { name: 'Agregar', exact: true }).click();
+  await expect(page.getByText('Clase de algebra')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Crear nueva tarea' }).click();
+  dialog = page.getByRole('dialog', { name: 'Crear tarea' });
+  await dialog.getByRole('textbox', { name: 'Nueva tarea' }).fill('Consulta de algebra');
+  await dialog.getByRole('radio', { name: /Horario/ }).click();
+  await dialog.getByLabel('Primer dia').fill(slotDate);
+  await dialog.getByLabel('Ultimo dia').fill(slotDate);
+  await dialog.getByLabel('Hora de inicio').fill('10:30');
+  await dialog.getByLabel('Hora de fin').fill('11:30');
+  await dialog.getByRole('button', { name: 'Agregar', exact: true }).click();
+
+  const conflictAlert = dialog.getByRole('alert');
+  await expect(conflictAlert).toContainText('Este horario se superpone');
+  await expect(conflictAlert).toContainText('Clase de algebra');
+  await conflictAlert.getByRole('button', { name: 'Guardar de todos modos' }).click();
+
+  const conflicts = page.getByRole('status', { name: 'Conflictos de horario' });
+  await expect(conflicts).toContainText('1 conflicto de horario');
+  await expect(page.getByText('Clase de algebra')).toBeVisible();
+  await expect(page.getByText('Consulta de algebra')).toBeVisible();
+  await expect(page.getByRole('button', { name: /Conflicto de horario/ })).toHaveCount(2);
+});
+
+test('navigates views with tabs and the command palette', async ({ page }) => {
+  await seedAnchorTodo(page);
+  await page.goto('/');
+
+  const listTab = page.getByRole('tab', { name: 'Lista' });
+  await listTab.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.getByRole('tab', { name: 'Hoy' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', 'todo-view-tab-today');
+
+  await page.keyboard.press('End');
+  await expect(page.getByRole('tab', { name: 'Semana' })).toHaveAttribute('aria-selected', 'true');
+
+  await page.keyboard.press('Control+k');
+  const palette = page.getByRole('dialog', { name: 'Paleta de comandos' });
+  await palette.getByRole('combobox', { name: 'Buscar comando' }).fill('calendario');
+  await page.keyboard.press('Enter');
+
+  await expect(palette).not.toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Calendario' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('grid', { name: /Calendario/ })).toBeVisible();
+});
+
+test('omits one occurrence from a recurring schedule', async ({ page }) => {
+  await page.addInitScript(() => {
+    const formatDate = date => [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, '0'),
+      String(date.getDate()).padStart(2, '0'),
+    ].join('-');
+    const today = new Date();
+    const endDate = new Date(today);
+    endDate.setDate(endDate.getDate() + 30);
+
+    localStorage.setItem('TODOS_V1', JSON.stringify([{
+      id: 'e2e-recurring-schedule',
+      text: 'Cursar algebra',
+      kind: 'schedule',
+      dateType: 'period',
+      startDate: formatDate(today),
+      endDate: formatDate(endDate),
+      startTime: '10:00',
+      endTime: '12:00',
+      recurrence: 'daily',
+    }]));
+  });
+  await page.goto('/');
+
+  const today = await page.evaluate(() => {
+    const date = new Date();
+    return [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, '0'),
+      String(date.getDate()).padStart(2, '0'),
+    ].join('-');
+  });
+  const displayDate = today.split('-').reverse().join('/');
+
+  await expect(page.getByText('Cursar algebra')).toBeVisible();
+  await page.getByRole('tab', { name: 'Calendario' }).click();
+  const todayCell = page.getByRole('gridcell', { name: today });
+  await todayCell.getByRole('button', { name: /Horario Diaria 10:00 a 12:00 Cursar algebra/ }).click();
+
+  const detail = page.getByRole('dialog', { name: 'Detalle del elemento' });
+  await detail.getByRole('button', { name: `Omitir ${displayDate}` }).click();
+  await expect(detail.getByRole('heading', { name: 'Fechas omitidas' })).toBeVisible();
+  await expect.poll(async () => page.evaluate(() => (
+    JSON.parse(localStorage.getItem('TODOS_V1') || '[]')[0]?.excludedOccurrences
+  ))).toEqual([today]);
 });

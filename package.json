@@ -10,6 +10,7 @@
     "dev": "vite",
     "test": "vitest run",
     "test:e2e": "node scripts/run-e2e.mjs",
+    "test:e2e:update": "node scripts/run-e2e.mjs --update-snapshots=all",
     "typecheck": "tsc --noEmit",
     "audit:lighthouse": "node scripts/run-lighthouse.mjs",
     "capture:demo": "node scripts/capture-demo.mjs",
