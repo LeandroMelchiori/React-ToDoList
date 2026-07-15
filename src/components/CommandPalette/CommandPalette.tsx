@@ -110,7 +110,7 @@ function CommandPalette({ commands }: CommandPaletteProps) {
         )}
       </div>
       <footer>
-        <span><kbd>↑</kbd><kbd>↓</kbd> navegar</span>
+        <span><kbd>Arriba</kbd><kbd>Abajo</kbd> navegar</span>
         <span><kbd>Enter</kbd> ejecutar</span>
       </footer>
     </section>
