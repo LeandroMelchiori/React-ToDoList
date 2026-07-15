@@ -392,6 +392,7 @@ test('reuses one IndexedDB connection across local changes', async ({ page }) =>
 });
 
 test('reloads the application shell while offline', async ({ context, page }) => {
+  await seedAnchorTodo(page);
   await page.goto('/');
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready;
@@ -406,7 +407,7 @@ test('reloads the application shell while offline', async ({ context, page }) =>
 
   const cacheState = await page.evaluate(async () => {
     const cacheNames = await caches.keys();
-    const shellCache = await caches.open('taskflow-shell-v2');
+    const shellCache = await caches.open('taskflow-shell-v3');
     const cachedRequests = await shellCache.keys();
 
     return {
@@ -414,15 +415,17 @@ test('reloads the application shell while offline', async ({ context, page }) =>
       assets: cachedRequests.map(request => new URL(request.url).pathname),
     };
   });
-  expect(cacheState.cacheNames).toEqual(['taskflow-shell-v2']);
-  expect(cacheState.assets.filter(asset => asset.startsWith('/assets/')).length).toBeGreaterThanOrEqual(2);
+  expect(cacheState.cacheNames).toEqual(['taskflow-shell-v3']);
+  expect(cacheState.assets.filter(asset => asset.startsWith('/assets/')).length).toBeGreaterThanOrEqual(6);
   expect(cacheState.assets).toContain('/fonts/outfit-latin.woff2');
 
   await context.setOffline(true);
   try {
     await page.reload();
-    await expect(page.getByText('Organiza tu dia con una primera tarea')).toBeVisible();
+    await expect(page.getByText('Tarea de referencia')).toBeVisible();
     await expect(page.getByText('Sin conexion. TaskFlow sigue disponible offline.')).toBeVisible();
+    await page.getByRole('tab', { name: 'Calendario' }).click();
+    await expect(page.getByRole('grid', { name: /Calendario/ })).toBeVisible();
   } finally {
     await context.setOffline(false);
   }

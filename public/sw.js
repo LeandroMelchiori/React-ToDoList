@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'taskflow-shell-';
-const CACHE_NAME = `${CACHE_PREFIX}v2`;
+const CACHE_NAME = `${CACHE_PREFIX}v3`;
 const MANIFEST_CACHE_KEY = '/__taskflow_asset_manifest__';
 const CORE_ASSETS = [
   '/',
@@ -27,6 +27,61 @@ function getShellAssets(html) {
   return [...assets];
 }
 
+function getAssetDependencies(asset, source) {
+  const dependencies = new Set();
+  const dependencyPattern = /["'`]([^"'`]+\.(?:css|js|woff2?))["'`]/g;
+  let match = dependencyPattern.exec(source);
+
+  while (match) {
+    const dependency = match[1];
+    const dependencyBase = dependency.startsWith('assets/') || dependency.startsWith('fonts/')
+      ? new URL('/', self.location.origin)
+      : new URL(asset, self.location.origin);
+    const dependencyUrl = new URL(dependency, dependencyBase);
+
+    if (
+      dependencyUrl.origin === self.location.origin &&
+      (dependencyUrl.pathname.startsWith('/assets/') || dependencyUrl.pathname.startsWith('/fonts/'))
+    ) {
+      dependencies.add(`${dependencyUrl.pathname}${dependencyUrl.search}`);
+    }
+
+    match = dependencyPattern.exec(source);
+  }
+
+  return [...dependencies];
+}
+
+async function cacheAssetTree(cache, initialAssets) {
+  const assets = new Set(initialAssets);
+  const pendingAssets = initialAssets.filter(asset => asset !== '/');
+
+  while (pendingAssets.length > 0) {
+    const asset = pendingAssets.shift();
+    const response = await fetch(asset, { cache: 'no-store' });
+
+    if (!response.ok) {
+      throw new Error(`Could not cache ${asset}.`);
+    }
+
+    const sourceResponse = response.clone();
+    await cache.put(asset, response);
+
+    if (new URL(asset, self.location.origin).pathname.endsWith('.js')) {
+      const dependencies = getAssetDependencies(asset, await sourceResponse.text());
+
+      dependencies.forEach(dependency => {
+        if (!assets.has(dependency)) {
+          assets.add(dependency);
+          pendingAssets.push(dependency);
+        }
+      });
+    }
+  }
+
+  return [...assets];
+}
+
 async function cacheCurrentShell() {
   const shellResponse = await fetch('/', { cache: 'no-store' });
 
@@ -39,20 +94,10 @@ async function cacheCurrentShell() {
   const cache = await caches.open(CACHE_NAME);
 
   await cache.put('/', shellResponse);
-  await Promise.all(shellAssets
-    .filter(asset => asset !== '/')
-    .map(async asset => {
-      const response = await fetch(asset, { cache: 'no-store' });
-
-      if (!response.ok) {
-        throw new Error(`Could not cache ${asset}.`);
-      }
-
-      await cache.put(asset, response);
-    }));
+  const cachedAssets = await cacheAssetTree(cache, shellAssets);
   await cache.put(
     MANIFEST_CACHE_KEY,
-    new Response(JSON.stringify(shellAssets), {
+    new Response(JSON.stringify(cachedAssets), {
       headers: { 'Content-Type': 'application/json' },
     }),
   );
@@ -131,19 +176,22 @@ self.addEventListener('fetch', event => {
   }
 
   event.respondWith(
-    caches.match(event.request).then(cachedResponse => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
+    caches.open(CACHE_NAME).then(cache => (
+      cache.match(`${requestUrl.pathname}${requestUrl.search}`, { ignoreVary: true })
+        .then(cachedResponse => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
 
-      return fetch(event.request).then(response => {
-        if (response.ok && response.type === 'basic') {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseClone));
-        }
+          return fetch(event.request).then(response => {
+            if (response.ok && response.type === 'basic') {
+              const responseClone = response.clone();
+              cache.put(event.request, responseClone);
+            }
 
-        return response;
-      });
-    }),
+            return response;
+          });
+        })
+    )),
   );
 });

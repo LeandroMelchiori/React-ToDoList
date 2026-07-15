@@ -14,10 +14,6 @@ import { TodoHeaderTools } from '../components/TodoHeader/TodoHeaderTools/TodoHe
 import { TodoReminderStatus } from '../components/TodoHeader/TodoReminderStatus/TodoReminderStatus';
 import { TodoList } from '../components/TodoList/TodoList';
 import { TodoItem } from '../components/TodoList/TodoItem/TodoItem';
-import { TodoBoardView } from '../components/TodoBoardView/TodoBoardView';
-import { TodoCalendar } from '../components/TodoCalendar/TodoCalendar';
-import { TodoToday } from '../components/TodoToday/TodoToday';
-import { TodoWeekCalendar } from '../components/TodoWeekCalendar/TodoWeekCalendar';
 import { TodoViewMode, TodoViewToggle } from '../components/TodoViewToggle/TodoViewToggle';
 import { CreateTodoButton } from '../components/CreateTodoButton/CreateTodoButton';
 import { Modal } from '../components/Modal/Modal';
@@ -40,12 +36,22 @@ import { useTodoReminders } from './useTodoReminders';
 import { TodoSettings as TodoSettingsPanel } from '../components/TodoHeader/TodoSettings/TodoSettings';
 import { TodoSnapshots } from '../components/TodoHeader/TodoSnapshots/TodoSnapshots';
 import { TodoDataCenter } from '../components/TodoHeader/TodoDataCenter/TodoDataCenter';
-import { CommandPalette } from '../components/CommandPalette/CommandPalette';
 import type { CommandPaletteItem } from '../components/CommandPalette/CommandPalette';
 import { TodoSettings, useTodoSettings } from './useTodoSettings';
 import { useMediaQuery } from './useMediaQuery';
 import type { TodoKind, TodoRecurrence } from './todoModel';
 import { TodoMobileSummary } from '../components/TodoHeader/TodoMobileSummary/TodoMobileSummary';
+
+const CommandPalette = React.lazy(() => import('../components/CommandPalette/CommandPalette')
+    .then(module => ({ default: module.CommandPalette })));
+const TodoBoardView = React.lazy(() => import('../components/TodoBoardView/TodoBoardView')
+    .then(module => ({ default: module.TodoBoardView })));
+const TodoCalendar = React.lazy(() => import('../components/TodoCalendar/TodoCalendar')
+    .then(module => ({ default: module.TodoCalendar })));
+const TodoToday = React.lazy(() => import('../components/TodoToday/TodoToday')
+    .then(module => ({ default: module.TodoToday })));
+const TodoWeekCalendar = React.lazy(() => import('../components/TodoWeekCalendar/TodoWeekCalendar')
+    .then(module => ({ default: module.TodoWeekCalendar })));
 
 type CreateTodoDefaults = {
     kind?: TodoKind;
@@ -603,6 +609,7 @@ function App() {
                 role="tabpanel"
                 tabIndex={0}
             >
+            <React.Suspense fallback={<TodosLoading />}>
             {todoViewMode === 'today' ? (
                 <TodoToday
                     error={error}
@@ -795,12 +802,15 @@ function App() {
                 />
                 </>
             )}
+            </React.Suspense>
             </div>
             </main>
 
             {isCommandPaletteOpen && (
                 <Modal label="Paleta de comandos" onClose={() => setIsCommandPaletteOpen(false)}>
-                    <CommandPalette commands={commandPaletteItems} />
+                    <React.Suspense fallback={<TodosLoading />}>
+                        <CommandPalette commands={commandPaletteItems} />
+                    </React.Suspense>
                 </Modal>
             )}
 

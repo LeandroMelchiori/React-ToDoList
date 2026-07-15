@@ -372,7 +372,7 @@ describe('App', () => {
 
     await user.click(screen.getByRole('tab', { name: 'Calendario' }));
 
-    expect(screen.getByRole('grid', { name: /Calendario/ })).toBeInTheDocument();
+    expect(await screen.findByRole('grid', { name: /Calendario/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Evento 10:00 Rendir parcial/ })).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /Periodo 10:00 a 12:00 Inscripcion a finales/ }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('button', { name: /Limite Semanal Pagar cuota/ }).length).toBeGreaterThan(0);
@@ -385,7 +385,7 @@ describe('App', () => {
 
     await user.click(screen.getByRole('tab', { name: 'Semana' }));
 
-    expect(screen.getByRole('grid', { name: /Agenda semanal/ })).toBeInTheDocument();
+    expect(await screen.findByRole('grid', { name: /Agenda semanal/ })).toBeInTheDocument();
     expect(within(screen.getByRole('group', { name: 'Elementos sin horario por dia' })).getAllByRole('button', { name: /Limite Semanal Pagar cuota/ }).length).toBeGreaterThan(0);
     expect(within(screen.getByRole('group', { name: 'Elementos sin horario por dia' })).getAllByText('2 diarias').length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: /10:00 Evento Rendir parcial/ })).toBeInTheDocument();
@@ -464,7 +464,7 @@ describe('App', () => {
 
     await user.click(screen.getByRole('tab', { name: 'Tablero' }));
 
-    expect(screen.getByRole('heading', { name: 'Planificacion por estado' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Planificacion por estado' })).toBeInTheDocument();
     expect(within(screen.getByRole('region', { name: 'Columna Vencidas' })).getByText('Enviar tramite vencido')).toBeInTheDocument();
     expect(within(screen.getByRole('region', { name: 'Columna Hoy' })).getByText('Preparar clase de hoy')).toBeInTheDocument();
     expect(within(screen.getByRole('region', { name: 'Columna Proximas' })).getByText('Comprar materiales')).toBeInTheDocument();
@@ -489,14 +489,14 @@ describe('App', () => {
     expect(await screen.findByText('Tarea existente')).toBeInTheDocument();
 
     await user.click(screen.getByRole('tab', { name: 'Calendario' }));
-    await user.click(screen.getByRole('button', { name: `Crear elemento el ${today}` }));
+    await user.click(await screen.findByRole('button', { name: `Crear elemento el ${today}` }));
 
     expect(screen.getByRole('radio', { name: /Evento/ })).toBeChecked();
     expect(screen.getByLabelText('Dia del evento')).toHaveValue(today);
 
     await user.click(screen.getByRole('button', { name: 'Cancelar' }));
     await user.click(screen.getByRole('tab', { name: 'Semana' }));
-    await user.click(screen.getByRole('button', { name: `Crear bloque el ${today} a las 10:00` }));
+    await user.click(await screen.findByRole('button', { name: `Crear bloque el ${today} a las 10:00` }));
 
     expect(screen.getByRole('radio', { name: /Horario/ })).toBeChecked();
     expect(screen.getByLabelText('Primer dia')).toHaveValue(today);
@@ -527,7 +527,7 @@ describe('App', () => {
     expect(await screen.findByText('Cursar algebra')).toBeInTheDocument();
 
     await user.click(screen.getByRole('tab', { name: 'Calendario' }));
-    let todayCell = screen.getByRole('gridcell', { name: today });
+    let todayCell = await screen.findByRole('gridcell', { name: today });
     await user.click(within(todayCell).getByRole('button', { name: /Horario Diaria 10:00 a 12:00 Cursar algebra/ }));
 
     let detailDialog = screen.getByRole('dialog', { name: 'Detalle del elemento' });
@@ -630,7 +630,7 @@ describe('App', () => {
 
     await user.click(screen.getByRole('tab', { name: 'Hoy' }));
 
-    expect(screen.getByRole('heading', { name: 'Tu dia en foco' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Tu dia en foco' })).toBeInTheDocument();
     expect(within(screen.getByRole('region', { name: 'Tareas para completar' })).getByText('Preparar entrega')).toBeInTheDocument();
     expect(within(screen.getByRole('region', { name: 'Eventos del dia' })).getByText('Rendir parcial')).toBeInTheDocument();
     expect(within(screen.getByRole('region', { name: 'Horarios y cursadas' })).getByText('Cursar programacion')).toBeInTheDocument();
@@ -671,7 +671,7 @@ describe('App', () => {
 
     await user.click(screen.getByRole('tab', { name: 'Hoy' }));
 
-    const reminder = screen.getByRole('button', { name: `Ahora: ${startTime} Rendir parcial` });
+    const reminder = await screen.findByRole('button', { name: `Ahora: ${startTime} Rendir parcial` });
     expect(reminder).toBeInTheDocument();
 
     await user.click(reminder);
@@ -1618,7 +1618,7 @@ describe('App', () => {
 
     await user.keyboard('{Control>}k{/Control}');
     const commandDialog = screen.getByRole('dialog', { name: 'Paleta de comandos' });
-    const commandSearch = within(commandDialog).getByRole('combobox', { name: 'Buscar comando' });
+    const commandSearch = await within(commandDialog).findByRole('combobox', { name: 'Buscar comando' });
 
     expect(commandSearch).toHaveFocus();
     await user.type(commandSearch, 'semana');

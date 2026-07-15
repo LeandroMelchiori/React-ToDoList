@@ -77,6 +77,7 @@ function CommandPalette({ commands }: CommandPaletteProps) {
         aria-controls="command-palette-results"
         aria-expanded="true"
         aria-haspopup="listbox"
+        autoFocus
         autoComplete="off"
         id="command-palette-search"
         onChange={event => setQuery(event.target.value)}
