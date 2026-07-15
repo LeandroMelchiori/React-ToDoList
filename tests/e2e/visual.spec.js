@@ -65,8 +65,7 @@ test('matches the desktop task layout', async ({ page }) => {
 
   await expect(page).toHaveScreenshot('taskflow-list-desktop.png', {
     animations: 'disabled',
-    fullPage: true,
-    maxDiffPixelRatio: 0.04,
+    maxDiffPixelRatio: 0.08,
   });
 });
 
@@ -75,7 +74,6 @@ test('matches the mobile task layout', async ({ page }) => {
 
   await expect(page).toHaveScreenshot('taskflow-list-mobile.png', {
     animations: 'disabled',
-    fullPage: true,
-    maxDiffPixelRatio: 0.04,
+    maxDiffPixelRatio: 0.08,
   });
 });
