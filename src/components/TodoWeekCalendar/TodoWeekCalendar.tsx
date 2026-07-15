@@ -67,6 +67,7 @@ interface TodoWeekCalendarProps {
   error?: boolean;
   loading?: boolean;
   onEditTodo: (id: string) => void;
+  onCreateTodoForSlot?: (dateValue: string, hour: number) => void;
   onEmptySearchResults: () => ReactNode;
   onEmptyTodos: () => ReactNode;
   onError: () => ReactNode;
@@ -256,6 +257,7 @@ function TodoWeekCalendar({
   error,
   loading,
   onEditTodo,
+  onCreateTodoForSlot,
   onEmptySearchResults,
   onEmptyTodos,
   onError,
@@ -434,6 +436,17 @@ function TodoWeekCalendar({
                         aria-label={`${day.dayName} ${formatShortDate(day.dateValue)} ${formatHourSlot(hour)}`}
                         key={`${day.dateValue}-${hour}`}
                       >
+                        {onCreateTodoForSlot && (
+                          <button
+                            aria-label={`Crear bloque el ${day.dateValue} a las ${formatHourSlot(hour)}`}
+                            className="TodoWeekCalendar-add"
+                            onClick={() => onCreateTodoForSlot(day.dateValue, hour)}
+                            title="Crear bloque"
+                            type="button"
+                          >
+                            +
+                          </button>
+                        )}
                         {slotTodos.map(todo => {
                           const hasConflict = conflictingTodoKeys.has(`${day.dateValue}:${todo.id}`);
 

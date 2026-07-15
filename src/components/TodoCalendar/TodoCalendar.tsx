@@ -46,6 +46,7 @@ interface TodoCalendarProps {
   error?: boolean;
   loading?: boolean;
   onEditTodo: (id: string) => void;
+  onCreateTodoForDate?: (dateValue: string) => void;
   onEmptySearchResults: () => ReactNode;
   onEmptyTodos: () => ReactNode;
   onError: () => ReactNode;
@@ -195,6 +196,7 @@ function TodoCalendar({
   error,
   loading,
   onEditTodo,
+  onCreateTodoForDate,
   onEmptySearchResults,
   onEmptyTodos,
   onError,
@@ -277,7 +279,20 @@ function TodoCalendar({
 
               return (
                 <div className={className} role="gridcell" key={day.dateValue} aria-label={day.dateValue}>
-                  <time dateTime={day.dateValue}>{day.dayNumber}</time>
+                  <div className="TodoCalendar-dayHeading">
+                    <time dateTime={day.dateValue}>{day.dayNumber}</time>
+                    {onCreateTodoForDate && (
+                      <button
+                        aria-label={`Crear elemento el ${day.dateValue}`}
+                        className="TodoCalendar-add"
+                        onClick={() => onCreateTodoForDate(day.dateValue)}
+                        title="Crear elemento"
+                        type="button"
+                      >
+                        +
+                      </button>
+                    )}
+                  </div>
                   {listedTodos.length > 0 && (
                     <ul className="TodoCalendar-events" aria-label={`Elementos del ${day.dateValue}`}>
                       {listedTodos.map(todo => {

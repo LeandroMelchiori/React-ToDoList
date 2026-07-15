@@ -448,6 +448,33 @@ describe('App', () => {
     expect(within(detailDialog).getByText('Preparar clase de hoy')).toBeInTheDocument();
   });
 
+  test('prefills creation from monthly and weekly calendar slots', async () => {
+    const user = userEvent.setup();
+    const today = getRelativeDateInputValue(0);
+    localStorage.setItem('TODOS_V1', JSON.stringify([
+      { id: 'todo-anchor', text: 'Tarea existente', completed: false },
+    ]));
+    renderApp();
+
+    expect(await screen.findByText('Tarea existente')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Calendario' }));
+    await user.click(screen.getByRole('button', { name: `Crear elemento el ${today}` }));
+
+    expect(screen.getByRole('radio', { name: /Evento/ })).toBeChecked();
+    expect(screen.getByLabelText('Dia del evento')).toHaveValue(today);
+
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }));
+    await user.click(screen.getByRole('button', { name: 'Semana' }));
+    await user.click(screen.getByRole('button', { name: `Crear bloque el ${today} a las 10:00` }));
+
+    expect(screen.getByRole('radio', { name: /Horario/ })).toBeChecked();
+    expect(screen.getByLabelText('Primer dia')).toHaveValue(today);
+    expect(screen.getByLabelText('Ultimo dia')).toHaveValue(today);
+    expect(screen.getByLabelText('Hora de inicio')).toHaveValue('10:00');
+    expect(screen.getByLabelText('Hora de fin')).toHaveValue('11:00');
+  });
+
   test('shows a focused today view separated by tasks and agenda items', async () => {
     const user = userEvent.setup();
     const yesterday = getRelativeDateInputValue(-1);

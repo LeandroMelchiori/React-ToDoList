@@ -255,6 +255,39 @@
   gap: 6px;
   min-height: 78px;
   padding: 8px;
+  position: relative;
+}
+
+.TodoWeekCalendar-add {
+  align-items: center;
+  align-self: start;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--color-text-soft);
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 900;
+  height: 24px;
+  justify-content: center;
+  justify-self: end;
+  opacity: 0;
+  width: 24px;
+}
+
+.TodoWeekCalendar-slot:hover .TodoWeekCalendar-add,
+.TodoWeekCalendar-add:focus-visible {
+  opacity: 1;
+}
+
+.TodoWeekCalendar-add:hover,
+.TodoWeekCalendar-add:focus-visible {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent);
+  color: var(--color-accent-hover);
+  outline: none;
 }
 
 .TodoWeekCalendar-event {
@@ -408,6 +441,9 @@
 }
 
 @media (max-width: 760px) {
+  .TodoWeekCalendar-add {
+    opacity: 1;
+  }
   .TodoWeekCalendar-header {
     align-items: flex-start;
     flex-direction: column;

@@ -40,6 +40,16 @@ import { useTodoReminders } from './useTodoReminders';
 import { TodoSettings as TodoSettingsPanel } from '../components/TodoHeader/TodoSettings/TodoSettings';
 import { TodoSnapshots } from '../components/TodoHeader/TodoSnapshots/TodoSnapshots';
 import { TodoSettings, useTodoSettings } from './useTodoSettings';
+import type { TodoKind, TodoRecurrence } from './todoModel';
+
+type CreateTodoDefaults = {
+    kind?: TodoKind;
+    startDate?: string;
+    endDate?: string;
+    startTime?: string;
+    endTime?: string;
+    recurrence?: TodoRecurrence;
+};
 
 function isEditableTarget(target: EventTarget | null): boolean {
     if (!(target instanceof HTMLElement)) {
@@ -73,6 +83,7 @@ function App() {
     const [selectedTodoIds, setSelectedTodoIds] = React.useState<Set<string>>(() => new Set());
     const [bulkActionMessage, setBulkActionMessage] = React.useState('');
     const [isBulkDeleteOpen, setIsBulkDeleteOpen] = React.useState(false);
+    const [createTodoDefaults, setCreateTodoDefaults] = React.useState<CreateTodoDefaults>({});
     const [dragState, setDragState] = React.useState<{
         draggedTodoId: string | null;
         targetTodoId: string | null;
@@ -169,6 +180,10 @@ function App() {
             setTodoViewMode(nextSettings.defaultView);
         }
     };
+    const launchCreateTodo = React.useCallback((defaults: CreateTodoDefaults = {}) => {
+        setCreateTodoDefaults(defaults);
+        openCreateModal();
+    }, [openCreateModal]);
 
     const formMode = editingTodo ? 'edit' : 'create';
     const modalLabel = deletingTodo
@@ -338,7 +353,7 @@ function App() {
 
             if (event.key.toLowerCase() === 'n') {
                 event.preventDefault();
-                openCreateModal();
+                launchCreateTodo();
             }
         };
 
@@ -347,7 +362,7 @@ function App() {
         return () => {
             window.removeEventListener('keydown', handleKeyboardShortcuts);
         };
-    }, [openCreateModal]);
+    }, [launchCreateTodo]);
 
     return (
         <>
@@ -447,7 +462,7 @@ function App() {
             </TodoHeader>
 
             <CreateTodoButton
-                onCreateTodo={openCreateModal}
+                onCreateTodo={() => launchCreateTodo()}
                 loading={loading}
              />
 
@@ -508,6 +523,11 @@ function App() {
                     visibleTodos={visibleTodos}
                     totalTodos={totalTodos}
                     onEditTodo={startViewingTodo}
+                    onCreateTodoForDate={(dateValue) => launchCreateTodo({
+                        kind: 'event',
+                        startDate: dateValue,
+                        recurrence: 'none',
+                    })}
                     onError={() => <TodosError />}
                     onLoading={() => <TodosLoading />}
                     onEmptyTodos={() => (
@@ -530,6 +550,14 @@ function App() {
                     visibleTodos={visibleTodos}
                     totalTodos={totalTodos}
                     onEditTodo={startViewingTodo}
+                    onCreateTodoForSlot={(dateValue, hour) => launchCreateTodo({
+                        kind: 'schedule',
+                        startDate: dateValue,
+                        endDate: dateValue,
+                        startTime: `${String(hour).padStart(2, '0')}:00`,
+                        endTime: hour < 23 ? `${String(hour + 1).padStart(2, '0')}:00` : '23:59',
+                        recurrence: 'none',
+                    })}
                     onError={() => <TodosError />}
                     onLoading={() => <TodosLoading />}
                     onEmptyTodos={() => (
@@ -683,15 +711,15 @@ function App() {
                     ) : (
                         <TodoForm 
                             initialValue={editingTodo?.text || ''}
-                            initialKind={editingTodo?.kind}
+                            initialKind={editingTodo?.kind || createTodoDefaults.kind}
                             initialDescription={editingTodo?.description}
                             initialPriority={editingTodo?.priority}
                             initialDueDate={editingTodo?.dueDate}
-                            initialStartDate={editingTodo?.startDate}
-                            initialEndDate={editingTodo?.endDate}
-                            initialStartTime={editingTodo?.startTime}
-                            initialEndTime={editingTodo?.endTime}
-                            initialRecurrence={editingTodo?.recurrence}
+                            initialStartDate={editingTodo?.startDate || createTodoDefaults.startDate}
+                            initialEndDate={editingTodo?.endDate || createTodoDefaults.endDate}
+                            initialStartTime={editingTodo?.startTime || createTodoDefaults.startTime}
+                            initialEndTime={editingTodo?.endTime || createTodoDefaults.endTime}
+                            initialRecurrence={editingTodo?.recurrence || createTodoDefaults.recurrence}
                             initialRecurrenceDays={editingTodo?.recurrenceDays}
                             initialRecurrenceEndDate={editingTodo?.recurrenceEndDate}
                             initialRecurrenceCount={editingTodo?.recurrenceCount}

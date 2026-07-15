@@ -102,12 +102,47 @@
   box-shadow: inset 0 0 0 2px var(--color-accent);
 }
 
+.TodoCalendar-dayHeading {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
 .TodoCalendar-day time {
   color: var(--color-text-muted);
-  display: block;
   font-size: 12px;
   font-weight: 900;
-  margin-bottom: 8px;
+}
+
+.TodoCalendar-add {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--color-text-soft);
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 900;
+  height: 26px;
+  justify-content: center;
+  opacity: 0;
+  width: 26px;
+}
+
+.TodoCalendar-day:hover .TodoCalendar-add,
+.TodoCalendar-add:focus-visible {
+  opacity: 1;
+}
+
+.TodoCalendar-add:hover,
+.TodoCalendar-add:focus-visible {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent);
+  color: var(--color-accent-hover);
+  outline: none;
 }
 
 .TodoCalendar-events {
@@ -303,6 +338,9 @@
 }
 
 @media (max-width: 760px) {
+  .TodoCalendar-add {
+    opacity: 1;
+  }
   .TodoCalendar-header {
     align-items: flex-start;
     flex-direction: column;
