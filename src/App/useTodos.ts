@@ -1,13 +1,16 @@
 import React from 'react';
 import { useLocalStorage } from './useLocalStorage';
 import {
+    createTodosCalendarExport,
+    readTodosCalendarImport,
+} from './todoCalendarIcs';
+import {
     TODO_FILTERS,
     TODO_KINDS,
     TODO_RECURRENCES,
     analyzeTodosImport,
     applyTodosImport,
     createTodo,
-    createTodosCalendarExport,
     getTodoFacets,
     getTodoFilterCounts,
     getTodoGroups,
@@ -36,7 +39,6 @@ import {
     normalizeTodoSchedule,
     normalizeTodoTimes,
     normalizeTodos,
-    readTodosCalendarImport,
     reindexTodos,
     setTodoOccurrenceCompletion,
     setTodoOccurrenceExcluded,
