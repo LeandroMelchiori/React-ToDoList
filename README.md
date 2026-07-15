@@ -121,6 +121,7 @@ La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de pro
 - La UI usa labels, botones accesibles, skip link, foco visible y estados claros para mejorar navegacion y feedback.
 - Los recordatorios usan la Notification API del navegador y se programan localmente mientras la app esta abierta.
 - El build usa base `/` para publicar correctamente en Vercel desde `taskflow.sachadev.me`.
+- La tipografia Outfit se sirve como WOFF2 local para mantener el diseno disponible offline y evitar dependencias externas.
 - El toolchain usa Vite para reducir dependencias vulnerables y acelerar desarrollo/build.
 
 ## Arquitectura

@@ -393,6 +393,7 @@ test('reloads the application shell while offline', async ({ context, page }) =>
   });
   expect(cacheState.cacheNames).toEqual(['taskflow-shell-v2']);
   expect(cacheState.assets.filter(asset => asset.startsWith('/assets/')).length).toBeGreaterThanOrEqual(2);
+  expect(cacheState.assets).toContain('/fonts/outfit-latin.woff2');
 
   await context.setOffline(true);
   try {
