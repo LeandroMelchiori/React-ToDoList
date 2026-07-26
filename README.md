@@ -1,316 +1,306 @@
-# TaskFlow - React ToDo List
+<div align="center">
+
+# ✅ TaskFlow
+
+### Gestor local-first de tareas, agenda y planificación personal
 
 [![CI](https://github.com/LeandroMelchiori/React-ToDoList/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/LeandroMelchiori/React-ToDoList/actions/workflows/ci-cd.yml)
+[![Demo](https://img.shields.io/badge/Demo-taskflow.sachadev.me-5B4BDB?style=for-the-badge)](https://taskflow.sachadev.me)
 ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=061A23)
-![Vite](https://img.shields.io/badge/Vite-build-646CFF?logo=vite&logoColor=white)
-![Vitest](https://img.shields.io/badge/Vitest-tested-6E9F18?logo=vitest&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
 ![Playwright](https://img.shields.io/badge/Playwright-E2E-2EAD33?logo=playwright&logoColor=white)
-![Lighthouse](https://img.shields.io/badge/Lighthouse-99%2F100%2F100%2F100-0B57D0?logo=lighthouse&logoColor=white)
+
+</div>
 
 <p align="center">
   <a href="https://taskflow.sachadev.me">
-    <img src="public/demo-taskflow.png" alt="TaskFlow con tareas, filtros y acciones principales" width="100%" />
+    <img src="public/demo-taskflow.png" alt="TaskFlow mostrando tareas, filtros y opciones de planificación" width="100%" />
   </a>
 </p>
 
-TaskFlow es una aplicacion React local-first para gestionar tareas, agenda y horarios sin backend. Permite trabajar con tareas completables, eventos, bloques recurrentes y periodos, manteniendo una base simple, probada y desplegable, con foco en separar estado, UI, modelo de datos y persistencia sin agregar complejidad innecesaria.
+**TaskFlow** es una aplicación React local-first para organizar tareas, eventos, horarios recurrentes y períodos sin depender de un servidor o una cuenta de usuario.
 
-## Demo
+La información se guarda en IndexedDB dentro del navegador, puede exportarse mediante backups y permanece disponible offline después de la primera visita.
 
-- Produccion: https://taskflow.sachadev.me
-- Repositorio: https://github.com/LeandroMelchiori/React-ToDoList
+🔗 **Aplicación publicada:** [taskflow.sachadev.me](https://taskflow.sachadev.me)
 
-## Objetivo y alcance
+---
 
-La aplicacion parte de un flujo de tareas clasico y agrega comportamiento de producto sin salir de una arquitectura liviana:
+## 🎯 Enfoque del producto
 
-- Gestion completa de tareas y agenda: crear, editar, completar, duplicar, buscar, filtrar y eliminar.
-- Diferenciacion entre tareas completables, eventos puntuales, horarios recurrentes y periodos activos.
-- Persistencia local en IndexedDB con migracion desde `localStorage`.
-- Orden manual con drag and drop y controles accesibles subir/bajar.
-- Validaciones para evitar entradas vacias y duplicadas.
-- Estados visibles para carga, error, lista vacia y busqueda sin resultados.
-- Sincronizacion cuando el almacenamiento cambia desde otra pestana.
-- Soporte PWA con shell offline para abrir la app sin conexion luego de la primera visita.
-- Exportacion e importacion guiada de backups completos en JSON, mas exportacion e importacion de agenda en formato ICS.
-- Recordatorios locales opcionales con notificaciones del navegador.
-- Pruebas automatizadas y validacion continua antes de publicar cambios.
+TaskFlow comenzó como una lista de tareas y evolucionó hacia un workspace de planificación personal. El objetivo es ofrecer funciones avanzadas sin perder una experiencia rápida y comprensible.
 
-## Funcionalidades
+- No requiere registro.
+- No envía las tareas a un servidor.
+- Funciona como PWA.
+- Mantiene compatibilidad con versiones antiguas de los datos.
+- Ofrece varias formas de visualizar la misma información.
+- Incluye pruebas automáticas de comportamiento y accesibilidad.
 
-- Crear tareas con validacion de texto vacio y duplicados.
-- Editar tareas desde un modal con validacion de duplicados.
-- Crear tareas completables, eventos de agenda, horarios/bloques recurrentes y periodos.
-- Agregar descripcion, prioridad, fecha limite, fecha puntual, rango de fechas y horarios opcionales.
-- Configurar repeticion diaria, semanal, mensual o anual segun el tipo de elemento.
-- Ajustar recurrencias semanales por dias concretos, fecha de fin o cantidad maxima.
-- Configurar recordatorios locales al momento, minutos antes o un dia antes.
-- Organizar tareas por proyecto y etiquetas opcionales.
-- Dividir tareas en subtareas tipo checklist con progreso visual y plegado.
-- Completar automaticamente una tarea cuando todas sus subtareas estan listas.
-- Ver el detalle completo de un elemento antes de editarlo.
-- Duplicar tareas o elementos de agenda como copias limpias.
-- Cargar plantillas iniciales desde el estado vacio.
-- Marcar tareas como completadas o pendientes.
-- Archivar tareas completadas para sacarlas de la vista principal y consultarlas luego.
-- Eliminar tareas con confirmacion previa.
-- Deshacer una eliminacion reciente desde un aviso temporal.
-- Buscar tareas por texto, proyecto o etiqueta.
-- Filtrar rapidamente por proyecto o etiqueta.
-- Filtrar por todas, pendientes, completadas, vencidas, de hoy o proximas.
-- Filtrar por sin fecha, prioridad alta, subtareas pendientes, recurrentes, recordatorios y tipo de elemento.
-- Guardar combinaciones de filtros para reutilizarlas.
-- Separar el trabajo en tableros locales.
-- Reordenar tareas con drag and drop o con controles subir/bajar.
-- Alternar entre lista, vista de hoy, calendario mensual y agenda semanal.
-- Usar una vista tipo tablero por estado para planificar visualmente.
-- Visualizar eventos, horarios, tareas con fecha y periodos en calendario.
-- Compactar tareas diarias repetidas para no saturar el calendario.
-- Mostrar en Hoy el elemento actual o el proximo elemento con horario.
-- Usar atajos de teclado: `/` enfoca busqueda, `n` abre el formulario de nueva tarea y el skip link salta directo a la lista.
-- Persistir datos en IndexedDB, manteniendo compatibilidad con datos antiguos en `localStorage`.
-- Normalizar tareas antiguas guardadas sin `id`.
-- Detectar cambios hechos en otra pestana y permitir sincronizar.
-- Exportar e importar el workspace completo con un archivo JSON local.
-- Revisar el impacto de una importacion JSON y elegir tablero destino antes de fusionar tareas.
-- Exportar elementos con fecha a un archivo `.ics` compatible con calendarios externos.
-- Importar archivos `.ics` y fusionar eventos sin duplicar elementos existentes.
-- Mostrar metricas locales de progreso, completadas recientes, vencidas y alta prioridad.
-- Mostrar estado offline/PWA y avisar cuando hay una version nueva disponible.
-- Mostrar estados de carga, error, lista vacia y busqueda sin resultados.
+---
 
-## Stack
+## ✨ Funcionalidades
 
-- React 18
-- TypeScript incremental
-- Vite
-- CSS por componente
-- React Testing Library
-- Vitest
-- Playwright
-- IndexedDB
-- PWA / Service Worker
-- Jest DOM
-- GitHub Actions
-- Vercel
+### Tareas y agenda
 
-## Calidad y entrega
+- Creación, edición, duplicación, finalización y eliminación de elementos.
+- Tareas completables.
+- Eventos con fecha y horario.
+- Horarios o bloques recurrentes.
+- Períodos con fecha de inicio y finalización.
+- Prioridad, descripción, proyecto y etiquetas.
+- Subtareas con progreso visual.
+- Repeticiones diarias, semanales, mensuales y anuales.
+- Fecha límite y recordatorios locales opcionales.
+- Archivo de tareas completadas.
+- Deshacer una eliminación reciente.
 
-| Senal | Estado |
-| --- | --- |
-| Auditoria de dependencias | `npm audit --audit-level=moderate` sin vulnerabilidades. |
-| Tests unitarios/integracion | `npm test` cubre hooks y flujos principales de UI. |
-| Typecheck | `npm run typecheck` valida las capas migradas a TypeScript. |
-| Tests E2E | `npm run test:e2e` valida el flujo completo sobre el build de produccion local. |
-| Persistencia | `npm run benchmark:storage` mide serializacion local con workspaces de hasta 5000 elementos. |
-| Lighthouse | `npm run audit:lighthouse` genera reporte del sitio publicado. Ultima medicion: 99/100/100/100. |
-| CI | GitHub Actions ejecuta audit, tests, Playwright y build en cada push/PR a `main`. |
+### Organización
 
-## Decisiones tecnicas
+- Tableros locales independientes.
+- Orden manual mediante drag and drop.
+- Controles accesibles para subir o bajar elementos sin arrastrar.
+- Búsqueda por texto, proyecto o etiqueta.
+- Filtros por estado, fecha, prioridad, recurrencia, recordatorios y tipo.
+- Vistas guardadas para reutilizar combinaciones de filtros.
+- Menú de opciones compacto para backups, importaciones y herramientas secundarias.
 
-- Cada tarea usa un `id` unico para evitar depender del texto como key o identificador.
-- Los datos antiguos se normalizan para mantener compatibilidad con tareas sin `id`, prioridad, proyecto o etiquetas.
-- Las operaciones sobre tareas son inmutables: completar, borrar, agregar, editar y reordenar generan nuevas referencias.
-- El modelo puro de tareas vive en `todoModel.ts`; la exportacion e importacion de calendarios se aisla en `todoCalendarIcs.ts`.
-- Los modelos de tableros, filtros guardados y backups completos viven en archivos de dominio separados.
-- La logica principal vive en hooks (`useTodos`, `useLocalStorage`) para separar estado y presentacion.
-- IndexedDB es la persistencia principal y `localStorage` queda como compatibilidad, migracion y puente para eventos `storage`.
-- El formulario se reutiliza para creacion y edicion, manteniendo validaciones consistentes.
-- Las tareas completables se tratan distinto de eventos, horarios y periodos para que la agenda no contamine metricas de completado.
-- El calendario mensual compacta tareas diarias recurrentes y la agenda semanal prioriza bloques con horario.
-- Las reglas de recurrencia viven en el modelo para que lista, calendario, agenda semanal, recordatorios e ICS usen la misma interpretacion.
-- La UI usa labels, botones accesibles, skip link, foco visible y estados claros para mejorar navegacion y feedback.
-- Los recordatorios usan la Notification API del navegador y se programan localmente mientras la app esta abierta.
-- El build usa base `/` para publicar correctamente en Vercel desde `taskflow.sachadev.me`.
-- La tipografia Outfit se sirve como WOFF2 local para mantener el diseno disponible offline y evitar dependencias externas.
-- El toolchain usa Vite para reducir dependencias vulnerables y acelerar desarrollo/build.
+### Vistas de planificación
 
-## Arquitectura
+- Lista general.
+- Vista Hoy.
+- Calendario mensual.
+- Agenda semanal con grilla horaria.
+- Tablero visual por estado.
+- Resumen del elemento actual o próximo según su horario.
+- Compactación de recurrencias diarias para evitar saturar el calendario.
+- Carga diferida de las vistas de planificación para reducir el JavaScript inicial.
+
+### Importación y exportación
+
+- Backup completo del workspace en JSON.
+- Vista previa antes de importar datos.
+- Selección del tablero de destino.
+- Fusión sin reemplazar automáticamente el contenido existente.
+- Exportación de elementos con fecha en formato ICS.
+- Importación de calendarios ICS.
+- Detección de eventos duplicados.
+
+### PWA y uso offline
+
+- Instalación en escritorio y dispositivos móviles.
+- Service Worker con shell offline.
+- Aviso de nuevas versiones.
+- Caché endurecida para evitar recursos desactualizados.
+- Tipografía local disponible sin conexión.
+- Indicador de estado offline.
+
+---
+
+## 🧠 Decisiones técnicas
+
+### Local-first
+
+IndexedDB es la fuente principal de persistencia. `localStorage` se mantiene para migrar versiones antiguas y para detectar cambios originados en otra pestaña.
+
+La capa de persistencia:
+
+- normaliza datos de versiones anteriores;
+- evita bloquear la interfaz durante escrituras frecuentes;
+- reduce serializaciones innecesarias;
+- sincroniza cambios entre pestañas;
+- permite trabajar con workspaces grandes sin agregar un backend.
+
+### Modelo de datos
+
+Cada elemento tiene un identificador estable y un tipo explícito. Las tareas, eventos, horarios y períodos comparten una estructura base, pero se interpretan de forma diferente en estadísticas y calendarios.
+
+Las reglas de recurrencia se concentran en el modelo para que lista, Hoy, calendario, agenda, recordatorios e ICS produzcan resultados consistentes.
+
+### Separación de responsabilidades
+
+- `useTodos` coordina el estado del workspace.
+- `todoModel.ts` contiene operaciones y reglas puras.
+- `todoStorage.ts` abstrae la persistencia.
+- `todoBoards.ts` administra tableros.
+- `todoSavedViews.ts` administra filtros guardados.
+- `todoWorkspaceBackup.ts` valida backups.
+- Los componentes visuales reciben datos y callbacks para facilitar las pruebas.
+
+---
+
+## 🏗️ Arquitectura
 
 ```mermaid
 flowchart TD
-  App["App.tsx"] --> Header["TodoHeader"]
-  App --> List["TodoList"]
-  App --> Board["TodoBoardView"]
-  App --> Today["TodoToday"]
-  App --> Calendar["TodoCalendar"]
-  App --> Week["TodoWeekCalendar"]
-  App --> Modal["Modal"]
-  App --> Alert["ChangeAlert"]
-  App --> PWA["PwaStatus"]
-  App --> Undo["UndoToast"]
-  App --> Todos["useTodos"]
-  Todos --> Model["todoModel.ts"]
-  Todos --> Storage["useLocalStorage"]
-  Storage --> Adapter["todoStorage.ts"]
-  Adapter --> IndexedDB["IndexedDB taskflow-db"]
-  Adapter --> LocalStorage["localStorage TODOS_V1"]
-  Todos --> Boards["todoBoards.ts"]
-  Todos --> Views["todoSavedViews.ts"]
-  Todos --> Workspace["todoWorkspaceBackup.ts"]
-  Todos --> Filters["search + filters + facets + counts"]
-  Todos --> Actions["create / edit / detail / duplicate / complete / delete / reorder"]
-  List --> Item["TodoItem"]
-  Item --> Order["drag and drop + subir/bajar"]
-  Board --> Columns["columnas por estado/fecha"]
-  Today --> Focus["recordatorio visual actual/proximo"]
-  Calendar --> Agenda["mes + recurrencias compactas"]
-  Week --> Schedule["grilla semanal por horario"]
-  Modal --> Form["TodoForm"]
-  Modal --> Detail["TodoDetail"]
-  Modal --> DeleteDialog["DeleteTodoDialog"]
+  App[App.tsx] --> Header[Workspace y navegación]
+  App --> Views[Vistas de lista, hoy, tablero y calendario]
+  App --> Modals[Detalle, formulario y confirmaciones]
+  App --> Todos[useTodos]
+  Todos --> Model[todoModel.ts]
+  Todos --> Boards[todoBoards.ts]
+  Todos --> Saved[todoSavedViews.ts]
+  Todos --> Backup[todoWorkspaceBackup.ts]
+  Todos --> Storage[todoStorage.ts]
+  Storage --> IndexedDB[(IndexedDB)]
+  Storage --> Legacy[(localStorage)]
+  App --> PWA[Service Worker y estado offline]
 ```
 
-El estado de negocio vive en `useTodos`; las reglas puras de tareas y agenda viven en `todoModel.ts`; la persistencia y sincronizacion con el navegador quedan aisladas en `useLocalStorage` y `todoStorage.ts`. Los componentes visuales reciben datos y callbacks, lo que mantiene la UI facil de probar y cambiar.
+Las vistas de calendario y planificación se cargan de forma diferida. Esto mantiene liviana la experiencia inicial y descarga módulos complejos solamente cuando el usuario los necesita.
 
-## Estructura
+---
 
-```txt
+## 🛠️ Stack
+
+| Área | Tecnología |
+|---|---|
+| Interfaz | React 18 |
+| Tipado | TypeScript 6, migración incremental |
+| Build | Vite 8 |
+| Persistencia | IndexedDB y compatibilidad con localStorage |
+| PWA | Service Worker y Web App Manifest |
+| Tests | Vitest, Testing Library y Jest DOM |
+| E2E | Playwright |
+| Accesibilidad | axe-core integrado a Playwright |
+| Auditoría | Lighthouse |
+| CI/CD | GitHub Actions y Vercel |
+
+---
+
+## 📂 Estructura principal
+
+```text
 src/
-  App/
-    App.tsx
-    todoBoards.ts
-    todoModel.ts
-    todoSavedViews.ts
-    todoStorage.ts
-    todoWorkspaceBackup.ts
-    useTodos.ts
-    useLocalStorage.ts
-    usePwaStatus.ts
-    useTheme.ts
-  components/
-    ChangeAlert/
-    CreateTodoButton/
-    Modal/
-    PwaStatus/
-    ThemeToggle/
-    TodoBoardView/
-    TodoCalendar/
-    TodoHeader/
-    TodoIcon/
-    TodoList/
-    TodoToday/
-    TodoViewToggle/
-    TodoWeekCalendar/
-    UndoToast/
-  serviceWorkerRegistration.ts
+├── App/
+│   ├── App.tsx
+│   ├── todoModel.ts
+│   ├── todoStorage.ts
+│   ├── todoBoards.ts
+│   ├── todoSavedViews.ts
+│   ├── todoWorkspaceBackup.ts
+│   ├── useTodos.ts
+│   ├── useLocalStorage.ts
+│   ├── usePwaStatus.ts
+│   └── useTheme.ts
+├── components/
+│   ├── TodoList/
+│   ├── TodoToday/
+│   ├── TodoBoardView/
+│   ├── TodoCalendar/
+│   ├── TodoWeekCalendar/
+│   ├── Modal/
+│   ├── PwaStatus/
+│   └── UndoToast/
+└── serviceWorkerRegistration.ts
+
 public/
-  manifest.json
-  sw.js
+├── manifest.json
+├── sw.js
+└── demo-taskflow.png
+
 tests/
-  e2e/
+└── e2e/
 ```
 
-## Scripts
+---
 
-Instalar dependencias:
+## 🚀 Ejecución local
 
 ```bash
+git clone https://github.com/LeandroMelchiori/React-ToDoList.git
+cd React-ToDoList
 npm install
+npm run dev
 ```
 
-Ejecutar en desarrollo:
+La aplicación estará disponible en la dirección indicada por Vite.
+
+### Build de producción
 
 ```bash
-npm start
+npm run build
+npm run preview
 ```
 
-Ejecutar tests:
+---
+
+## ✅ Calidad y pruebas
+
+### Tests unitarios e integración
 
 ```bash
 npm test
 ```
 
-Ejecutar TypeScript:
+### Validación TypeScript
 
 ```bash
 npm run typecheck
 ```
 
-Ejecutar E2E sobre el build de produccion:
+### End-to-end y accesibilidad
 
 ```bash
 npm run test:e2e
 ```
 
-Medir el costo de serializacion del almacenamiento local:
+La suite Playwright valida flujos de planificación, importación, persistencia, navegación y accesibilidad con axe-core.
+
+### Auditoría de dependencias
 
 ```bash
-npm run benchmark:storage
+npm audit --audit-level=moderate
 ```
 
-Generar auditoria Lighthouse del sitio publicado:
+### Lighthouse
 
 ```bash
 npm run audit:lighthouse
 ```
 
-Regenerar la captura demo del README:
+La última medición documentada en el repositorio registra **99 / 100 / 100 / 100**. El script permite repetir la auditoría sobre la versión publicada.
+
+### Benchmark local
 
 ```bash
-npm run capture:demo
+npm run benchmark:storage
 ```
 
-Generar build de produccion:
+Mide el costo de serialización y persistencia con workspaces de hasta miles de elementos.
 
-```bash
-npm run build
-```
+---
 
-Previsualizar el build:
+## 🔄 CI/CD
 
-```bash
-npm run preview
-```
+GitHub Actions ejecuta en cada push o pull request hacia `main`:
 
-## CI
+- instalación reproducible con `npm ci`;
+- auditoría de dependencias;
+- tests con Vitest;
+- typecheck;
+- pruebas E2E con Playwright;
+- auditorías automatizadas de accesibilidad;
+- build de producción.
 
-El proyecto usa GitHub Actions para validar cada cambio. Vercel toma los cambios de `main` y publica automaticamente la version principal.
+Vercel publica automáticamente la rama principal en [taskflow.sachadev.me](https://taskflow.sachadev.me).
 
-- En cada pull request o push a `main`: instala dependencias con `npm ci`, ejecuta `npm audit --audit-level=moderate`, corre tests, ejecuta typecheck, ejecuta E2E con Playwright y genera build.
-- Vercel publica la app en `taskflow.sachadev.me`.
+---
 
-## Tests
+## 🛣️ Próximas mejoras
 
-La suite actual cubre:
+- Finalizar la migración del código restante a TypeScript.
+- Añadir cifrado opcional a los backups locales.
+- Mejorar la programación de notificaciones cuando la aplicación está cerrada.
+- Ampliar las pruebas de importación ICS con calendarios externos.
+- Seguir optimizando la experiencia móvil y el uso con lectores de pantalla.
 
-- Normalizacion de tareas antiguas.
-- Creacion de tareas con ids y texto limpio.
-- Filtros por busqueda y estado.
-- Filtros temporales por tareas vencidas, de hoy y proximas.
-- Filtros avanzados por atributos, tipo de elemento y agenda.
-- Archivo/historial de tareas completadas.
-- Creacion, marcado y completado automatico de tareas con subtareas.
-- Tareas, eventos, horarios recurrentes y periodos como tipos separados.
-- Vista Hoy con tareas, agenda y recordatorio visual del horario actual/proximo.
-- Vista Tablero con columnas por estado y apertura de detalle.
-- Calendario mensual y agenda semanal con recurrencias.
-- Reglas avanzadas de recurrencia semanal, fin por fecha y fin por cantidad.
-- Recordatorios locales con permiso del navegador.
-- Exportacion ICS de elementos fechados.
-- Importacion ICS con preview y fusion sin duplicados.
-- Tableros, filtros guardados y backups completos del workspace.
-- Plantillas iniciales desde el estado vacio.
-- Reordenamiento manual con botones y drag and drop.
-- Flujo principal desde la UI: crear, validar, buscar, completar, filtrar y eliminar.
-- Validacion de tareas duplicadas desde el formulario de creacion.
-- Edicion de tareas desde modal y validacion de duplicados en edicion.
-- Panel de detalle, duplicado de elementos y acciones desde el detalle.
-- Cancelacion segura antes de eliminar una tarea.
-- Deshacer una eliminacion reciente y autocierre del aviso.
-- Navegacion por teclado, skip link, foco en modal y cierre con `Escape`.
-- Exportacion e importacion guiada de backups JSON.
-- Metricas locales de progreso, completadas recientes, vencidas y alta prioridad.
-- Estado PWA/offline y aplicacion de actualizaciones del service worker.
-- Flujo E2E de produccion con Playwright: crear, buscar, editar, completar, cancelar borrado y eliminar.
-
-## Mejoras futuras
-
-- Mas plantillas locales para flujos recurrentes de estudio, talleres o proyectos.
-- Migrar componentes y hooks restantes a TypeScript.
-- Arrastre entre columnas del tablero para cambiar estado o fecha con reglas seguras.
-- Excepciones puntuales de recurrencia, como saltear una clase o feriado.
+---
 
 ## Autor
 
-Desarrollado por Leandro Melchiori.
+Desarrollado por **Leandro Melchiori**.
+
+- [GitHub](https://github.com/LeandroMelchiori)
+- [LinkedIn](https://www.linkedin.com/in/leandromelchiori-developer/)
