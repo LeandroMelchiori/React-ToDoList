@@ -382,7 +382,8 @@ describe('App', () => {
     expect(screen.getAllByRole('button', { name: /Periodo 10:00 a 12:00 Inscripcion a finales/ }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('button', { name: /Limite Semanal Pagar cuota/ }).length).toBeGreaterThan(0);
     expect(screen.getAllByText('2 diarias').length).toBeGreaterThan(0);
-    expect(within(screen.getByRole('complementary', { name: 'Elementos sin fecha' })).getByRole('button', { name: 'Leer bibliografia' })).toBeInTheDocument();
+    expect(screen.queryByRole('complementary', { name: 'Elementos sin fecha' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Leer bibliografia')).not.toBeInTheDocument();
 
     const dailySummary = screen.getAllByText('2 diarias')[0];
     await user.click(dailySummary);

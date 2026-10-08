@@ -2,7 +2,7 @@ import type { KeyboardEvent } from 'react';
 import { handleButtonGroupNavigation } from '../buttonGroupNavigation';
 import './TodoViewToggle.css';
 
-type TodoViewMode = 'list' | 'board' | 'today' | 'calendar' | 'week';
+type TodoViewMode = 'list' | 'board' | 'today' | 'agenda' | 'calendar' | 'week';
 
 interface TodoViewToggleProps {
   activeView: TodoViewMode;
@@ -12,6 +12,7 @@ interface TodoViewToggleProps {
 const VIEW_OPTIONS: Array<{ label: string; value: TodoViewMode }> = [
   { label: 'Lista', value: 'list' },
   { label: 'Hoy', value: 'today' },
+  { label: 'Agenda', value: 'agenda' },
   { label: 'Tablero', value: 'board' },
   { label: 'Calendario', value: 'calendar' },
   { label: 'Semana', value: 'week' },

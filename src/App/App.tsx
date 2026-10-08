@@ -47,6 +47,8 @@ const TodoBoardView = React.lazy(() => import('../components/TodoBoardView/TodoB
     .then(module => ({ default: module.TodoBoardView })));
 const TodoCalendar = React.lazy(() => import('../components/TodoCalendar/TodoCalendar')
     .then(module => ({ default: module.TodoCalendar })));
+const TodoAgenda = React.lazy(() => import('../components/TodoAgenda/TodoAgenda')
+    .then(module => ({ default: module.TodoAgenda })));
 const TodoToday = React.lazy(() => import('../components/TodoToday/TodoToday')
     .then(module => ({ default: module.TodoToday })));
 const TodoWeekCalendar = React.lazy(() => import('../components/TodoWeekCalendar/TodoWeekCalendar')
@@ -267,6 +269,7 @@ function App() {
         ...([
             ['list', 'Abrir Lista', 'Muestra las tareas agrupadas.'],
             ['today', 'Abrir Hoy', 'Muestra el foco del dia.'],
+            ['agenda', 'Abrir Agenda', 'Muestra los proximos compromisos en orden cronologico.'],
             ['board', 'Abrir Tablero', 'Muestra la planificacion por columnas.'],
             ['calendar', 'Abrir Calendario', 'Muestra la agenda mensual.'],
             ['week', 'Abrir Semana', 'Muestra la grilla semanal por horario.'],
@@ -676,6 +679,28 @@ function App() {
                             {searchValue
                                 ? 'No hay tareas que coincidan con tu busqueda.'
                                 : 'No hay tareas para este filtro.'}
+                        </p>
+                    )}
+                />
+            ) : todoViewMode === 'agenda' ? (
+                <TodoAgenda
+                    error={error}
+                    loading={loading}
+                    visibleTodos={visibleTodos}
+                    totalTodos={totalTodos}
+                    onEditTodo={startViewingTodo}
+                    onError={() => <TodosError />}
+                    onLoading={() => <TodosLoading />}
+                    onEmptyTodos={() => (
+                        <EmptyTodos
+                            onCreateTemplate={(template) => addTodo(template.todo.text, template.todo)}
+                        />
+                    )}
+                    onEmptySearchResults={() => (
+                        <p className="TodoList-emptySearch">
+                            {searchValue
+                                ? 'No hay elementos que coincidan con tu busqueda.'
+                                : 'No hay elementos para este filtro.'}
                         </p>
                     )}
                 />

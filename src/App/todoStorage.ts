@@ -1,6 +1,8 @@
 const DATABASE_NAME = 'taskflow-db';
-const DATABASE_VERSION = 1;
+const DATABASE_VERSION = 2;
 const STORE_NAME = 'keyValue';
+const ATTACHMENT_STORE_NAME = 'attachments';
+const ATTACHMENT_TODO_INDEX = 'todoId';
 let databaseConnection: IDBDatabase | null = null;
 let pendingDatabaseConnection: Promise<IDBDatabase> | null = null;
 
@@ -25,6 +27,11 @@ function openDatabase(): Promise<IDBDatabase> {
 
       if (!database.objectStoreNames.contains(STORE_NAME)) {
         database.createObjectStore(STORE_NAME);
+      }
+
+      if (!database.objectStoreNames.contains(ATTACHMENT_STORE_NAME)) {
+        const attachmentStore = database.createObjectStore(ATTACHMENT_STORE_NAME, { keyPath: 'id' });
+        attachmentStore.createIndex(ATTACHMENT_TODO_INDEX, 'todoId', { unique: false });
       }
     };
 
@@ -145,4 +152,154 @@ async function setStoredItem(itemName: string, value: string): Promise<void> {
   }
 }
 
-export { canUseIndexedDB, getStoredItem, setStoredItem };
+type TodoAttachment = {
+  id: string;
+  todoId: string;
+  name: string;
+  type: string;
+  size: number;
+  createdAt: string;
+};
+
+type StoredTodoAttachment = TodoAttachment & {
+  blob: Blob;
+};
+
+function createAttachmentId(): string {
+  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : `attachment-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+async function listTodoAttachments(todoId: string): Promise<TodoAttachment[]> {
+  if (!canUseIndexedDB()) {
+    return [];
+  }
+
+  const database = await openDatabase();
+
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(ATTACHMENT_STORE_NAME, 'readonly');
+    const store = transaction.objectStore(ATTACHMENT_STORE_NAME);
+    const index = store.index(ATTACHMENT_TODO_INDEX);
+    const request = index.getAll(todoId);
+    let attachments: TodoAttachment[] = [];
+
+    request.onsuccess = () => {
+      attachments = (request.result as StoredTodoAttachment[])
+        .map(({ blob: _blob, ...attachment }) => attachment)
+        .sort((first, second) => second.createdAt.localeCompare(first.createdAt));
+    };
+    request.onerror = () => reject(request.error);
+    transaction.oncomplete = () => resolve(attachments);
+    transaction.onerror = () => reject(transaction.error);
+  });
+}
+
+async function saveTodoAttachment(todoId: string, file: File): Promise<TodoAttachment> {
+  if (!canUseIndexedDB()) {
+    throw new Error('Tu navegador no permite guardar adjuntos locales.');
+  }
+
+  const database = await openDatabase();
+  const attachment: StoredTodoAttachment = {
+    id: createAttachmentId(),
+    todoId,
+    name: file.name,
+    type: file.type || 'application/octet-stream',
+    size: file.size,
+    createdAt: new Date().toISOString(),
+    blob: file,
+  };
+
+  await new Promise<void>((resolve, reject) => {
+    const transaction = database.transaction(ATTACHMENT_STORE_NAME, 'readwrite');
+    const request = transaction.objectStore(ATTACHMENT_STORE_NAME).put(attachment);
+
+    request.onerror = () => reject(request.error);
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+  });
+
+  const { blob: _blob, ...metadata } = attachment;
+  return metadata;
+}
+
+async function readTodoAttachment(attachmentId: string): Promise<StoredTodoAttachment | null> {
+  if (!canUseIndexedDB()) {
+    return null;
+  }
+
+  const database = await openDatabase();
+
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(ATTACHMENT_STORE_NAME, 'readonly');
+    const request = transaction.objectStore(ATTACHMENT_STORE_NAME).get(attachmentId);
+    let attachment: StoredTodoAttachment | null = null;
+
+    request.onsuccess = () => {
+      attachment = request.result || null;
+    };
+    request.onerror = () => reject(request.error);
+    transaction.oncomplete = () => resolve(attachment);
+    transaction.onerror = () => reject(transaction.error);
+  });
+}
+
+async function removeTodoAttachment(attachmentId: string): Promise<void> {
+  if (!canUseIndexedDB()) {
+    return;
+  }
+
+  const database = await openDatabase();
+
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(ATTACHMENT_STORE_NAME, 'readwrite');
+    const request = transaction.objectStore(ATTACHMENT_STORE_NAME).delete(attachmentId);
+
+    request.onerror = () => reject(request.error);
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+  });
+}
+
+async function removeTodoAttachmentsForTodo(todoId: string): Promise<void> {
+  if (!canUseIndexedDB()) {
+    return;
+  }
+
+  const database = await openDatabase();
+
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(ATTACHMENT_STORE_NAME, 'readwrite');
+    const store = transaction.objectStore(ATTACHMENT_STORE_NAME);
+    const index = store.index(ATTACHMENT_TODO_INDEX);
+    const request = index.openKeyCursor(IDBKeyRange.only(todoId));
+
+    request.onsuccess = () => {
+      const cursor = request.result;
+
+      if (!cursor) {
+        return;
+      }
+
+      store.delete(cursor.primaryKey);
+      cursor.continue();
+    };
+    request.onerror = () => reject(request.error);
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+  });
+}
+
+export {
+  canUseIndexedDB,
+  getStoredItem,
+  listTodoAttachments,
+  readTodoAttachment,
+  removeTodoAttachment,
+  removeTodoAttachmentsForTodo,
+  saveTodoAttachment,
+  setStoredItem,
+};
+export type { StoredTodoAttachment, TodoAttachment };

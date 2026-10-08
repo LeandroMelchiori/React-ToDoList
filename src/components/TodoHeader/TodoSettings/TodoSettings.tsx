@@ -28,6 +28,7 @@ function TodoSettings({ loading = false, onChange, settings }: TodoSettingsProps
           >
             <option value="list">Lista</option>
             <option value="today">Hoy</option>
+            <option value="agenda">Agenda</option>
             <option value="board">Tablero</option>
             <option value="calendar">Calendario</option>
             <option value="week">Semana</option>
