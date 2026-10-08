@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
+import type { Todo } from '../../App/todoModel';
 import { getTodoAgendaEntries } from './TodoAgenda';
 
-const baseTodo = {
+const baseTodo: Todo = {
   completed: false,
   completedAt: null,
   archivedAt: null,
