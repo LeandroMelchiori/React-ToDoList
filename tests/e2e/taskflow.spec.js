@@ -108,7 +108,7 @@ test('manages a todo through the production flow', async ({ page }) => {
 
   const completeOccurrenceButton = page.getByRole('button', { name: /Completar ocurrencia del/ });
   const completeOccurrenceLabel = await completeOccurrenceButton.getAttribute('aria-label');
-  const occurrenceDate = completeOccurrenceLabel?.match(/(\\d{2}\\/\\d{2}\\/\\d{4})$/)?.[1];
+  const occurrenceDate = completeOccurrenceLabel?.split(' del ').pop();
 
   expect(occurrenceDate).toBeTruthy();
   await completeOccurrenceButton.click();
