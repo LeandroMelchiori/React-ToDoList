@@ -94,6 +94,32 @@ describe('TodoCalendar helpers', () => {
     expect(isTodoVisibleOnDay(periodTodo, '2026-07-12')).toBe(false);
   });
 
+  test('keeps unscheduled todos out of the calendar surface', () => {
+    render(
+      <TodoCalendar
+        onEditTodo={() => {}}
+        onEmptySearchResults={() => null}
+        onEmptyTodos={() => null}
+        onError={() => null}
+        onLoading={() => null}
+        totalTodos={1}
+        visibleTodos={[{
+          id: 'todo-unscheduled',
+          text: 'Pendiente sin fecha',
+          order: 0,
+          kind: 'task',
+          dateType: 'due',
+          dueDate: null,
+          recurrence: 'none',
+          timeBlocks: [],
+        }]}
+      />
+    );
+
+    expect(screen.queryByText('Pendiente sin fecha')).not.toBeInTheDocument();
+    expect(screen.getByText('No hay elementos con fecha en este mes.')).toBeInTheDocument();
+  });
+
   test('returns todos without calendar dates as unscheduled', () => {
     expect(getUnscheduledTodos([
       { id: 'todo-1', text: 'Sin fecha', dateType: 'due', dueDate: null },
