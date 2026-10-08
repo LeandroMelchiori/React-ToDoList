@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLocalStorage } from './useLocalStorage';
+import { removeTodoAttachmentsForTodo } from './todoStorage';
 import {
     createTodosCalendarExport,
     readTodosCalendarImport,
@@ -667,6 +668,9 @@ function useTodos() {
         if (deletedCount > 0) {
             createAutomaticSnapshot(`Antes de eliminar ${deletedCount} tareas`);
             saveActiveTodos(newTodos);
+            ids.forEach(id => {
+                removeTodoAttachmentsForTodo(id).catch(() => undefined);
+            });
         }
 
         return deletedCount;
@@ -1082,6 +1086,10 @@ function useTodos() {
     }
 
     const dismissUndoDelete = () => {
+        if (recentlyDeletedTodo) {
+            removeTodoAttachmentsForTodo(recentlyDeletedTodo.id).catch(() => undefined);
+        }
+
         setRecentlyDeletedTodo(null);
     }
 
