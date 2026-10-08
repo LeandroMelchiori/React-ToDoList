@@ -13,6 +13,7 @@ import {
   getTodoNextOccurrenceDate,
   isTodoOccurrenceCompleted,
 } from '../../../App/todoModel';
+import { TodoAttachments } from '../TodoAttachments/TodoAttachments';
 import './TodoDetail.css';
 
 const TODO_KIND_LABELS: Record<TodoKind, string> = {
@@ -266,6 +267,8 @@ function TodoDetail({
           </div>
         )}
       </dl>
+
+      <TodoAttachments todoId={todo.id} />
 
       {isTask && sortedTimeBlocks.length > 0 && (
         <section className="TodoDetail-timeBlocks" aria-labelledby="todo-detail-time-blocks-title">
