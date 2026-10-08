@@ -124,7 +124,7 @@ function TodoAttachments({ todoId }: TodoAttachmentsProps) {
       <div className="TodoAttachments-heading">
         <div>
           <h3 id="todo-attachments-title">Documentos</h3>
-          <p>Se guardan localmente en este dispositivo.</p>
+          <p>Se guardan localmente en este dispositivo y no se incluyen en el backup JSON.</p>
         </div>
         <label className="TodoAttachments-add">
           Adjuntar

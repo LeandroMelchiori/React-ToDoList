@@ -88,6 +88,7 @@ TaskFlow comenzó como una lista de tareas y evolucionó hacia un workspace de p
 - Importación de calendarios ICS.
 - Detección de eventos duplicados.
 - Adjuntos locales por elemento en IndexedDB para PDF, Word, texto e imagenes.
+- Los adjuntos permanecen en el dispositivo y no forman parte de los backups JSON ni de la exportacion ICS.
 
 ### PWA y uso offline
 
