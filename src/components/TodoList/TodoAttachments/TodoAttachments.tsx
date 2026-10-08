@@ -100,7 +100,9 @@ function TodoAttachments({ todoId }: TodoAttachmentsProps) {
       const link = document.createElement('a');
       link.href = url;
       link.download = storedAttachment.name;
+      document.body.appendChild(link);
       link.click();
+      link.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 0);
     } catch {
       setStatus('No pudimos abrir el adjunto.');

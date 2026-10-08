@@ -1,6 +1,5 @@
 import React, { ReactNode } from 'react';
 import {
-  TODO_DATE_TYPES,
   TODO_KINDS,
   TODO_RECURRENCES,
   Todo,
@@ -58,6 +57,12 @@ function formatAgendaDate(dateValue: string): string {
     month: 'long',
     year: 'numeric',
   }).format(date);
+}
+
+function formatShortDate(dateValue: string): string {
+  const [year, month, day] = dateValue.split('-');
+
+  return year && month && day ? `${day}/${month}/${year}` : dateValue;
 }
 
 function getTodoAgendaEntries(todos: Todo[], todayDate = toDateValue(new Date())): TodoAgendaEntry[] {
@@ -160,7 +165,7 @@ function TodoAgenda({
               <p>Proximos compromisos</p>
               <h2>Agenda cronologica</h2>
             </div>
-            <span>{entries.length} proximos</span>
+            <span>{entries.length === 1 ? '1 proximo' : `${entries.length} proximos`}</span>
           </header>
 
           {entries.length === 0 ? (
@@ -193,7 +198,7 @@ function TodoAgenda({
                                 {entry.source === 'timeBlock'
                                   ? 'Bloque de trabajo'
                                   : TODO_KIND_LABELS[entry.todo.kind]}
-                                {isPeriod ? ` · hasta ${entry.endDate}` : ''}
+                                {isPeriod && entry.endDate ? ` · hasta ${formatShortDate(entry.endDate)}` : ''}
                               </small>
                             </span>
                           </button>
