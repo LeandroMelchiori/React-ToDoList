@@ -4,11 +4,11 @@ import { DEFAULT_TODO_SETTINGS, normalizeTodoSettings } from './useTodoSettings'
 describe('todo settings', () => {
   test('normalizes persisted preferences', () => {
     expect(normalizeTodoSettings({
-      defaultView: 'week',
+      defaultView: 'agenda',
       density: 'compact',
       showQuickAdd: false,
     })).toEqual({
-      defaultView: 'week',
+      defaultView: 'agenda',
       density: 'compact',
       showQuickAdd: false,
     });
