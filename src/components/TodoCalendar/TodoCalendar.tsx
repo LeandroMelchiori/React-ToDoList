@@ -234,7 +234,6 @@ function TodoCalendar({
       calendarDays.slice(weekIndex * 7, weekIndex * 7 + 7)
     ))
   ), [calendarDays]);
-  const unscheduledTodos = React.useMemo(() => getUnscheduledTodos(visibleTodos), [visibleTodos]);
   const scheduledTodosInMonth = calendarDays.reduce((count, day) => (
     day.isCurrentMonth
       ? count + getSortedTodosForDay(visibleTodos, day.dateValue).length +
@@ -422,21 +421,6 @@ function TodoCalendar({
             <p className="TodoCalendar-emptyMonth">
               No hay elementos con fecha en este mes.
             </p>
-          )}
-
-          {unscheduledTodos.length > 0 && (
-            <aside className="TodoCalendar-unscheduled" aria-label="Elementos sin fecha">
-              <h3>Sin fecha</h3>
-              <ul>
-                {unscheduledTodos.map(todo => (
-                  <li key={todo.id}>
-                    <button type="button" onClick={() => onEditTodo(todo.id)}>
-                      {todo.text}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </aside>
           )}
 
         </>
