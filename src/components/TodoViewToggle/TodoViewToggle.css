@@ -36,13 +36,15 @@
   .TodoViewToggle {
     box-sizing: border-box;
     flex-wrap: nowrap;
+    justify-content: flex-start;
     max-width: 100%;
-    overflow: visible;
+    overflow-x: auto;
+    scrollbar-width: thin;
     width: 100%;
   }
 
   .TodoViewToggle-button {
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     font-size: 12px;
     min-height: 44px;
     padding: 0 7px;

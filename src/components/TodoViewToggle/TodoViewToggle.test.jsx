@@ -10,6 +10,7 @@ describe('TodoViewToggle', () => {
     expect(screen.getByRole('tab', { name: 'Calendario' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('tab', { name: 'Calendario' })).toHaveAttribute('tabindex', '0');
     expect(screen.getByRole('tab', { name: 'Lista' })).toHaveAttribute('tabindex', '-1');
+    expect(screen.getByRole('tab', { name: 'Agenda' })).toBeInTheDocument();
   });
 
   test('changes views with arrow, Home and End keys', async () => {

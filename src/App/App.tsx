@@ -269,6 +269,7 @@ function App() {
         ...([
             ['list', 'Abrir Lista', 'Muestra las tareas agrupadas.'],
             ['today', 'Abrir Hoy', 'Muestra el foco del dia.'],
+            ['agenda', 'Abrir Agenda', 'Muestra los proximos compromisos en orden cronologico.'],
             ['board', 'Abrir Tablero', 'Muestra la planificacion por columnas.'],
             ['calendar', 'Abrir Calendario', 'Muestra la agenda mensual.'],
             ['week', 'Abrir Semana', 'Muestra la grilla semanal por horario.'],
