@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 const storageMocks = vi.hoisted(() => ({
@@ -50,8 +50,6 @@ describe('TodoAttachments', () => {
   });
 
   test('rejects unsupported file extensions before storing them', async () => {
-    const user = userEvent.setup();
-
     storageMocks.listTodoAttachments.mockResolvedValue([]);
 
     render(<TodoAttachments todoId="todo-1" />);
@@ -59,7 +57,9 @@ describe('TodoAttachments', () => {
     await screen.findByText('Todavia no hay documentos adjuntos.');
 
     const file = new File(['contenido'], 'ejecutable.exe', { type: 'application/octet-stream' });
-    await user.upload(screen.getByLabelText('Adjuntar'), file);
+    fireEvent.change(screen.getByLabelText('Adjuntar'), {
+      target: { files: [file] },
+    });
 
     expect(storageMocks.saveTodoAttachment).not.toHaveBeenCalled();
     expect(screen.getByRole('status')).toHaveTextContent(
