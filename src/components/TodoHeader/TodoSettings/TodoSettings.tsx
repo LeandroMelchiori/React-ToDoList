@@ -28,10 +28,11 @@ function TodoSettings({ loading = false, onChange, settings }: TodoSettingsProps
           >
             <option value="list">Lista</option>
             <option value="today">Hoy</option>
-            <option value="agenda">Agenda</option>
+            <option value="days">Planificación de 3 días</option>
+            <option value="agenda">Planificación semanal</option>
             <option value="board">Tablero</option>
             <option value="calendar">Calendario</option>
-            <option value="week">Semana</option>
+            <option value="week">Semana (solo calendario)</option>
           </select>
         </label>
         <label>

@@ -10,9 +10,16 @@ import {
   getUntimedWeekTodos,
   getWeekDays,
   getWeekStart,
+  getCalendarDays,
 } from './TodoWeekCalendar';
 
 describe('TodoWeekCalendar helpers', () => {
+  test('shows consecutive days across a month and week boundary', () => {
+    const days = getCalendarDays(new Date(2026, 0, 31), 'threeDays', new Date(2026, 0, 31));
+    expect(days.map(day => day.dateValue)).toEqual(['2026-01-31', '2026-02-01', '2026-02-02']);
+    expect(days.map(day => day.dayName)).toEqual(['Sab', 'Dom', 'Lun']);
+    expect(days.map(day => day.isToday)).toEqual([true, false, false]);
+  });
   test('builds a Monday-first week from any anchor day', () => {
     const weekStart = getWeekStart(new Date(2026, 7, 12));
     const weekDays = getWeekDays(new Date(2026, 7, 12), new Date(2026, 7, 11));
@@ -223,7 +230,7 @@ describe('TodoWeekCalendar conflicts', () => {
 
     expect(courseButton).toHaveClass('TodoWeekCalendar-event--conflict');
     expect(consultationButton).toHaveClass('TodoWeekCalendar-event--conflict');
-    expect(courseButton).toHaveStyle({ height: '150px', left: 'calc(0% + 4px)', width: 'calc(50% - 8px)' });
+    expect(courseButton).toHaveStyle({ height: '108px', left: 'calc(0% + 4px)', width: 'calc(50% - 8px)' });
     expect(consultationButton).toHaveStyle({ height: '36px', left: 'calc(50% + 4px)', width: 'calc(50% - 8px)' });
 
     vi.useRealTimers();

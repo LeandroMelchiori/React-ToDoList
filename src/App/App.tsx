@@ -38,7 +38,9 @@ import { TodoSnapshots } from '../components/TodoHeader/TodoSnapshots/TodoSnapsh
 import { TodoDataCenter } from '../components/TodoHeader/TodoDataCenter/TodoDataCenter';
 import type { CommandPaletteItem } from '../components/CommandPalette/CommandPalette';
 import { TodoSettings, useTodoSettings } from './useTodoSettings';
-import type { TodoKind, TodoRecurrence } from './todoModel';
+import { getTodoNextRecurringDate, getTodoPlanningSlot } from './todoModel';
+import type { TodoKind, TodoRecurrence, TodoScheduleChange } from './todoModel';
+import { TodoOverdueTray } from '../components/TodoAgenda/TodoOverdueTray';
 import { TodoMobileSummary } from '../components/TodoHeader/TodoMobileSummary/TodoMobileSummary';
 
 const CommandPalette = React.lazy(() => import('../components/CommandPalette/CommandPalette')
@@ -49,8 +51,8 @@ const TodoCalendar = React.lazy(() => import('../components/TodoCalendar/TodoCal
     .then(module => ({ default: module.TodoCalendar })));
 const TodoAgenda = React.lazy(() => import('../components/TodoAgenda/TodoAgenda')
     .then(module => ({ default: module.TodoAgenda })));
-const TodoToday = React.lazy(() => import('../components/TodoToday/TodoToday')
-    .then(module => ({ default: module.TodoToday })));
+const TodoPlanTask = React.lazy(() => import('../components/TodoAgenda/TodoPlanTask')
+    .then(module => ({ default: module.TodoPlanTask })));
 const TodoWeekCalendar = React.lazy(() => import('../components/TodoWeekCalendar/TodoWeekCalendar')
     .then(module => ({ default: module.TodoWeekCalendar })));
 
@@ -91,6 +93,12 @@ function App() {
     } = usePwaStatus();
     const searchInputRef = React.useRef<HTMLInputElement>(null);
     const [todoViewMode, setTodoViewMode] = React.useState<TodoViewMode>(settings.defaultView);
+    const [isSearchOpen, setIsSearchOpen] = React.useState(() => ['list', 'board'].includes(settings.defaultView));
+    const [planningTodoId, setPlanningTodoId] = React.useState<string | null>(null);
+    const [planningSlot, setPlanningSlot] = React.useState<{ date: string; startTime: string; endTime: string } | null>(null);
+    const [planningSource, setPlanningSource] = React.useState<Pick<TodoScheduleChange, 'timeBlockId' | 'occurrenceDate'> | null>(null);
+    const [planningError, setPlanningError] = React.useState('');
+    const isPlanningView = !['list', 'board'].includes(todoViewMode);
     const [isSelectionMode, setIsSelectionMode] = React.useState(false);
     const [selectedTodoIds, setSelectedTodoIds] = React.useState<Set<string>>(() => new Set());
     const [bulkActionMessage, setBulkActionMessage] = React.useState('');
@@ -178,6 +186,10 @@ function App() {
         deleteTodos,
         updateTodo,
         updateTodoOccurrence,
+        changeTodoSchedule,
+        checkScheduleChange,
+        undoScheduleChange,
+        dismissScheduleUndo,
         exportTodos,
         exportCalendar,
         previewTodosImport,
@@ -187,6 +199,28 @@ function App() {
         syncTodos
     } = stateUpdaters;
     const reminderStatus = useTodoReminders(reminderTodos);
+    const planningTodo = reminderTodos.find(todo => todo.id === planningTodoId && !todo.completed && !todo.archivedAt);
+    const scheduleTodo = (id: string, date?: string, hour?: number, source?: Pick<TodoScheduleChange, 'timeBlockId' | 'occurrenceDate'>) => {
+        const todo = reminderTodos.find(item => item.id === id);
+        setPlanningSlot(todo && date && hour !== undefined ? getTodoPlanningSlot(todo, {
+            date, startTime: `${String(hour).padStart(2, '0')}:00`, timeBlockId: source?.timeBlockId,
+        }) : null);
+        setPlanningSource(source || null);
+        setPlanningError('');
+        setPlanningTodoId(id);
+    };
+    const changeScheduleFromDetail = (timeBlockId?: string) => {
+        if (!detailTodo) return;
+        const block = detailTodo.timeBlocks.find(item => item.id === timeBlockId);
+        const occurrenceDate = detailTodo.recurrence !== 'none'
+            ? detailOccurrenceDate || getTodoNextRecurringDate(detailTodo) || undefined : undefined;
+        const date = block?.date || occurrenceDate || detailTodo.startDate;
+        setPlanningTodoId(detailTodo.id);
+        setPlanningSource({ timeBlockId, occurrenceDate });
+        setPlanningSlot(getTodoPlanningSlot(detailTodo, { date, timeBlockId }));
+        setPlanningError('');
+        closeModal();
+    };
     const visibleTodoIds = React.useMemo(
         () => visibleTodos.map(todo => todo.id),
         [visibleTodos]
@@ -229,10 +263,15 @@ function App() {
     };
     const changeTodoView = (view: TodoViewMode) => {
         setTodoViewMode(view);
+        setIsSearchOpen(['list', 'board'].includes(view));
 
         if (view !== 'list') {
             closeSelectionMode();
         }
+    };
+    const focusSearch = () => {
+        setIsSearchOpen(true);
+        window.setTimeout(() => searchInputRef.current?.focus(), 0);
     };
     const closeCommandPaletteAndRun = (action: () => void) => {
         setIsCommandPaletteOpen(false);
@@ -253,7 +292,7 @@ function App() {
             description: 'Lleva el foco al buscador principal.',
             keywords: ['encontrar', 'filtrar'],
             shortcut: '/',
-            onSelect: () => closeCommandPaletteAndRun(() => searchInputRef.current?.focus()),
+            onSelect: () => closeCommandPaletteAndRun(focusSearch),
         },
         {
             id: 'clear-filters',
@@ -269,6 +308,7 @@ function App() {
         ...([
             ['list', 'Abrir Lista', 'Muestra las tareas agrupadas.'],
             ['today', 'Abrir Hoy', 'Muestra el foco del dia.'],
+            ['days', 'Abrir 3 días', 'Muestra tres días consecutivos por horario.'],
             ['agenda', 'Abrir Agenda', 'Muestra los proximos compromisos en orden cronologico.'],
             ['board', 'Abrir Tablero', 'Muestra la planificacion por columnas.'],
             ['calendar', 'Abrir Calendario', 'Muestra la agenda mensual.'],
@@ -342,6 +382,7 @@ function App() {
 
     React.useEffect(() => {
         closeSelectionMode();
+        setPlanningTodoId(null);
     }, [activeBoardId]);
 
     const startTodoDrag = React.useCallback((todoId: string, event: React.DragEvent<any>) => {
@@ -420,7 +461,7 @@ function App() {
             if (isCommandPaletteShortcut) {
                 event.preventDefault();
 
-                if (!openModal && !isBulkDeleteOpen) {
+                if (!openModal && !isBulkDeleteOpen && !planningTodo) {
                     setIsCommandPaletteOpen(currentValue => !currentValue);
                 }
 
@@ -433,6 +474,9 @@ function App() {
                 event.ctrlKey ||
                 event.metaKey ||
                 isCommandPaletteOpen ||
+                planningTodo ||
+                openModal ||
+                isBulkDeleteOpen ||
                 isEditableTarget(event.target)
             ) {
                 return;
@@ -440,7 +484,8 @@ function App() {
 
             if (event.key === '/') {
                 event.preventDefault();
-                searchInputRef.current?.focus();
+                setIsSearchOpen(true);
+                window.setTimeout(() => searchInputRef.current?.focus(), 0);
             }
 
             if (event.key.toLowerCase() === 'n') {
@@ -454,11 +499,11 @@ function App() {
         return () => {
             window.removeEventListener('keydown', handleKeyboardShortcuts);
         };
-    }, [isBulkDeleteOpen, isCommandPaletteOpen, launchCreateTodo, openModal]);
+    }, [isBulkDeleteOpen, isCommandPaletteOpen, launchCreateTodo, openModal, planningTodo]);
 
     return (
         <>
-            <a className="SkipLink" href="#todo-list">Saltar a la lista de tareas</a>
+            <a className="SkipLink" href="#todo-list">Saltar al contenido</a>
             <main
                 className={`App ${settings.density === 'compact' ? 'App--compact' : ''}`}
                 aria-labelledby="app-title"
@@ -476,18 +521,20 @@ function App() {
 
                 <TodoHeader loading={loading}>
 
-                <TodoCounter
+                {isPlanningView ? (
+                    <div className="App-planningTitle">
+                        <p>TaskFlow</p>
+                        <h1 id="app-title">Planificación</h1>
+                    </div>
+                ) : <TodoCounter
                     totalTodos={totalTasks}
                     totalItems={totalTodos}
                     completedTodos={completedTodos}
-                />
-                <TodoBoards
-                    activeBoardId={activeBoardId}
-                    boards={todoBoards}
-                    onCreateBoard={createBoard}
-                    onSelectBoard={selectTodoBoard}
-                    showCreateForm={false}
-                />
+                />}
+                <p className="App-boardContext">Espacio: {states.activeBoardName || 'Personal'}</p>
+                <details className="App-searchTools" open={isSearchOpen}
+                    onToggle={event => setIsSearchOpen(event.currentTarget.open)}>
+                <summary>Buscar y filtrar{searchValue || filter !== 'all' || activeProject || activeTag ? ' · Filtros activos' : ''}</summary>
                 <TodoSearch
                     ref={searchInputRef}
                     searchValue={searchValue}
@@ -514,6 +561,7 @@ function App() {
                         />
                     </TodoMobileSummary>
                 </div>
+                </details>
             </TodoHeader>
 
             <CreateTodoButton
@@ -564,7 +612,7 @@ function App() {
                                         onCreateBoard={createBoard}
                                         onRenameBoard={renameBoard}
                                         onSelectBoard={selectTodoBoard}
-                                        showBoardList={false}
+                                        showBoardList
                                         showManagement
                                     />,
                                     <TodoSavedViews
@@ -623,43 +671,24 @@ function App() {
                 </div>
             </div>
 
-            {settings.showQuickAdd && (
+            {settings.showQuickAdd && !isPlanningView && (
                 <div className="App-workspaceQuickAdd">
                     <TodoQuickAdd compact onAddTodo={addTodo} />
                 </div>
             )}
 
+            {isPlanningView && !loading && !error && <TodoOverdueTray todos={reminderTodos}
+                onComplete={completeTodo} onOpen={startViewingTodo} onChangeDeadline={startEditingTodo} />}
+            {planningError && <p role="alert">{planningError}</p>}
             <div
-                aria-labelledby={`todo-view-tab-${todoViewMode}`}
+                aria-labelledby={`todo-view-tab-${todoViewMode === 'week' ? 'agenda' : todoViewMode}`}
                 className="App-viewPanel"
                 id="todo-view-panel"
                 role="tabpanel"
                 tabIndex={0}
             >
             <React.Suspense fallback={<TodosLoading />}>
-            {todoViewMode === 'today' ? (
-                <TodoToday
-                    error={error}
-                    loading={loading}
-                    visibleTodos={visibleTodos}
-                    totalTodos={totalTodos}
-                    onEditTodo={startViewingTodo}
-                    onError={() => <TodosError />}
-                    onLoading={() => <TodosLoading />}
-                    onEmptyTodos={() => (
-                        <EmptyTodos
-                            onCreateTemplate={(template) => addTodo(template.todo.text, template.todo)}
-                        />
-                    )}
-                    onEmptySearchResults={() => (
-                        <p className="TodoList-emptySearch">
-                            {searchValue
-                                ? 'No hay elementos que coincidan con tu busqueda.'
-                                : 'No hay elementos para este filtro.'}
-                        </p>
-                    )}
-                />
-            ) : todoViewMode === 'board' ? (
+            {todoViewMode === 'board' ? (
                 <TodoBoardView
                     error={error}
                     loading={loading}
@@ -682,8 +711,10 @@ function App() {
                         </p>
                     )}
                 />
-            ) : todoViewMode === 'agenda' ? (
+            ) : todoViewMode === 'agenda' || todoViewMode === 'days' || todoViewMode === 'today' ? (
                 <TodoAgenda
+                    key={todoViewMode}
+                    calendarSpan={todoViewMode === 'today' ? 'day' : todoViewMode === 'days' ? 'threeDays' : 'week'}
                     error={error}
                     loading={loading}
                     visibleTodos={visibleTodos}
@@ -697,6 +728,9 @@ function App() {
                         recurrence: 'none',
                     })}
                     onEditTodo={startViewingTodo}
+                    onCompleteTodo={completeTodo}
+                    onScheduleTodo={id => scheduleTodo(id)}
+                    onScheduleTodoForSlot={scheduleTodo}
                     onError={() => <TodosError />}
                     onLoading={() => <TodosLoading />}
                     onEmptyTodos={() => (
@@ -871,6 +905,23 @@ function App() {
                 </Modal>
             )}
 
+            {planningTodo && (
+                <Modal label={planningSource ? 'Cambiar horario' : 'Programar tarea'} onClose={() => setPlanningTodoId(null)}>
+                    <React.Suspense fallback={<TodosLoading />}>
+                        <TodoPlanTask todo={planningTodo} initialSlot={planningSlot}
+                            mode={planningSource ? 'reschedule' : 'reserve'}
+                            timeBlockId={planningSource?.timeBlockId} occurrenceDate={planningSource?.occurrenceDate}
+                            onCancel={() => setPlanningTodoId(null)}
+                            onCheckConflicts={(_details, change) => checkScheduleChange(change)}
+                            onSave={(_details, change) => {
+                                const result = changeTodoSchedule(change);
+                                if (result.ok) setPlanningTodoId(null);
+                                return result;
+                            }} />
+                    </React.Suspense>
+                </Modal>
+            )}
+
             {isBulkDeleteOpen && (
                 <Modal label="Eliminar seleccion" onClose={() => setIsBulkDeleteOpen(false)}>
                     <BulkDeleteDialog
@@ -895,6 +946,7 @@ function App() {
                         />
                     ) : detailTodo ? (
                         <TodoDetail
+                            onChangeSchedule={changeScheduleFromDetail}
                             occurrenceDate={detailOccurrenceDate}
                             todo={detailTodo}
                             onClose={closeModal}
@@ -968,9 +1020,12 @@ function App() {
             <ChangeAlert
                 syncTodos={syncTodos} />
             <UndoToast
-                message={recentlyDeletedTodo ? `Eliminaste "${recentlyDeletedTodo.text}".` : ''}
-                onDismiss={dismissUndoDelete}
-                onUndo={undoDeleteTodo}
+                message={recentlyDeletedTodo ? `Eliminaste "${recentlyDeletedTodo.text}".` : states.calendarUndoMessage}
+                onDismiss={recentlyDeletedTodo ? dismissUndoDelete : dismissScheduleUndo}
+                onUndo={recentlyDeletedTodo ? undoDeleteTodo : () => {
+                    const result = undoScheduleChange();
+                    if (!result.ok) setPlanningError(result.error || 'No se pudo deshacer.');
+                }}
             />
         </>
     );

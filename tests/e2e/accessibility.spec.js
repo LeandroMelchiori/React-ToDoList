@@ -19,6 +19,7 @@ async function expectNoAccessibilityViolations(page) {
 
 async function seedAccessibleTodo(page) {
   await page.addInitScript(() => {
+    localStorage.setItem('TODO_SETTINGS_V2', JSON.stringify({ defaultView: 'list' }));
     localStorage.setItem('TODOS_V1', JSON.stringify([{
       id: 'axe-task',
       text: 'Revisar accesibilidad',
@@ -77,7 +78,8 @@ test('has no detectable accessibility violations in the dark mobile calendar', a
     }]));
   });
   await page.goto('/');
-  await page.getByRole('tab', { name: 'Calendario' }).click();
+  await page.getByRole('button', { name: 'Planificación', exact: true }).click();
+  await page.getByRole('tab', { name: 'Mes' }).click();
   await expect(page.getByRole('grid', { name: /Calendario/ })).toBeVisible();
 
   await expectNoAccessibilityViolations(page);

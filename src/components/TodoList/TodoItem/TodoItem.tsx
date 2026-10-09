@@ -134,7 +134,7 @@ function getScheduleLabel(
   if (dateType === TODO_DATE_TYPES.event) {
     const eventDate = formatDateValue(startDate);
 
-    return joinScheduleWithTime(eventDate ? `Dia ${eventDate}` : null, startTime);
+    return joinScheduleWithTime(eventDate ? `Dia ${eventDate}` : null, startTime, endTime);
   }
 
   if (dateType === TODO_DATE_TYPES.period) {

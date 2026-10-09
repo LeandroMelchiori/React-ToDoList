@@ -2,23 +2,27 @@ import type { KeyboardEvent } from 'react';
 import { handleButtonGroupNavigation } from '../buttonGroupNavigation';
 import './TodoViewToggle.css';
 
-type TodoViewMode = 'list' | 'board' | 'today' | 'agenda' | 'calendar' | 'week';
+type TodoViewMode = 'list' | 'board' | 'today' | 'days' | 'agenda' | 'calendar' | 'week';
 
 interface TodoViewToggleProps {
   activeView: TodoViewMode;
   onChangeView: (view: TodoViewMode) => void;
 }
 
-const VIEW_OPTIONS: Array<{ label: string; value: TodoViewMode }> = [
+const TASK_VIEWS: Array<{ label: string; value: TodoViewMode }> = [
   { label: 'Lista', value: 'list' },
-  { label: 'Hoy', value: 'today' },
-  { label: 'Agenda', value: 'agenda' },
   { label: 'Tablero', value: 'board' },
-  { label: 'Calendario', value: 'calendar' },
-  { label: 'Semana', value: 'week' },
+];
+const PLANNING_VIEWS: Array<{ label: string; value: TodoViewMode }> = [
+  { label: 'Hoy', value: 'today' },
+  { label: '3 días', value: 'days' },
+  { label: 'Semana', value: 'agenda' },
+  { label: 'Mes', value: 'calendar' },
 ];
 
 function TodoViewToggle({ activeView, onChangeView }: TodoViewToggleProps) {
+  const isPlanning = !['list', 'board'].includes(activeView);
+  const selectedView = activeView === 'week' ? 'agenda' : activeView;
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const isNavigationKey = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key);
 
@@ -30,6 +34,15 @@ function TodoViewToggle({ activeView, onChangeView }: TodoViewToggleProps) {
   };
 
   return (
+    <div className="TodoViewNavigation">
+      <nav aria-label="Espacios de trabajo" className="TodoViewNavigation-primary">
+        <button aria-pressed={isPlanning} onClick={() => onChangeView('agenda')} type="button">
+          Planificación
+        </button>
+        <button aria-pressed={!isPlanning} onClick={() => onChangeView('list')} type="button">
+          Tareas
+        </button>
+      </nav>
     <div
       aria-label="Cambiar vista"
       aria-orientation="horizontal"
@@ -37,8 +50,8 @@ function TodoViewToggle({ activeView, onChangeView }: TodoViewToggleProps) {
       onKeyDown={handleKeyDown}
       role="tablist"
     >
-      {VIEW_OPTIONS.map(({ label, value }) => {
-        const isActive = activeView === value;
+      {(isPlanning ? PLANNING_VIEWS : TASK_VIEWS).map(({ label, value }) => {
+        const isActive = selectedView === value;
 
         return (
           <button
@@ -56,6 +69,7 @@ function TodoViewToggle({ activeView, onChangeView }: TodoViewToggleProps) {
           </button>
         );
       })}
+    </div>
     </div>
   );
 }

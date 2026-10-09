@@ -47,7 +47,7 @@ TaskFlow comenzó como una lista de tareas y evolucionó hacia un workspace de p
 
 - Creación, edición, duplicación, finalización y eliminación de elementos.
 - Tareas completables.
-- Eventos con fecha y horario.
+- Eventos con fecha, hora de inicio y hora de fin.
 - Horarios o bloques recurrentes.
 - Períodos con fecha de inicio y finalización.
 - Prioridad, descripción, proyecto y etiquetas.
@@ -56,6 +56,7 @@ TaskFlow comenzó como una lista de tareas y evolucionó hacia un workspace de p
 - Fecha límite y recordatorios locales opcionales.
 - Archivo de tareas completadas.
 - Deshacer una eliminación reciente.
+- Reprogramar bloques o una fecha de una serie recurrente y deshacer el cambio.
 
 ### Organización
 
@@ -70,13 +71,16 @@ TaskFlow comenzó como una lista de tareas y evolucionó hacia un workspace de p
 ### Vistas de planificación
 
 - Lista general.
-- Vista Hoy.
+- Vista Hoy con calendario diario, hora actual y desplazamiento inicial hacia ella.
+- Vista de tres días consecutivos, también disponible en móvil.
 - Calendario mensual.
 - Agenda semanal con grilla horaria.
 - Vista de Planificación que combina la semana, próximos compromisos y pendientes sin fecha.
 - Agenda cronológica de próximos compromisos ordenada por fecha y hora.
 - Tablero visual por estado.
-- Resumen del elemento actual o próximo según su horario.
+- Bandeja de tareas vencidas visible incluso cuando el calendario tiene filtros activos.
+- Reserva de tiempo mediante arrastre o formulario accesible, con aviso de conflictos.
+- Colores y etiquetas de Trabajo, Estudio y Personal según el proyecto.
 - Compactación de recurrencias diarias para evitar saturar el calendario.
 - Carga diferida de las vistas de planificación para reducir el JavaScript inicial.
 

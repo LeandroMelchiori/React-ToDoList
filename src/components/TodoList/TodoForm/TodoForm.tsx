@@ -232,7 +232,6 @@ function TodoForm({
         if (nextKind === TODO_KINDS.event) {
             setDueDateValue('');
             setEndDateValue('');
-            setEndTimeValue('');
             setSubtasksValue([]);
             setSubtaskDraft('');
             setTimeBlocksValue([]);
@@ -395,7 +394,7 @@ function TodoForm({
         }
 
         if (
-            (isScheduleKind || isPeriodKind) &&
+            (isScheduleKind || isPeriodKind || isEventKind) &&
             startTimeValue &&
             endTimeValue &&
             endTimeValue <= startTimeValue
@@ -461,7 +460,7 @@ function TodoForm({
             startDate: isTaskKind ? '' : startDateValue,
             endDate: isScheduleKind || isPeriodKind ? endDateValue : '',
             startTime: startTimeValue,
-            endTime: isScheduleKind || isPeriodKind ? endTimeValue : '',
+            endTime: !isTaskKind ? endTimeValue : '',
             recurrence: recurrenceValue,
             recurrenceDays: isWeeklyRecurrence ? recurrenceDaysValue : [],
             recurrenceEndDate: hasRecurrence ? recurrenceEndDateValue : '',
@@ -482,6 +481,99 @@ function TodoForm({
 
         saveTodo(details);
     }
+
+    const recurrenceFields = (
+        <>
+                <div className="TodoForm-field">
+                    <label htmlFor={recurrenceId}>
+                        Repeticion
+                    </label>
+                    <select
+                        id={recurrenceId}
+                        value={recurrenceValue}
+                        disabled={isRecurrenceDisabled}
+                        aria-describedby={recurrenceHintId}
+                        onChange={event => setRecurrenceValue(event.target.value as TodoRecurrence)}
+                    >
+                        {recurrenceOptions.map(option => (
+                            <option key={option.value} value={option.value}>
+                                {option.label}
+                            </option>
+                        ))}
+                    </select>
+                    <span className="TodoForm-fieldHint" id={recurrenceHintId}>
+                        {lockRecurrence
+                            ? 'Esta fecha sera independiente de la serie.'
+                            : TODO_RECURRENCE_HINTS[kindValue]}
+                    </span>
+                </div>
+                {isWeeklyRecurrence && (
+                    <fieldset className="TodoForm-field TodoForm-weekdayField">
+                        <legend>Dias de repeticion</legend>
+                        <div className="TodoForm-weekdays">
+                            {TODO_WEEKDAY_OPTIONS.map(option => (
+                                <label key={option.value}>
+                                    <input
+                                        type="checkbox"
+                                        checked={recurrenceDaysValue.includes(option.value)}
+                                        onChange={() => toggleRecurrenceDay(option.value)}
+                                    />
+                                    <span>{option.label}</span>
+                                </label>
+                            ))}
+                        </div>
+                        <span className="TodoForm-fieldHint">
+                            Si no elegis dias, se usa el dia de la fecha base.
+                        </span>
+                    </fieldset>
+                )}
+                {hasRecurrence && (
+                    <>
+                        {(!isScheduleKind || initialRecurrenceEndDate) && <label htmlFor={recurrenceEndDateId}>
+                            Finaliza el
+                            <input
+                                id={recurrenceEndDateId}
+                                type="date"
+                                value={recurrenceEndDateValue}
+                                onChange={event => setRecurrenceEndDateValue(event.target.value)}
+                            />
+                        </label>}
+                        <label htmlFor={recurrenceCountId}>
+                            Cantidad maxima
+                            <input
+                                id={recurrenceCountId}
+                                type="number"
+                                min="1"
+                                max="999"
+                                inputMode="numeric"
+                                placeholder="Ej: 12"
+                                value={recurrenceCountValue}
+                                onChange={event => setRecurrenceCountValue(event.target.value)}
+                            />
+                        </label>
+                    </>
+                )}
+        </>
+    );
+
+    const renderKindOption = (option: typeof TODO_KIND_OPTIONS[number]) => (
+        <label
+            className={kindValue === option.value ? 'TodoForm-kindOption--selected' : ''}
+            key={option.value}
+        >
+            <input
+                checked={kindValue === option.value}
+                name={`${inputId}-kind`}
+                onChange={() => handleKindChange(option.value)}
+                type="radio"
+                value={option.value}
+            />
+            <span>
+                <strong>{option.label}</strong>
+                <small>{option.hint}</small>
+            </span>
+        </label>
+    );
 
     return (
         <form className="TodoForm" onSubmit={onSubmit}>
@@ -504,25 +596,14 @@ function TodoForm({
             <fieldset className="TodoForm-kindField">
                 <legend>{mode === 'create' ? 'Que queres agregar?' : 'Tipo de elemento'}</legend>
                 <div className="TodoForm-kindOptions">
-                    {TODO_KIND_OPTIONS.map(option => (
-                        <label
-                            className={kindValue === option.value ? 'TodoForm-kindOption--selected' : ''}
-                            key={option.value}
-                        >
-                            <input
-                                checked={kindValue === option.value}
-                                name={`${inputId}-kind`}
-                                onChange={() => handleKindChange(option.value)}
-                                type="radio"
-                                value={option.value}
-                            />
-                            <span>
-                                <strong>{option.label}</strong>
-                                <small>{option.hint}</small>
-                            </span>
-                        </label>
-                    ))}
+                    {TODO_KIND_OPTIONS.filter(option => option.value !== TODO_KINDS.period).map(renderKindOption)}
                 </div>
+                <details className="TodoForm-otherKinds" open={isPeriodKind || undefined}>
+                    <summary tabIndex={0}>Más tipos</summary>
+                    <div className="TodoForm-kindOptions TodoForm-kindOptions--extra">
+                        {TODO_KIND_OPTIONS.filter(option => option.value === TODO_KINDS.period).map(renderKindOption)}
+                    </div>
+                </details>
                 <p className="TodoForm-kindDecision">
                     {isTaskKind
                         ? 'Se completa y puede dividirse en subtareas.'
@@ -596,6 +677,11 @@ function TodoForm({
                                 value={startTimeValue}
                                 onChange={event => setStartTimeValue(event.target.value)}
                             />
+                        </label>
+                        <label htmlFor={endTimeId}>
+                            Fin del evento
+                            <input id={endTimeId} type="time" value={endTimeValue}
+                                onChange={event => setEndTimeValue(event.target.value)} />
                         </label>
                     </>
                 )}
@@ -687,6 +773,7 @@ function TodoForm({
                     </label>
                     <input
                         id={projectId}
+                        list={`${projectId}-options`}
                         type="text"
                         placeholder="Ej: TaskFlow"
                         value={projectValue}
@@ -694,6 +781,9 @@ function TodoForm({
                         aria-describedby={isProjectLocked ? `${projectId}-hint` : undefined}
                         onChange={event => setProjectValue(event.target.value)}
                     />
+                    <datalist id={`${projectId}-options`}>
+                        <option value="Trabajo" /><option value="Estudio" /><option value="Personal" />
+                    </datalist>
                     {isProjectLocked && (
                         <span className="TodoForm-fieldHint" id={`${projectId}-hint`}>
                             Fijado por el proyecto filtrado actualmente.
@@ -701,6 +791,7 @@ function TodoForm({
                     )}
                 </div>
             </div>
+            {isScheduleKind && <div className="TodoForm-fields">{recurrenceFields}</div>}
             <details className="TodoForm-advanced" open={isAdvancedOpen}>
                 <summary onClick={(event) => {
                     event.preventDefault();
@@ -711,75 +802,7 @@ function TodoForm({
                 </summary>
                 <div className="TodoForm-advancedContent">
                 <div className="TodoForm-fields TodoForm-fields--advanced">
-                <div className="TodoForm-field">
-                    <label htmlFor={recurrenceId}>
-                        Repeticion
-                    </label>
-                    <select
-                        id={recurrenceId}
-                        value={recurrenceValue}
-                        disabled={isRecurrenceDisabled}
-                        aria-describedby={recurrenceHintId}
-                        onChange={event => setRecurrenceValue(event.target.value as TodoRecurrence)}
-                    >
-                        {recurrenceOptions.map(option => (
-                            <option key={option.value} value={option.value}>
-                                {option.label}
-                            </option>
-                        ))}
-                    </select>
-                    <span className="TodoForm-fieldHint" id={recurrenceHintId}>
-                        {lockRecurrence
-                            ? 'Esta fecha sera independiente de la serie.'
-                            : TODO_RECURRENCE_HINTS[kindValue]}
-                    </span>
-                </div>
-                {isWeeklyRecurrence && (
-                    <fieldset className="TodoForm-field TodoForm-weekdayField">
-                        <legend>Dias de repeticion</legend>
-                        <div className="TodoForm-weekdays">
-                            {TODO_WEEKDAY_OPTIONS.map(option => (
-                                <label key={option.value}>
-                                    <input
-                                        type="checkbox"
-                                        checked={recurrenceDaysValue.includes(option.value)}
-                                        onChange={() => toggleRecurrenceDay(option.value)}
-                                    />
-                                    <span>{option.label}</span>
-                                </label>
-                            ))}
-                        </div>
-                        <span className="TodoForm-fieldHint">
-                            Si no elegis dias, se usa el dia de la fecha base.
-                        </span>
-                    </fieldset>
-                )}
-                {hasRecurrence && (
-                    <>
-                        <label htmlFor={recurrenceEndDateId}>
-                            Finaliza el
-                            <input
-                                id={recurrenceEndDateId}
-                                type="date"
-                                value={recurrenceEndDateValue}
-                                onChange={event => setRecurrenceEndDateValue(event.target.value)}
-                            />
-                        </label>
-                        <label htmlFor={recurrenceCountId}>
-                            Cantidad maxima
-                            <input
-                                id={recurrenceCountId}
-                                type="number"
-                                min="1"
-                                max="999"
-                                inputMode="numeric"
-                                placeholder="Ej: 12"
-                                value={recurrenceCountValue}
-                                onChange={event => setRecurrenceCountValue(event.target.value)}
-                            />
-                        </label>
-                    </>
-                )}
+                {!isScheduleKind && recurrenceFields}
                 <div className="TodoForm-field">
                     <label htmlFor={reminderId}>
                         Recordatorio

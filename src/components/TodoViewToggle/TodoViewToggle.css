@@ -18,7 +18,7 @@
   cursor: pointer;
   font-size: 14px;
   font-weight: 800;
-  min-height: 34px;
+  min-height: 44px;
   padding: 0 14px;
 }
 
@@ -33,18 +33,21 @@
 }
 
 @media (max-width: 640px) {
+  .TodoViewNavigation { gap: 8px; }
+  .TodoViewNavigation-primary { width: 100%; }
+  .TodoViewNavigation-primary button { flex: 1; }
   .TodoViewToggle {
     box-sizing: border-box;
     flex-wrap: nowrap;
     justify-content: flex-start;
     max-width: 100%;
-    overflow-x: auto;
+    overflow-x: visible;
     scrollbar-width: thin;
     width: 100%;
   }
 
   .TodoViewToggle-button {
-    flex: 0 0 auto;
+    flex: 1;
     font-size: 12px;
     min-height: 44px;
     padding: 0 7px;
@@ -57,3 +60,21 @@
     padding: 0 4px;
   }
 }
+.TodoViewNavigation { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.TodoViewNavigation-primary { display: flex; gap: 8px; }
+.TodoViewNavigation-primary button {
+  background: transparent;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  min-height: 44px;
+  padding: 8px 12px;
+}
+.TodoViewNavigation-primary button[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  color: var(--color-text-strong);
+}
+.TodoViewNavigation button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }

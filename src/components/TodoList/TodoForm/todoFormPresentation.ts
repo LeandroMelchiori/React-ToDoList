@@ -172,7 +172,7 @@ function getFormPreviewDetails({
     if (kind === TODO_KINDS.event) {
         return [
             startDate ? `Dia ${formatDateValue(startDate)}` : 'Sin dia definido',
-            startTime ? `Hora ${startTime}` : 'Sin horario definido',
+            startTime ? `Hora ${formatTimeRange(startTime, endTime)}` : 'Sin horario definido',
             getRecurrenceSummary(recurrence, recurrenceDays, recurrenceEndDate, recurrenceCount),
             getReminderLabel(reminder),
         ];
@@ -208,4 +208,3 @@ export {
     formatDateValue,
     getFormPreviewDetails,
 };
-

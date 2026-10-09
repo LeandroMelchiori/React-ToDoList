@@ -1,0 +1,107 @@
+:root {
+  --planning-work-bg: #e0f2fe;
+  --planning-work-text: #075985;
+  --planning-work-border: #7dd3fc;
+  --planning-study-bg: #ede9fe;
+  --planning-study-text: #5b21b6;
+  --planning-study-border: #c4b5fd;
+  --planning-personal-bg: #dcfce7;
+  --planning-personal-text: #166534;
+  --planning-personal-border: #86efac;
+}
+
+[data-theme='dark'] {
+  --planning-work-bg: #123247;
+  --planning-work-text: #bae6fd;
+  --planning-work-border: #0369a1;
+  --planning-study-bg: #30234a;
+  --planning-study-text: #ddd6fe;
+  --planning-study-border: #7c3aed;
+  --planning-personal-bg: #163a2a;
+  --planning-personal-text: #bbf7d0;
+  --planning-personal-border: #15803d;
+}
+
+[data-category='work'] {
+  --planning-bg: var(--planning-work-bg);
+  --planning-text: var(--planning-work-text);
+  --planning-border: var(--planning-work-border);
+}
+
+[data-category='study'] {
+  --planning-bg: var(--planning-study-bg);
+  --planning-text: var(--planning-study-text);
+  --planning-border: var(--planning-study-border);
+}
+
+[data-category='personal'] {
+  --planning-bg: var(--planning-personal-bg);
+  --planning-text: var(--planning-personal-text);
+  --planning-border: var(--planning-personal-border);
+}
+
+.TodoWeekCalendar .TodoWeekCalendar-event[data-category],
+.TodoCalendar .TodoCalendar-event[data-category],
+.TodoCalendar .TodoPlanning-block[data-category],
+.TodoPlanning-legend [data-category] {
+  background: var(--planning-bg, var(--color-surface-muted));
+  color: var(--planning-text, var(--color-text));
+  border-color: var(--planning-border, var(--color-border));
+}
+
+.TodoPlanning-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.TodoPlanning-legend span {
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 8px;
+}
+
+.TodoWeekCalendar-event small {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.TodoWeekCalendar .TodoWeekCalendar-event--conflict[data-category] {
+  border-color: var(--color-danger);
+}
+
+.TodoWeekCalendar-event[draggable='true'] { cursor: grab; }
+
+.TodoWeekCalendar-eventContent {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  transform: translateY(clamp(0px, calc(var(--planning-scroll-top, 0px) - var(--planning-event-y, 0px) + 60px), var(--planning-label-max-offset, 0px)));
+}
+
+.TodoWeekCalendar-now {
+  border-top: 2px solid var(--color-danger);
+  left: 0;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  z-index: 6;
+}
+
+.TodoWeekCalendar-now span {
+  background: var(--color-danger);
+  border-radius: 4px;
+  color: var(--color-danger-text);
+  font-size: 10px;
+  font-weight: 800;
+  left: 0;
+  padding: 2px 4px;
+  position: absolute;
+  top: -20px;
+  white-space: nowrap;
+}

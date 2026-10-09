@@ -5,9 +5,9 @@ import {
   TODO_RECURRENCES,
   getTodoNextRecurringDate,
 } from '../../App/todoModel';
-import type { Todo, TodoKind } from '../../App/todoModel';
+import type { Todo, TodoKind, TodoScheduleChange } from '../../App/todoModel';
 import { getTodoScheduleRange } from '../TodoCalendar/TodoCalendar';
-import { TodoWeekCalendar } from '../TodoWeekCalendar/TodoWeekCalendar';
+import { TodoWeekCalendar, TODO_PLANNING_DRAG_TYPE } from '../TodoWeekCalendar/TodoWeekCalendar';
 import './TodoAgenda.css';
 
 type TodoAgendaEntry = {
@@ -22,10 +22,14 @@ type TodoAgendaEntry = {
 };
 
 interface TodoAgendaProps {
+  calendarSpan?: 'week' | 'threeDays' | 'day';
   error?: boolean;
   loading?: boolean;
   onCreateTodoForSlot?: (dateValue: string, hour: number) => void;
   onEditTodo: (id: string, occurrenceDate?: string) => void;
+  onCompleteTodo?: (id: string) => void;
+  onScheduleTodo?: (id: string) => void;
+  onScheduleTodoForSlot?: (id: string, dateValue: string, hour: number, source?: Pick<TodoScheduleChange, 'timeBlockId' | 'occurrenceDate'>) => void;
   onEmptySearchResults: () => ReactNode;
   onEmptyTodos: () => ReactNode;
   onError: () => ReactNode;
@@ -151,10 +155,14 @@ function getUnscheduledAgendaTodos(todos: Todo[], todayDate = toDateValue(new Da
 }
 
 function TodoAgenda({
+  calendarSpan = 'week',
   error,
   loading,
   onCreateTodoForSlot,
   onEditTodo,
+  onCompleteTodo,
+  onScheduleTodo,
+  onScheduleTodoForSlot,
   onEmptySearchResults,
   onEmptyTodos,
   onError,
@@ -162,6 +170,7 @@ function TodoAgenda({
   totalTodos,
   visibleTodos,
 }: TodoAgendaProps) {
+  const [mobilePanel, setMobilePanel] = React.useState<'calendar' | 'tasks'>('calendar');
   const entries = React.useMemo(() => getTodoAgendaEntries(visibleTodos), [visibleTodos]);
   const unscheduledTodos = React.useMemo(
     () => getUnscheduledAgendaTodos(visibleTodos),
@@ -184,24 +193,24 @@ function TodoAgenda({
 
       {!loading && !error && (
         <>
-          <header className="TodoAgenda-overviewHeader">
-            <div>
-              <p>Tu planificación</p>
-              <h2>Planificación</h2>
-              <span>Semana, próximos compromisos y pendientes sin fecha en una sola vista.</span>
-            </div>
-            <div className="TodoAgenda-overviewStats" aria-label="Resumen de planificacion">
-              <span><strong>{entries.length}</strong> con fecha</span>
-              <span><strong>{unscheduledTodos.length}</strong> sin fecha</span>
-            </div>
-          </header>
+          <div className="TodoAgenda-mobilePanels" role="group" aria-label="Contenido de planificacion">
+            <button type="button" aria-pressed={mobilePanel === 'calendar'} onClick={() => setMobilePanel('calendar')}>Calendario</button>
+            <button type="button" aria-pressed={mobilePanel === 'tasks'} onClick={() => setMobilePanel('tasks')}>Sin fecha ({unscheduledTodos.length})</button>
+          </div>
 
-          <section className="TodoAgenda-weekPanel" aria-label="Plan semanal">
+          {!!totalTodos && !visibleTodos.length && (
+            <div className="TodoAgenda-filterEmpty">{onEmptySearchResults()}</div>
+          )}
+
+          <div className={`TodoAgenda-mainGrid TodoAgenda-mainGrid--${mobilePanel}`}>
+          <section className="TodoAgenda-weekPanel" aria-label={calendarSpan === 'day' ? 'Plan diario' : calendarSpan === 'threeDays' ? 'Plan de tres días' : 'Plan semanal'}>
             <TodoWeekCalendar
+              calendarSpan={calendarSpan}
               embedded
               error={false}
               loading={false}
               onCreateTodoForSlot={onCreateTodoForSlot}
+              onScheduleTodoForSlot={onScheduleTodoForSlot}
               onEditTodo={onEditTodo}
               onEmptySearchResults={() => null}
               onEmptyTodos={() => null}
@@ -214,21 +223,48 @@ function TodoAgenda({
             />
           </section>
 
-          {!!totalTodos && !visibleTodos.length && (
-            <div className="TodoAgenda-filterEmpty">
-              {onEmptySearchResults()}
-            </div>
-          )}
-
           <div className="TodoAgenda-dashboardGrid">
-            <section className="TodoAgenda-panel" aria-labelledby="todo-agenda-upcoming-title">
+            <aside className="TodoAgenda-panel TodoAgenda-unscheduled" aria-labelledby="todo-agenda-unscheduled-title">
               <header className="TodoAgenda-panelHeader">
                 <div>
-                  <p>Orden cronológico</p>
-                  <h3 id="todo-agenda-upcoming-title">Próximos</h3>
+                  <p>Sin calendario</p>
+                  <h3 id="todo-agenda-unscheduled-title">Pendientes sin fecha</h3>
                 </div>
-                <span>{entries.length}</span>
+                <span>{unscheduledTodos.length}</span>
               </header>
+
+              {onScheduleTodoForSlot && <p className="TodoAgenda-dragHint">Arrastrá una tarea al calendario o elegí Programar.</p>}
+
+              {unscheduledTodos.length === 0 ? (
+                <p className="TodoAgenda-empty">
+                  No tenés pendientes sin fecha. Lo que tenga día u horario aparecerá en la planificación.
+                </p>
+              ) : (
+                <ul className="TodoAgenda-unscheduledList">
+                  {unscheduledTodos.map(todo => (
+                    <li key={todo.id}>
+                      {onCompleteTodo && <input type="checkbox" aria-label={`Completar ${todo.text}`} onChange={() => onCompleteTodo(todo.id)} />}
+                      <button type="button" onClick={() => onEditTodo(todo.id)}
+                        draggable={Boolean(onScheduleTodoForSlot)}
+                        onDragStart={event => {
+                          event.dataTransfer.effectAllowed = 'copy';
+                          event.dataTransfer.setData(TODO_PLANNING_DRAG_TYPE, todo.id);
+                        }}>
+                        <span>
+                          <strong>{todo.text}</strong>
+                          <small>Sin fecha asignada</small>
+                        </span>
+                        <span aria-hidden="true">→</span>
+                      </button>
+                      {onScheduleTodo && <button className="TodoAgenda-scheduleAction" type="button" aria-label={`Programar ${todo.text}`} onClick={() => onScheduleTodo(todo.id)}>Programar</button>}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </aside>
+
+            <details className="TodoAgenda-panel TodoAgenda-upcoming">
+              <summary>Próximos compromisos ({entries.length})</summary>
 
               {groupedEntries.length === 0 ? (
                 <p className="TodoAgenda-empty">No hay próximos elementos con fecha.</p>
@@ -276,37 +312,8 @@ function TodoAgenda({
                   ))}
                 </div>
               )}
-            </section>
-
-            <aside className="TodoAgenda-panel TodoAgenda-unscheduled" aria-labelledby="todo-agenda-unscheduled-title">
-              <header className="TodoAgenda-panelHeader">
-                <div>
-                  <p>Sin calendario</p>
-                  <h3 id="todo-agenda-unscheduled-title">Pendientes sin fecha</h3>
-                </div>
-                <span>{unscheduledTodos.length}</span>
-              </header>
-
-              {unscheduledTodos.length === 0 ? (
-                <p className="TodoAgenda-empty">
-                  No tenés pendientes sin fecha. Lo que tenga día u horario aparecerá en la planificación.
-                </p>
-              ) : (
-                <ul className="TodoAgenda-unscheduledList">
-                  {unscheduledTodos.map(todo => (
-                    <li key={todo.id}>
-                      <button type="button" onClick={() => onEditTodo(todo.id)}>
-                        <span>
-                          <strong>{todo.text}</strong>
-                          <small>Sin fecha asignada</small>
-                        </span>
-                        <span aria-hidden="true">→</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </aside>
+            </details>
+          </div>
           </div>
 
           {!totalTodos && (

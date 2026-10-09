@@ -13,7 +13,9 @@ function TodoHeader({ children, loading }: TodoHeaderProps) {
           {React.Children
             .toArray(children)
             .map(child =>
-              React.cloneElement(child as ReactElement<any>, { loading })
+              React.isValidElement(child) && typeof child.type !== 'string'
+                ? React.cloneElement(child as ReactElement<any>, { loading })
+                : child
             )
           }
     </header>

@@ -9,8 +9,10 @@ import {
   TodoRecurrence,
   TodoTimeBlock,
   isTodoRecurringOnDate,
+  getTodoPlanningCategory,
 } from '../../App/todoModel';
 import './TodoCalendar.css';
+import '../TodoAgenda/TodoPlanningCategory.css';
 
 const WEEK_DAYS = ['Lun', 'Mar', 'Mier', 'Jue', 'Vie', 'Sab', 'Dom'];
 
@@ -100,7 +102,7 @@ function getTodoScheduleRange(todo: Todo): TodoScheduleRange | null {
           startDate: todo.startDate,
           endDate: todo.startDate,
           startTime: todo.startTime || null,
-          endTime: null,
+          endTime: todo.endTime || null,
           type: TODO_DATE_TYPES.event,
         }
       : null;
@@ -190,7 +192,7 @@ function getTodoTimeLabel(todo: Pick<Todo, 'dateType' | 'startTime' | 'endTime'>
     return '';
   }
 
-  return todo.dateType === TODO_DATE_TYPES.period && todo.endTime
+  return todo.dateType !== TODO_DATE_TYPES.due && todo.endTime
     ? `${todo.startTime} a ${todo.endTime}`
     : todo.startTime;
 }
@@ -330,12 +332,15 @@ function TodoCalendar({
                       {timeBlockEntries.map(({ timeBlock, todo }) => (
                         <li key={`${todo.id}-${timeBlock.id}`}>
                           <button
+                            data-category={getTodoPlanningCategory(todo)}
+                            className="TodoPlanning-block"
                             aria-label={`Trabajo ${timeBlock.startTime} a ${timeBlock.endTime} ${todo.text}`}
                             onClick={() => onEditTodo(todo.id)}
                             type="button"
                           >
                             <span>{timeBlock.startTime}-{timeBlock.endTime}</span>
                             {todo.text}
+                            <small>{todo.project || 'Personal'}</small>
                           </button>
                         </li>
                       ))}
@@ -354,12 +359,14 @@ function TodoCalendar({
                           recurrenceLabel,
                           timeLabel,
                           todo.text,
+                          todo.project || 'Personal',
                         ].filter(Boolean).join(' ');
 
                         return (
                           <li key={todo.id}>
                             <button
                               type="button"
+                              data-category={getTodoPlanningCategory(todo)}
                               aria-label={eventLabel}
                               className={[
                                 'TodoCalendar-event',
@@ -373,6 +380,7 @@ function TodoCalendar({
                               <span>{typeLabel}</span>
                               {recurrenceLabel && <small>{recurrenceLabel}</small>}
                               {timeLabel && <small>{timeLabel}</small>}
+                              <small>{todo.project || 'Personal'}</small>
                               {todo.text}
                             </button>
                           </li>

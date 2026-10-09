@@ -77,7 +77,7 @@ test('matches the desktop task layout', async ({ page }) => {
 test('matches the mobile task layout', async ({ page }) => {
   await openVisualFixture(page, { width: 390, height: 844 });
 
-  await expect(page.getByRole('tab', { name: 'Semana' })).toBeInViewport();
+  await expect(page.getByRole('button', { name: 'Planificación', exact: true })).toBeInViewport();
   const firstTaskPosition = await page.getByText('Preparar lanzamiento de TaskFlow').boundingBox();
   expect(firstTaskPosition?.y).toBeLessThan(844);
 

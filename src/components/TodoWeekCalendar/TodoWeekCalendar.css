@@ -51,7 +51,7 @@
   cursor: pointer;
   font-size: 13px;
   font-weight: 800;
-  min-height: 36px;
+  min-height: 44px;
   padding: 0 12px;
 }
 
@@ -86,7 +86,7 @@
   border-radius: 8px;
   display: grid;
   gap: 1px;
-  grid-template-columns: repeat(7, minmax(124px, 1fr));
+  grid-template-columns: repeat(var(--week-day-count, 7), minmax(0, 1fr));
   margin-bottom: 12px;
   overflow-x: auto;
 }
@@ -191,13 +191,20 @@
   border-radius: 8px;
   overflow-x: auto;
 }
+.TodoWeekCalendar-navArrow { display: none; }
+
+.TodoWeekCalendar-dayPicker { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin: 12px 0; }
+.TodoWeekCalendar-dayPicker button { display: grid; gap: 3px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 8px; color: var(--color-text-muted); cursor: pointer; font: inherit; min-height: 56px; padding: 6px 0; }
+.TodoWeekCalendar-dayPicker span { font-size: 11px; }
+.TodoWeekCalendar-dayPicker button[aria-pressed='true'] { background: var(--color-active); color: var(--color-active-text); border-color: var(--color-active); }
+.TodoWeekCalendar-dayPicker button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 
 .TodoWeekCalendar-grid {
   background: var(--color-border);
   display: grid;
   gap: 1px;
-  grid-template-columns: 72px repeat(7, minmax(124px, 1fr));
-  min-width: 980px;
+  grid-template-columns: 56px repeat(var(--week-day-count, 7), minmax(0, 1fr));
+  min-width: 0;
 }
 
 .TodoWeekCalendar-row {
@@ -255,7 +262,7 @@
 }
 
 .TodoWeekCalendar-slot {
-  min-height: 78px;
+  min-height: 56px;
   position: relative;
 }
 
@@ -298,7 +305,10 @@
   border-radius: 7px;
   color: var(--color-text);
   cursor: pointer;
-  display: block;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
   font-family: inherit;
   font-size: 12px;
   font-weight: 800;
@@ -313,7 +323,7 @@
   font-size: 10px;
   font-weight: 900;
   margin-bottom: 3px;
-  opacity: 0.72;
+  opacity: 1;
 }
 
 .TodoWeekCalendar-event--positioned {
@@ -365,7 +375,7 @@
   color: var(--color-text);
 }
 
-.TodoWeekCalendar-event--timeBlock span {
+.TodoWeekCalendar-event--timeBlock .TodoWeekCalendar-blockLabel {
   color: var(--color-accent-hover);
   display: block;
   font-size: 9px;
@@ -482,14 +492,17 @@
   .TodoWeekCalendar-actions {
     justify-content: flex-start;
   }
+  .TodoWeekCalendar-navLabel { display: none; }
+  .TodoWeekCalendar-navArrow { display: inline; font-size: 24px; }
+  .TodoWeekCalendar-actions button { min-width: 44px; }
 
   .TodoWeekCalendar-grid {
-    grid-template-columns: 64px repeat(7, minmax(112px, 1fr));
-    min-width: 860px;
+    grid-template-columns: 56px repeat(var(--week-day-count, 1), minmax(0, 1fr));
+    min-width: 0;
   }
 
   .TodoWeekCalendar-allDay {
-    grid-template-columns: repeat(7, minmax(112px, 1fr));
+    grid-template-columns: repeat(var(--week-day-count, 1), minmax(0, 1fr));
   }
 }
 
@@ -510,4 +523,17 @@
 
 .TodoWeekCalendar--embedded .TodoWeekCalendar-emptyWeek {
   margin-bottom: 0;
+}
+
+.TodoWeekCalendar--embedded .TodoWeekCalendar-scroller { max-height: 65dvh; overflow-y: auto; }
+.TodoWeekCalendar-dayHeader, .TodoWeekCalendar-corner { position: sticky; top: 0; z-index: 8; }
+
+.TodoWeekCalendar-slot--dropTarget::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  pointer-events: none;
+  z-index: 7;
 }

@@ -25,4 +25,8 @@ describe('todo settings', () => {
       showQuickAdd: 'yes',
     })).toEqual(DEFAULT_TODO_SETTINGS);
   });
+
+  test('preserves the three-day view preference', () => {
+    expect(normalizeTodoSettings({ defaultView: 'days' }).defaultView).toBe('days');
+  });
 });

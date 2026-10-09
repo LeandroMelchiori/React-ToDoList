@@ -1,7 +1,7 @@
 import React from 'react';
 
 type TodoDensity = 'comfortable' | 'compact';
-type TodoDefaultView = 'list' | 'today' | 'agenda' | 'board' | 'calendar' | 'week';
+type TodoDefaultView = 'list' | 'today' | 'days' | 'agenda' | 'board' | 'calendar' | 'week';
 
 type TodoSettings = {
   defaultView: TodoDefaultView;
@@ -17,7 +17,7 @@ const DEFAULT_TODO_SETTINGS: TodoSettings = {
   showQuickAdd: true,
 };
 
-const VALID_VIEWS: TodoDefaultView[] = ['list', 'today', 'agenda', 'board', 'calendar', 'week'];
+const VALID_VIEWS: TodoDefaultView[] = ['list', 'today', 'days', 'agenda', 'board', 'calendar', 'week'];
 const VALID_DENSITIES: TodoDensity[] = ['comfortable', 'compact'];
 
 function normalizeTodoSettings(value: unknown): TodoSettings {

@@ -62,6 +62,7 @@ interface TodoDetailProps {
   onDelete: () => void;
   onDuplicate: () => void;
   onEdit: () => void;
+  onChangeSchedule?: (timeBlockId?: string) => void;
   onEditOccurrence?: () => void;
   onRestoreOccurrence?: (dateValue: string) => void;
   onSkipOccurrence?: () => void;
@@ -148,6 +149,7 @@ function TodoDetail({
   onDelete,
   onDuplicate,
   onEdit,
+  onChangeSchedule,
   onEditOccurrence,
   onRestoreOccurrence,
   onSkipOccurrence,
@@ -280,6 +282,9 @@ function TodoDetail({
                   {formatDateValue(timeBlock.date)}
                 </time>
                 <span>{timeBlock.startTime} a {timeBlock.endTime}</span>
+                {onChangeSchedule && !todo.completed && !isArchived && <button type="button" className="TodoDetail-button"
+                  aria-label={`Cambiar horario del bloque ${timeBlock.startTime} a ${timeBlock.endTime}`}
+                  onClick={() => onChangeSchedule(timeBlock.id)}>Cambiar horario</button>}
               </li>
             ))}
           </ul>
@@ -331,6 +336,9 @@ function TodoDetail({
       )}
 
       <div className="TodoDetail-actions">
+        {onChangeSchedule && !isArchived && ['event', 'schedule'].includes(todo.kind) && (
+          <button type="button" className="TodoDetail-button TodoDetail-button--primary" onClick={() => onChangeSchedule()}>Cambiar horario</button>
+        )}
         {isTask && !isArchived && (
           <button
             type="button"

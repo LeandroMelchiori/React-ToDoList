@@ -8,8 +8,11 @@ import {
   TodoKind,
   TodoRecurrence,
   TodoTimeBlock,
+  TodoScheduleChange,
+  getTodoPlanningCategory,
 } from '../../App/todoModel';
 import { getTodoScheduleConflicts } from '../../App/todoScheduleConflicts';
+import { useMediaQuery } from '../../App/useMediaQuery';
 import {
   getTodoScheduleRange,
   getTodoTimeLabel,
@@ -17,11 +20,16 @@ import {
   isTodoVisibleOnDay,
 } from '../TodoCalendar/TodoCalendar';
 import './TodoWeekCalendar.css';
+import '../TodoAgenda/TodoPlanningCategory.css';
 
 const WEEK_DAYS = ['Lun', 'Mar', 'Mier', 'Jue', 'Vie', 'Sab', 'Dom'];
 const DEFAULT_START_HOUR = 8;
 const DEFAULT_END_HOUR = 20;
-const HOUR_SLOT_HEIGHT = 78;
+const HOUR_SLOT_HEIGHT = 56;
+// The timeline also includes the one-pixel divider between hour rows.
+const HOUR_ROW_HEIGHT = HOUR_SLOT_HEIGHT + 1;
+const TODO_PLANNING_DRAG_TYPE = 'application/x-taskflow-todo';
+const TODO_RESCHEDULE_DRAG_TYPE = 'application/x-taskflow-schedule';
 
 const TODO_DATE_TYPE_LABELS: Record<TodoDateType, string> = {
   [TODO_DATE_TYPES.due]: 'Limite',
@@ -84,11 +92,13 @@ type TodoTimedLayoutEntry = {
 };
 
 interface TodoWeekCalendarProps {
+  calendarSpan?: 'week' | 'threeDays' | 'day';
   embedded?: boolean;
   error?: boolean;
   loading?: boolean;
   onEditTodo: (id: string, occurrenceDate?: string) => void;
   onCreateTodoForSlot?: (dateValue: string, hour: number) => void;
+  onScheduleTodoForSlot?: (id: string, dateValue: string, hour: number, source?: Pick<TodoScheduleChange, 'timeBlockId' | 'occurrenceDate'>) => void;
   onEmptySearchResults: () => ReactNode;
   onEmptyTodos: () => ReactNode;
   onError: () => ReactNode;
@@ -154,7 +164,23 @@ function getWeekLabel(weekDays: WeekDay[]): string {
     return '';
   }
 
-  return `${formatShortDate(firstDay)} - ${formatShortDate(lastDay)}`;
+  return firstDay === lastDay ? formatShortDate(firstDay) : `${formatShortDate(firstDay)} - ${formatShortDate(lastDay)}`;
+}
+
+function getCalendarDays(anchorDate: Date, span: 'week' | 'threeDays' | 'day', today = new Date()): WeekDay[] {
+  if (span === 'week') return getWeekDays(anchorDate, today);
+
+  return Array.from({ length: span === 'day' ? 1 : 3 }, (_, index) => {
+    const date = addDays(anchorDate, index);
+    const dateValue = toDateValue(date);
+    return {
+      date,
+      dateValue,
+      dayName: WEEK_DAYS[(date.getDay() + 6) % 7],
+      dayNumber: date.getDate(),
+      isToday: dateValue === toDateValue(today),
+    };
+  });
 }
 
 function getTodoStartHour(todo: Pick<Todo, 'startTime'>): number | null {
@@ -198,7 +224,7 @@ function getWeekTimeBlockEntries(todos: Todo[], weekDays: WeekDay[]): TodoTimeBl
     .map(timeBlock => ({ timeBlock, todo })));
 }
 
-function getHourSlots(todos: Todo[], weekDays: WeekDay[]): number[] {
+function getHourSlots(todos: Todo[], weekDays: WeekDay[], currentHour: number | null = null): number[] {
   const timedTodos = getWeekTimedTodos(todos, weekDays);
   const timeBlockEntries = getWeekTimeBlockEntries(todos, weekDays);
   const startHours = timedTodos
@@ -213,8 +239,8 @@ function getHourSlots(todos: Todo[], weekDays: WeekDay[]): number[] {
     .concat(timeBlockEntries
       .map(entry => getTodoEndHour(entry.timeBlock))
       .filter((hour): hour is number => hour !== null));
-  const startHour = Math.max(0, Math.min(DEFAULT_START_HOUR, ...startHours));
-  const endHour = Math.min(23, Math.max(DEFAULT_END_HOUR, ...endHours));
+  const startHour = Math.max(0, Math.min(DEFAULT_START_HOUR, currentHour ?? DEFAULT_START_HOUR, ...startHours));
+  const endHour = Math.min(23, Math.max(DEFAULT_END_HOUR, currentHour ?? DEFAULT_END_HOUR, ...endHours));
 
   return Array.from({ length: endHour - startHour + 1 }, (_, index) => startHour + index);
 }
@@ -405,11 +431,13 @@ function formatHourSlot(hour: number): string {
 }
 
 function TodoWeekCalendar({
+  calendarSpan = 'week',
   embedded = false,
   error,
   loading,
   onEditTodo,
   onCreateTodoForSlot,
+  onScheduleTodoForSlot,
   onEmptySearchResults,
   onEmptyTodos,
   onError,
@@ -420,8 +448,29 @@ function TodoWeekCalendar({
   visibleTodos,
 }: TodoWeekCalendarProps) {
   const [anchorDate, setAnchorDate] = React.useState(() => new Date());
-  const weekDays = React.useMemo(() => getWeekDays(anchorDate), [anchorDate]);
-  const hourSlots = React.useMemo(() => getHourSlots(visibleTodos, weekDays), [visibleTodos, weekDays]);
+  const [now, setNow] = React.useState(() => new Date());
+  const scrollerRef = React.useRef<HTMLDivElement>(null);
+  const autoScrolledKeyRef = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    const tick = () => setNow(new Date());
+    const timer = window.setInterval(tick, 60_000);
+    window.addEventListener('focus', tick);
+    return () => { window.clearInterval(timer); window.removeEventListener('focus', tick); };
+  }, []);
+  const [dropTarget, setDropTarget] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    const clearDropTarget = () => setDropTarget(null);
+    window.addEventListener('dragend', clearDropTarget);
+    return () => window.removeEventListener('dragend', clearDropTarget);
+  }, []);
+  const isMobile = useMediaQuery('(max-width: 760px)');
+  const todayDate = toDateValue(now);
+  const weekDays = React.useMemo(() => getCalendarDays(anchorDate, calendarSpan, new Date(`${todayDate}T12:00:00`)), [anchorDate, calendarSpan, todayDate]);
+  const displayedDays = isMobile && calendarSpan === 'week'
+    ? weekDays.filter(day => day.dateValue === toDateValue(anchorDate))
+    : weekDays;
+  const currentHour = displayedDays.some(day => day.dateValue === todayDate) ? now.getHours() : null;
+  const hourSlots = React.useMemo(() => getHourSlots(visibleTodos, weekDays, currentHour), [visibleTodos, weekDays, currentHour]);
   const timedTodos = React.useMemo(() => getWeekTimedTodos(visibleTodos, weekDays), [visibleTodos, weekDays]);
   const timedTimeBlocks = React.useMemo(
     () => getWeekTimeBlockEntries(visibleTodos, weekDays),
@@ -443,13 +492,31 @@ function TodoWeekCalendar({
     weekDays.find(day => day.dateValue === conflict.dateValue)
   )).filter((day): day is WeekDay => Boolean(day));
   const weekLabel = getWeekLabel(weekDays);
+  const navigationStep = calendarSpan === 'day' ? 1 : calendarSpan === 'threeDays' ? 3 : 7;
+  const previousLabel = calendarSpan === 'day' ? 'Día anterior' : calendarSpan === 'threeDays' ? 'Tres días anteriores' : 'Semana anterior';
+  const nextLabel = calendarSpan === 'day' ? 'Día siguiente' : calendarSpan === 'threeDays' ? 'Tres días siguientes' : 'Semana siguiente';
+  const calendarLabel = calendarSpan === 'day' ? 'Agenda diaria' : calendarSpan === 'threeDays' ? 'Agenda de tres días' : 'Agenda semanal';
+  const nowTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const dayCountStyle = { '--week-day-count': displayedDays.length } as React.CSSProperties;
+  React.useEffect(() => {
+    const key = `${toDateValue(anchorDate)}:${calendarSpan}:${isMobile}`;
+    if (!scrollerRef.current || loading || error || autoScrolledKeyRef.current === key) return;
+    autoScrolledKeyRef.current = key;
+    if (displayedDays.some(day => day.dateValue === todayDate)) {
+      scrollerRef.current.scrollTop = Math.max(0, (now.getHours() + now.getMinutes() / 60 - (hourSlots[0] || 0) - 1) * HOUR_ROW_HEIGHT);
+      scrollerRef.current.style.setProperty('--planning-scroll-top', `${scrollerRef.current.scrollTop}px`);
+    }
+  }, [anchorDate, calendarSpan, isMobile, loading, error, todayDate, hourSlots, displayedDays, now]);
+  const timedEntriesByDay = React.useMemo(() => new Map(
+    weekDays.map(day => [day.dateValue, getTimedLayoutEntriesForDay(visibleTodos, day.dateValue)])
+  ), [visibleTodos, weekDays]);
 
   return (
     <section
       className={embedded ? 'TodoWeekCalendar TodoWeekCalendar--embedded' : 'TodoWeekCalendar'}
       id={embedded ? undefined : 'todo-list'}
       tabIndex={embedded ? undefined : -1}
-      aria-label="Agenda semanal"
+      aria-label={calendarLabel}
     >
       {error && onError()}
       {loading && onLoading()}
@@ -462,21 +529,34 @@ function TodoWeekCalendar({
         <>
           <div className="TodoWeekCalendar-header">
             <div>
-              <p>{embedded ? 'Esta semana' : 'Agenda semanal'}</p>
-              <h2>{weekLabel}</h2>
+              <p>{calendarSpan === 'day' ? 'Tu día' : calendarSpan === 'threeDays' ? 'Tres días' : embedded ? 'Esta semana' : 'Agenda semanal'}</p>
+              <h2>{calendarSpan === 'day' ? new Intl.DateTimeFormat('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }).format(anchorDate) : weekLabel}</h2>
             </div>
             <div className="TodoWeekCalendar-actions">
-              <button type="button" onClick={() => setAnchorDate(currentDate => addDays(currentDate, -7))}>
-                Semana anterior
+              <button aria-label={previousLabel} type="button" onClick={() => setAnchorDate(currentDate => addDays(currentDate, -navigationStep))}>
+                <span className="TodoWeekCalendar-navArrow" aria-hidden="true">‹</span><span className="TodoWeekCalendar-navLabel">{previousLabel}</span>
               </button>
-              <button type="button" onClick={() => setAnchorDate(new Date())}>
+              <button type="button" onClick={() => { autoScrolledKeyRef.current = null; setAnchorDate(new Date()); }}>
                 Hoy
               </button>
-              <button type="button" onClick={() => setAnchorDate(currentDate => addDays(currentDate, 7))}>
-                Semana siguiente
+              <button aria-label={nextLabel} type="button" onClick={() => setAnchorDate(currentDate => addDays(currentDate, navigationStep))}>
+                <span className="TodoWeekCalendar-navLabel">{nextLabel}</span><span className="TodoWeekCalendar-navArrow" aria-hidden="true">›</span>
               </button>
             </div>
           </div>
+
+          {isMobile && calendarSpan === 'week' && (
+            <div className="TodoWeekCalendar-dayPicker" role="group" aria-label="Elegir dia">
+              {weekDays.map(day => (
+                <button key={day.dateValue} type="button"
+                  aria-pressed={day.dateValue === toDateValue(anchorDate)}
+                  aria-label={`${day.dayName} ${formatShortDate(day.dateValue)}${day.isToday ? ', hoy' : ''}`}
+                  onClick={() => setAnchorDate(day.date)}>
+                  <span>{day.dayName}</span><strong>{day.dayNumber}</strong>
+                </button>
+              ))}
+            </div>
+          )}
 
           {scheduleConflicts.length > 0 && (
             <aside className="TodoWeekCalendar-conflicts" role="status" aria-label="Conflictos de horario">
@@ -492,8 +572,8 @@ function TodoWeekCalendar({
           )}
 
           {untimedTodos.length > 0 && (
-            <div className="TodoWeekCalendar-allDay" role="group" aria-label="Elementos sin horario por dia">
-              {untimedTodosByDay.map(group => {
+            <div className="TodoWeekCalendar-allDay" style={dayCountStyle} role="group" aria-label="Elementos sin horario por dia">
+              {untimedTodosByDay.filter(group => displayedDays.some(day => day.dateValue === group.dateValue)).map(group => {
                 const compactRecurringTodos = group.todos.filter(isCompactRecurringTodo);
                 const listedTodos = group.todos.filter(todo => !isCompactRecurringTodo(todo));
 
@@ -562,11 +642,15 @@ function TodoWeekCalendar({
             </div>
           )}
 
-          <div className="TodoWeekCalendar-scroller">
-            <div className="TodoWeekCalendar-grid" role="grid" aria-label={`Agenda semanal ${weekLabel}`}>
+          <div className="TodoPlanning-legend" aria-label="Categorías">
+            <span data-category="work">Trabajo</span><span data-category="study">Estudio</span><span data-category="personal">Personal</span>
+          </div>
+          <div className="TodoWeekCalendar-scroller" ref={scrollerRef}
+            onScroll={event => event.currentTarget.style.setProperty('--planning-scroll-top', `${event.currentTarget.scrollTop}px`)}>
+            <div className="TodoWeekCalendar-grid" style={dayCountStyle} role="grid" aria-label={`${calendarLabel} ${weekLabel}`}>
               <div className="TodoWeekCalendar-row" role="row">
                 <div className="TodoWeekCalendar-corner" role="columnheader" aria-label="Hora" />
-                {weekDays.map(day => (
+                {displayedDays.map(day => (
                   <div
                     className={[
                       'TodoWeekCalendar-dayHeader',
@@ -586,17 +670,52 @@ function TodoWeekCalendar({
                   <div className="TodoWeekCalendar-hour" role="rowheader">
                     {formatHourSlot(hour)}
                   </div>
-                  {weekDays.map(day => {
-                    const slotEntries = getTimedLayoutEntriesForDay(visibleTodos, day.dateValue)
+                  {displayedDays.map(day => {
+                    const slotEntries = (timedEntriesByDay.get(day.dateValue) || [])
                       .filter(entry => Math.floor(entry.startMinutes / 60) === hour);
 
                     return (
                       <div
-                        className="TodoWeekCalendar-slot"
+                        className={`TodoWeekCalendar-slot${dropTarget === `${day.dateValue}:${hour}` ? ' TodoWeekCalendar-slot--dropTarget' : ''}`}
                         role="gridcell"
                         aria-label={`${day.dayName} ${formatShortDate(day.dateValue)} ${formatHourSlot(hour)}`}
                         key={`${day.dateValue}-${hour}`}
+                        onDragOver={event => {
+                          if (!onScheduleTodoForSlot || !event.dataTransfer.types.some(type => [TODO_PLANNING_DRAG_TYPE, TODO_RESCHEDULE_DRAG_TYPE].includes(type))) return;
+                          event.preventDefault();
+                          event.dataTransfer.dropEffect = event.dataTransfer.types.includes(TODO_RESCHEDULE_DRAG_TYPE) ? 'move' : 'copy';
+                          setDropTarget(`${day.dateValue}:${hour}`);
+                        }}
+                        onDragLeave={event => {
+                          if (!(event.relatedTarget instanceof Node) || !event.currentTarget.contains(event.relatedTarget)) setDropTarget(null);
+                        }}
+                        onDrop={event => {
+                          if (!onScheduleTodoForSlot) return;
+                          if (event.dataTransfer.types.includes(TODO_RESCHEDULE_DRAG_TYPE)) {
+                            event.preventDefault();
+                            setDropTarget(null);
+                            try {
+                              const source = JSON.parse(event.dataTransfer.getData(TODO_RESCHEDULE_DRAG_TYPE));
+                              const todo = visibleTodos.find(item => item.id === source.todoId && !item.archivedAt && !item.completed);
+                              if (todo && (todo.kind === 'event' || todo.kind === 'schedule' ||
+                                  (todo.kind === 'task' && todo.timeBlocks.some(block => block.id === source.timeBlockId)))) {
+                                onScheduleTodoForSlot(todo.id, day.dateValue, hour, { timeBlockId: source.timeBlockId, occurrenceDate: source.occurrenceDate });
+                              }
+                            } catch { /* Ignore unrelated drag payloads. */ }
+                            return;
+                          }
+                          if (!event.dataTransfer.types.includes(TODO_PLANNING_DRAG_TYPE)) return;
+                          event.preventDefault();
+                          setDropTarget(null);
+                          const id = event.dataTransfer.getData(TODO_PLANNING_DRAG_TYPE);
+                          const task = visibleTodos.find(todo => todo.id === id && todo.kind === TODO_KINDS.task && !todo.completed && !todo.archivedAt);
+                          if (task) onScheduleTodoForSlot(id, day.dateValue, hour);
+                        }}
                       >
+                        {day.dateValue === todayDate && hour === now.getHours() && (
+                          <div className="TodoWeekCalendar-now" role="img" aria-label={`Hora actual ${nowTime}`}
+                            style={{ top: (now.getMinutes() / 60) * HOUR_ROW_HEIGHT }}><span>Ahora {nowTime}</span></div>
+                        )}
                         {onCreateTodoForSlot && (
                           <button
                             aria-label={`Crear bloque el ${day.dateValue} a las ${formatHourSlot(hour)}`}
@@ -612,16 +731,20 @@ function TodoWeekCalendar({
                           const { timeBlock, todo } = entry;
                           const hasConflict = conflictingTodoKeys.has(`${day.dateValue}:${todo.id}`);
                           const eventStyle: React.CSSProperties = {
-                            height: Math.max(36, ((entry.endMinutes - entry.startMinutes) / 60) * HOUR_SLOT_HEIGHT - 6),
+                            height: Math.max(36, ((entry.endMinutes - entry.startMinutes) / 60) * HOUR_ROW_HEIGHT - 6),
                             left: `calc(${(entry.lane * 100) / entry.laneCount}% + 4px)`,
-                            top: ((entry.startMinutes % 60) / 60) * HOUR_SLOT_HEIGHT + 3,
+                            top: ((entry.startMinutes % 60) / 60) * HOUR_ROW_HEIGHT + 3,
                             width: `calc(${100 / entry.laneCount}% - 8px)`,
+                            ...({
+                              '--planning-event-y': `${59 + ((entry.startMinutes / 60) - (hourSlots[0] || 0)) * HOUR_ROW_HEIGHT + 3}px`,
+                              '--planning-label-max-offset': `${Math.max(0, ((entry.endMinutes - entry.startMinutes) / 60) * HOUR_ROW_HEIGHT - 62)}px`,
+                            } as React.CSSProperties),
                           };
 
                           if (entry.source === 'timeBlock' && timeBlock) {
                             return (
                               <button
-                                aria-label={`${timeBlock.startTime} a ${timeBlock.endTime} Trabajo ${todo.text}${hasConflict ? ' Conflicto de horario' : ''}`}
+                                aria-label={`${timeBlock.startTime} a ${timeBlock.endTime} Trabajo ${todo.text}${todo.project ? ` ${todo.project}` : ''}${hasConflict ? ' Conflicto de horario' : ''}`}
                                 className={[
                                   'TodoWeekCalendar-event',
                                   'TodoWeekCalendar-event--positioned',
@@ -629,14 +752,22 @@ function TodoWeekCalendar({
                                   hasConflict ? 'TodoWeekCalendar-event--conflict' : '',
                                 ].filter(Boolean).join(' ')}
                                 key={entry.id}
+                                data-category={getTodoPlanningCategory(todo)}
+                                draggable={Boolean(onScheduleTodoForSlot && !todo.completed && !todo.archivedAt)}
+                                onDragStart={event => {
+                                  event.dataTransfer.effectAllowed = 'move';
+                                  event.dataTransfer.setData(TODO_RESCHEDULE_DRAG_TYPE, JSON.stringify({ todoId: todo.id, timeBlockId: timeBlock.id }));
+                                }}
                                 onClick={() => onEditTodo(todo.id)}
                                 style={eventStyle}
                                 type="button"
                               >
-                                <small>{timeBlock.startTime} a {timeBlock.endTime}</small>
-                                <span>Trabajo</span>
+                                <span className="TodoWeekCalendar-eventContent">
+                                <small>{timeBlock.startTime} a {timeBlock.endTime} · {todo.project || 'Personal'}</small>
+                                <span className="TodoWeekCalendar-blockLabel">Bloque</span>
                                 {hasConflict && <span className="TodoWeekCalendar-conflictBadge">Conflicto</span>}
                                 {todo.text}
+                                </span>
                               </button>
                             );
                           }
@@ -652,14 +783,23 @@ function TodoWeekCalendar({
                                 todo.completed ? 'TodoWeekCalendar-event--completed' : '',
                                 hasConflict ? 'TodoWeekCalendar-event--conflict' : '',
                               ].filter(Boolean).join(' ')}
-                              aria-label={`${getTodoWeekAriaLabel(todo)}${hasConflict ? ' Conflicto de horario' : ''}`}
+                              aria-label={`${getTodoWeekAriaLabel(todo)}${todo.project ? ` ${todo.project}` : ''}${hasConflict ? ' Conflicto de horario' : ''}`}
                               key={entry.id}
+                              data-category={getTodoPlanningCategory(todo)}
+                              draggable={Boolean(onScheduleTodoForSlot && !todo.completed && !todo.archivedAt && ['event', 'schedule'].includes(todo.kind))}
+                              onDragStart={event => {
+                                event.dataTransfer.effectAllowed = 'move';
+                                event.dataTransfer.setData(TODO_RESCHEDULE_DRAG_TYPE, JSON.stringify({ todoId: todo.id,
+                                  occurrenceDate: todo.recurrence !== 'none' ? day.dateValue : undefined }));
+                              }}
                               onClick={() => onEditTodo(todo.id, day.dateValue)}
                               style={eventStyle}
                             >
-                              <small>{getTodoTimeLabel(todo)}</small>
+                              <span className="TodoWeekCalendar-eventContent">
+                              <small>{getTodoTimeLabel(todo)} · {todo.project || 'Personal'}</small>
                               {hasConflict && <span className="TodoWeekCalendar-conflictBadge">Conflicto</span>}
                               {todo.text}
+                              </span>
                             </button>
                           );
                         })}
@@ -699,6 +839,8 @@ function TodoWeekCalendar({
 
 export { TodoWeekCalendar };
 export {
+  TODO_PLANNING_DRAG_TYPE,
+  getCalendarDays,
   formatHourSlot,
   getHourSlots,
   getTimedTodosForSlot,

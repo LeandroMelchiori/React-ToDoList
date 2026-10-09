@@ -2,12 +2,29 @@ import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 
 async function openTools(page, sectionName) {
-  await page.getByRole('button', { name: 'Opciones' }).click();
+  const options = page.getByRole('button', { name: 'Opciones', exact: true });
+  if (await options.getAttribute('aria-expanded') === 'true') {
+    const back = page.getByRole('button', { name: 'Volver a opciones', exact: true });
+    if (await back.isVisible()) await back.click();
+  } else {
+    await options.click();
+  }
   await page.getByRole('button', { name: new RegExp(sectionName) }).click();
 }
 
 function getBoardSwitcher(page) {
   return page.getByRole('group', { name: 'Cambiar tablero' });
+}
+
+async function selectView(page, name) {
+  if (['Calendario', 'Semana', 'Agenda', 'Hoy'].includes(name)) {
+    await page.getByRole('button', { name: 'Planificación', exact: true }).click();
+    if (name === 'Agenda') return;
+    await page.getByRole('tab', { name: name === 'Calendario' ? 'Mes' : name }).click();
+  } else {
+    await page.getByRole('button', { name: 'Tareas', exact: true }).click();
+    await page.getByRole('tab', { name }).click();
+  }
 }
 
 test.beforeEach(async ({ page }) => {
@@ -73,16 +90,16 @@ test('manages a todo through the production flow', async ({ page }) => {
   await expect(page.getByLabel('Revisar copy')).toBeVisible();
   await expect(page.getByLabel('Validar responsive')).toBeVisible();
 
-  await page.getByRole('tab', { name: 'Calendario' }).click();
+  await selectView(page, 'Calendario');
   await expect(page.getByRole('grid', { name: /Calendario/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /Limite Semanal Preparar demo del proyecto/ }).first()).toBeVisible();
 
-  await page.getByRole('tab', { name: 'Agenda' }).click();
+  await selectView(page, 'Agenda');
   await expect(page.getByRole('heading', { name: 'Planificación' })).toBeVisible();
   await expect(page.getByLabel('Plan semanal')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Próximos' })).toBeVisible();
+  await expect(page.getByText(/Próximos compromisos/)).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Pendientes sin fecha' })).toBeVisible();
-  await page.getByRole('tab', { name: 'Lista' }).click();
+  await selectView(page, 'Lista');
 
   await page.getByRole('button', { name: 'Filtrar por etiqueta frontend' }).click();
   await page.getByRole('button', { name: /Resumen/ }).click();
@@ -266,10 +283,10 @@ test('restores a full workspace backup', async ({ page }) => {
   await page.getByRole('button', { name: 'Restaurar backup' }).click();
 
   await expect(page.getByText('Preparar workspace')).toBeVisible();
-  await expect(getBoardSwitcher(page).getByRole('button', { name: /Trabajo/ })).toBeVisible();
   await expect(page.getByText('Backup restaurado: 2 tableros, 2 tareas y 1 filtro guardado.')).toBeVisible();
   await page.getByRole('button', { name: 'Volver a opciones' }).click();
   await page.getByRole('button', { name: /Tableros y filtros/ }).click();
+  await expect(getBoardSwitcher(page).getByRole('button', { name: /Trabajo/ })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Trabajo activo', exact: true })).toBeVisible();
 
   await expect.poll(async () => page.evaluate(() => ({
@@ -298,6 +315,7 @@ test('keeps local boards and saved views in the production flow', async ({ page 
   await createBoardForm.getByRole('button', { name: 'Crear' }).click();
   await expect(page.getByText('Todavia no hay tareas')).toBeVisible();
   await expect(page.getByText('Plan personal')).not.toBeVisible();
+  await page.getByRole('button', { name: 'Cerrar opciones' }).click();
 
   await page.getByRole('button', { name: 'Crear nueva tarea' }).click();
   dialog = page.getByRole('dialog', { name: 'Crear tarea' });
@@ -325,6 +343,7 @@ test('keeps local boards and saved views in the production flow', async ({ page 
   await page.getByRole('button', { name: /Resumen/ }).click();
   await page.getByRole('button', { name: 'Limpiar filtros' }).click();
   await page.getByLabel('Buscar tareas').fill('');
+  await openTools(page, 'Tableros y filtros');
   await getBoardSwitcher(page).getByRole('button', { name: /Personal/ }).click();
   await expect(page.getByText('Plan personal')).toBeVisible();
   await expect(page.getByText('Preparar taller')).not.toBeVisible();
@@ -456,7 +475,7 @@ test('reloads the application shell while offline', async ({ context, page }) =>
     await page.reload();
     await expect(page.getByText('Tarea de referencia')).toBeVisible();
     await expect(page.getByText('Sin conexion. TaskFlow sigue disponible offline.')).toBeVisible();
-    await page.getByRole('tab', { name: 'Calendario' }).click();
+    await selectView(page, 'Calendario');
     await expect(page.getByRole('grid', { name: /Calendario/ })).toBeVisible();
   } finally {
     await context.setOffline(false);
@@ -467,7 +486,7 @@ test('creates schedules from the week grid and warns about overlaps', async ({ p
   await seedAnchorTodo(page);
   await page.goto('/');
 
-  await page.getByRole('tab', { name: 'Semana' }).click();
+  await selectView(page, 'Semana');
   const initialSlot = page.getByRole('button', { name: /Crear bloque el \d{4}-\d{2}-\d{2} a las 10:00/ }).first();
   const slotLabel = await initialSlot.getAttribute('aria-label');
   const slotDate = slotLabel?.match(/\d{4}-\d{2}-\d{2}/)?.[0];
@@ -508,14 +527,16 @@ test('navigates views with tabs and the command palette', async ({ page }) => {
   await seedAnchorTodo(page);
   await page.goto('/');
 
-  const listTab = page.getByRole('tab', { name: 'Lista' });
-  await listTab.focus();
-  await page.keyboard.press('ArrowRight');
+  await page.getByRole('button', { name: 'Planificación', exact: true }).click();
+  await page.getByRole('tab', { name: 'Semana' }).focus();
+  await page.keyboard.press('ArrowLeft');
+  await expect(page.getByRole('tab', { name: '3 días' })).toHaveAttribute('aria-selected', 'true');
+  await page.keyboard.press('ArrowLeft');
   await expect(page.getByRole('tab', { name: 'Hoy' })).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', 'todo-view-tab-today');
 
   await page.keyboard.press('End');
-  await expect(page.getByRole('tab', { name: 'Semana' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tab', { name: 'Mes' })).toHaveAttribute('aria-selected', 'true');
 
   await page.keyboard.press('Control+k');
   const palette = page.getByRole('dialog', { name: 'Paleta de comandos' });
@@ -523,7 +544,7 @@ test('navigates views with tabs and the command palette', async ({ page }) => {
   await page.keyboard.press('Enter');
 
   await expect(palette).not.toBeVisible();
-  await expect(page.getByRole('tab', { name: 'Calendario' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tab', { name: 'Mes' })).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByRole('grid', { name: /Calendario/ })).toBeVisible();
 });
 
@@ -563,7 +584,7 @@ test('omits one occurrence from a recurring schedule', async ({ page }) => {
   const displayDate = today.split('-').reverse().join('/');
 
   await expect(page.getByText('Cursar algebra')).toBeVisible();
-  await page.getByRole('tab', { name: 'Calendario' }).click();
+  await selectView(page, 'Calendario');
   const todayCell = page.getByRole('gridcell', { name: today });
   await todayCell.getByRole('button', { name: /Horario Diaria 10:00 a 12:00 Cursar algebra/ }).click();
 

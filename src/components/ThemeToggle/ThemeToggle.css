@@ -34,7 +34,9 @@
 
 @media (max-width: 560px) {
   .ThemeToggle {
-    position: static;
-    margin: 16px 16px 0 auto;
+    position: absolute;
+    margin: 0;
+    right: 12px;
+    top: 12px;
   }
 }
