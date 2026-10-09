@@ -93,7 +93,7 @@ describe('todoCalendarIcs', () => {
           startDate: '2026-08-08',
           endDate: null,
           startTime: '10:00',
-          endTime: null,
+          endTime: '12:00',
           recurrence: TODO_RECURRENCES.none,
         }),
         expect.objectContaining({
@@ -136,4 +136,3 @@ describe('todoCalendarIcs', () => {
     });
   });
 });
-

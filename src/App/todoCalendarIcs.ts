@@ -471,7 +471,7 @@ function readTodoFromIcsProperties(properties: Map<string, IcsProperty>, index: 
             ? recurrence.untilDate || endDate
             : endDate,
         startTime: start.time,
-        endTime: kind === TODO_KINDS.schedule ? end?.time : null,
+        endTime: kind === TODO_KINDS.schedule || kind === TODO_KINDS.event ? end?.time : null,
         recurrence: recurrence.recurrence,
         recurrenceDays: recurrence.recurrenceDays,
         recurrenceEndDate: recurrence.untilDate,

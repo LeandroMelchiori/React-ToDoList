@@ -511,10 +511,10 @@ function normalizeTodoTimes(details: {
     const startTime = normalizeTimeValue(details.startTime);
     const endTime = normalizeTimeValue(details.endTime);
 
-    if (kind === TODO_KINDS.schedule || dateType === TODO_DATE_TYPES.period) {
+    if (kind === TODO_KINDS.schedule || kind === TODO_KINDS.event || dateType === TODO_DATE_TYPES.period) {
         return {
             startTime,
-            endTime: startTime ? endTime : null,
+            endTime: startTime && endTime && (kind !== TODO_KINDS.event || endTime > startTime) ? endTime : null,
         };
     }
 
@@ -1569,7 +1569,128 @@ function applyTodosImport(existingTodos: Todo[], backup: unknown, mode: ImportMo
     };
 }
 
+type TodoScheduleChange = {
+    todoId: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    timeBlockId?: string;
+    occurrenceDate?: string;
+};
+
+type TodoScheduleUndo = {
+    before: Todo;
+    after: Todo;
+    createdTodo: Todo | null;
+};
+
+function getTodoPlanningSlot(todo: Todo, options: { date?: string | null; startTime?: string; timeBlockId?: string }) {
+    const block = todo.timeBlocks.find(item => item.id === options.timeBlockId);
+    const date = normalizeDueDate(options.date || block?.date || todo.startDate);
+    const originalStart = block?.startTime || todo.startTime || '09:00';
+    const originalEnd = block?.endTime || todo.endTime;
+    const startTime = normalizeTimeValue(options.startTime || originalStart);
+    if (!date || !isValidPlanningDate(date) || !startTime) return null;
+    const minutes = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3));
+    const duration = originalEnd && minutes(originalEnd) > minutes(originalStart)
+        ? minutes(originalEnd) - minutes(originalStart) : 60;
+    const end = Math.min(1439, minutes(startTime) + duration);
+    return { date, startTime, endTime: `${String(Math.floor(end / 60)).padStart(2, '0')}:${String(end % 60).padStart(2, '0')}` };
+}
+
+function isValidPlanningDate(date: string): boolean {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+    const parsed = new Date(`${date}T12:00:00`);
+    return Number.isFinite(parsed.getTime()) && getTodayDateValue(parsed) === date;
+}
+
+function getTodoCalendarState(todo: Todo) {
+    return {
+        dueDate: todo.dueDate,
+        startDate: todo.startDate,
+        endDate: todo.endDate,
+        startTime: todo.startTime,
+        endTime: todo.endTime,
+        timeBlocks: todo.timeBlocks,
+        excludedOccurrences: todo.excludedOccurrences,
+    };
+}
+
+function applyTodoScheduleChange(todos: Todo[], change: TodoScheduleChange):
+    { ok: true; todos: Todo[]; undo: TodoScheduleUndo } | { ok: false; error: string } {
+    const todo = todos.find(item => item.id === change.todoId);
+    if (!todo || todo.archivedAt || todo.completed) return { ok: false, error: 'El elemento ya no está disponible.' };
+    if (!isValidPlanningDate(change.date) || normalizeTimeValue(change.startTime) !== change.startTime ||
+        normalizeTimeValue(change.endTime) !== change.endTime || change.endTime <= change.startTime) {
+        return { ok: false, error: 'Elegí una fecha y un horario de fin posterior al inicio.' };
+    }
+
+    let after: Todo;
+    let createdTodo: Todo | null = null;
+    if (todo.kind === TODO_KINDS.task) {
+        if (change.timeBlockId && !todo.timeBlocks.some(block => block.id === change.timeBlockId)) {
+            return { ok: false, error: 'No encontramos ese bloque de trabajo.' };
+        }
+        if (todo.timeBlocks.some(block => block.id !== change.timeBlockId && block.date === change.date &&
+            block.startTime === change.startTime && block.endTime === change.endTime)) {
+            return { ok: false, error: 'Ese bloque ya está reservado.' };
+        }
+        const block = { id: change.timeBlockId || createTodoId(), date: change.date,
+            startTime: change.startTime, endTime: change.endTime };
+        after = { ...todo, timeBlocks: change.timeBlockId
+            ? todo.timeBlocks.map(item => item.id === change.timeBlockId ? block : item)
+            : [...todo.timeBlocks, block] };
+    } else if (todo.kind === TODO_KINDS.event || todo.kind === TODO_KINDS.schedule) {
+        if (todo.recurrence !== TODO_RECURRENCES.none) {
+            if (typeof change.occurrenceDate !== 'string' || !isValidPlanningDate(change.occurrenceDate) || !isTodoRecurringOnDate(todo, change.occurrenceDate)) {
+                return { ok: false, error: 'Elegí una fecha válida de la serie.' };
+            }
+            after = setTodoOccurrenceExcluded(todo, change.occurrenceDate, true);
+            createdTodo = createTodo(todo.text, { ...todo, startDate: change.date,
+                endDate: todo.kind === TODO_KINDS.schedule ? change.date : null,
+                startTime: change.startTime, endTime: change.endTime,
+                recurrence: TODO_RECURRENCES.none, recurrenceDays: [], recurrenceEndDate: null,
+                recurrenceCount: null, completedOccurrences: [], excludedOccurrences: [], order: todos.length });
+        } else {
+            const span = todo.startDate && todo.endDate ? getDateDiffInDays(todo.startDate, todo.endDate) : 0;
+            after = { ...todo, startDate: change.date,
+                endDate: todo.kind === TODO_KINDS.schedule ? getDateValueOffset(change.date, span) : null,
+                startTime: change.startTime, endTime: change.endTime };
+        }
+    } else {
+        return { ok: false, error: 'Los periodos se editan desde su detalle.' };
+    }
+    const nextTodos = todos.map(item => item.id === todo.id ? after : item);
+    if (createdTodo) nextTodos.push(createdTodo);
+    return { ok: true, todos: nextTodos, undo: { before: todo, after, createdTodo } };
+}
+
+function undoTodoScheduleChange(todos: Todo[], undo: TodoScheduleUndo):
+    { ok: true; todos: Todo[] } | { ok: false; error: string } {
+    const current = todos.find(todo => todo.id === undo.after.id);
+    const detached = undo.createdTodo && todos.find(todo => todo.id === undo.createdTodo?.id);
+    // Undo only its calendar fields; later edits to notes or completion must survive.
+    if (!current || JSON.stringify(getTodoCalendarState(current)) !== JSON.stringify(getTodoCalendarState(undo.after)) ||
+        (undo.createdTodo && JSON.stringify(detached) !== JSON.stringify(undo.createdTodo))) {
+        return { ok: false, error: 'El horario cambió después. No se puede deshacer este cambio.' };
+    }
+    return { ok: true, todos: reindexTodos(todos
+        .filter(todo => todo.id !== undo.createdTodo?.id)
+        .map(todo => todo.id === current.id ? { ...todo, ...getTodoCalendarState(undo.before) } : todo)) };
+}
+
+function getTodoPlanningCategory(todo: Pick<Todo, 'project'>): 'work' | 'study' | 'personal' | 'other' {
+    const project = (todo.project || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    if (/^(trabajo|work|laboral)$/.test(project)) return 'work';
+    if (/^(estudio|study|facultad|universidad)$/.test(project)) return 'study';
+    return !project || project === 'personal' ? 'personal' : 'other';
+}
+
 export {
+    getTodoPlanningSlot,
+    applyTodoScheduleChange,
+    undoTodoScheduleChange,
+    getTodoPlanningCategory,
     TODO_DATE_TYPES,
     TODO_FILTERS,
     TODO_BACKUP_VERSION,
@@ -1634,6 +1755,8 @@ export {
 };
 
 export type {
+    TodoScheduleChange,
+    TodoScheduleUndo,
     ImportMode,
     Todo,
     TodoBackup,

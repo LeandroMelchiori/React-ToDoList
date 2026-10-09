@@ -12,6 +12,8 @@ import {
     analyzeTodosImport,
     applyTodosImport,
     createTodo,
+    applyTodoScheduleChange,
+    undoTodoScheduleChange,
     getTodoFacets,
     getTodoFilterCounts,
     getTodoGroups,
@@ -76,6 +78,8 @@ import type {
     Todo,
     TodoDetails,
     TodoFilter,
+    TodoScheduleChange,
+    TodoScheduleUndo,
 } from './todoModel';
 import type { TodoBoard } from './todoBoards';
 import type { TodoSavedView } from './todoSavedViews';
@@ -207,6 +211,7 @@ function useTodos() {
 
     const [recentlyDeletedTodo, setRecentlyDeletedTodo] =
      React.useState<Todo | null>(null);
+    const [calendarUndo, setCalendarUndo] = React.useState<(TodoScheduleUndo & { boardId: string }) | null>(null);
 
     const normalizedTodos = normalizeTodos(todos);
     const normalizedStoredBoards = normalizeTodoBoards(storedBoards);
@@ -746,6 +751,42 @@ function useTodos() {
 
         return { ok: true };
     }
+
+    const changeTodoSchedule = (change: TodoScheduleChange): TodoActionResult => {
+        const result = applyTodoScheduleChange(normalizedTodos, change);
+        if (!result.ok) return result;
+        saveActiveTodos(result.todos);
+        setCalendarUndo({ ...result.undo, boardId: activeBoardId });
+        return { ok: true };
+    };
+    const checkScheduleChange = (change: TodoScheduleChange): TodoScheduleConflictMatch[] => {
+        const result = applyTodoScheduleChange(normalizedTodos, change);
+        if (!result.ok) return [];
+        let candidate = result.undo.createdTodo || result.undo.after;
+        let sources = result.todos.filter(todo => !todo.archivedAt && !todo.completed);
+        if (candidate.kind === TODO_KINDS.task) {
+            const changedBlock = change.timeBlockId
+                ? candidate.timeBlocks.find(block => block.id === change.timeBlockId)
+                : candidate.timeBlocks[candidate.timeBlocks.length - 1];
+            sources = sources.map(todo => todo.id === candidate.id
+                ? { ...todo, timeBlocks: todo.timeBlocks.filter(block => block.id !== changedBlock?.id) } : todo);
+            candidate = { ...candidate, id: `preview-${candidate.id}`, dueDate: null, startTime: null,
+                endTime: null, recurrence: TODO_RECURRENCES.none, timeBlocks: changedBlock ? [changedBlock] : [] };
+        }
+        return getTodoScheduleConflictMatches(sources, candidate);
+    };
+    const undoScheduleChange = (): TodoActionResult => {
+        if (!calendarUndo || calendarUndo.boardId !== activeBoardId) {
+            setCalendarUndo(null);
+            return { ok: false, error: 'El cambio pertenece a otro espacio.' };
+        }
+        const result = undoTodoScheduleChange(normalizedTodos, calendarUndo);
+        setCalendarUndo(null);
+        if (!result.ok) return result;
+        saveActiveTodos(result.todos);
+        return { ok: true };
+    };
+    const dismissScheduleUndo = React.useCallback(() => setCalendarUndo(null), []);
 
     const updateTodo = (id: string, text: string, details: TodoDetails = {}): TodoActionResult => {
         const trimmedText = text.trim();
@@ -1347,6 +1388,7 @@ function useTodos() {
         editingOccurrenceDate,
         deletingTodo,
         recentlyDeletedTodo,
+        calendarUndoMessage: calendarUndo?.boardId === activeBoardId ? `Actualizaste el horario de "${calendarUndo.before.text}".` : '',
     }
 
     const stateUpdaters = {
@@ -1390,6 +1432,10 @@ function useTodos() {
         closeModal,
         addTodo,
         updateTodo,
+        changeTodoSchedule,
+        checkScheduleChange,
+        undoScheduleChange,
+        dismissScheduleUndo,
         updateTodoOccurrence,
         exportTodos,
         exportCalendar,
