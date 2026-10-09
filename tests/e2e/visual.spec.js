@@ -53,6 +53,11 @@ async function openVisualFixture(page, viewport) {
   await page.addInitScript((todos) => {
     localStorage.clear();
     localStorage.setItem('THEME_V1', 'light');
+    localStorage.setItem('TODO_SETTINGS_V2', JSON.stringify({
+      defaultView: 'list',
+      density: 'comfortable',
+      showQuickAdd: true,
+    }));
     localStorage.setItem('TODOS_V1', JSON.stringify(todos));
   }, visualTodos);
   await page.goto('/');
