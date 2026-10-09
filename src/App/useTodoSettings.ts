@@ -9,9 +9,10 @@ type TodoSettings = {
   showQuickAdd: boolean;
 };
 
-const TODO_SETTINGS_STORAGE_KEY = 'TODO_SETTINGS_V1';
+const TODO_SETTINGS_STORAGE_KEY = 'TODO_SETTINGS_V2';
+const LEGACY_TODO_SETTINGS_STORAGE_KEY = 'TODO_SETTINGS_V1';
 const DEFAULT_TODO_SETTINGS: TodoSettings = {
-  defaultView: 'list',
+  defaultView: 'agenda',
   density: 'comfortable',
   showQuickAdd: true,
 };
@@ -43,9 +44,23 @@ function readTodoSettings(): TodoSettings {
   try {
     const storedSettings = localStorage.getItem(TODO_SETTINGS_STORAGE_KEY);
 
-    return storedSettings
-      ? normalizeTodoSettings(JSON.parse(storedSettings))
-      : DEFAULT_TODO_SETTINGS;
+    if (storedSettings) {
+      return normalizeTodoSettings(JSON.parse(storedSettings));
+    }
+
+    const legacySettings = localStorage.getItem(LEGACY_TODO_SETTINGS_STORAGE_KEY);
+
+    if (!legacySettings) {
+      return DEFAULT_TODO_SETTINGS;
+    }
+
+    const normalizedLegacySettings = normalizeTodoSettings(JSON.parse(legacySettings));
+
+    return {
+      ...DEFAULT_TODO_SETTINGS,
+      density: normalizedLegacySettings.density,
+      showQuickAdd: normalizedLegacySettings.showQuickAdd,
+    };
   } catch {
     return DEFAULT_TODO_SETTINGS;
   }
