@@ -200,6 +200,10 @@
   min-width: 980px;
 }
 
+.TodoWeekCalendar-row {
+  display: contents;
+}
+
 .TodoWeekCalendar-corner,
 .TodoWeekCalendar-dayHeader,
 .TodoWeekCalendar-hour,
