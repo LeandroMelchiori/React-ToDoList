@@ -688,6 +688,14 @@ function App() {
                     loading={loading}
                     visibleTodos={visibleTodos}
                     totalTodos={totalTodos}
+                    onCreateTodoForSlot={(dateValue, hour) => launchCreateTodo({
+                        kind: 'schedule',
+                        startDate: dateValue,
+                        endDate: dateValue,
+                        startTime: `${String(hour).padStart(2, '0')}:00`,
+                        endTime: hour < 23 ? `${String(hour + 1).padStart(2, '0')}:00` : '23:59',
+                        recurrence: 'none',
+                    })}
                     onEditTodo={startViewingTodo}
                     onError={() => <TodosError />}
                     onLoading={() => <TodosLoading />}
