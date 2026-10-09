@@ -564,23 +564,25 @@ function TodoWeekCalendar({
 
           <div className="TodoWeekCalendar-scroller">
             <div className="TodoWeekCalendar-grid" role="grid" aria-label={`Agenda semanal ${weekLabel}`}>
-              <div className="TodoWeekCalendar-corner" aria-hidden="true" />
-              {weekDays.map(day => (
-                <div
-                  className={[
-                    'TodoWeekCalendar-dayHeader',
-                    day.isToday ? 'TodoWeekCalendar-dayHeader--today' : '',
-                  ].filter(Boolean).join(' ')}
-                  role="columnheader"
-                  key={day.dateValue}
-                >
-                  <span>{day.dayName}</span>
-                  <time dateTime={day.dateValue}>{formatShortDate(day.dateValue)}</time>
-                </div>
-              ))}
+              <div className="TodoWeekCalendar-row" role="row">
+                <div className="TodoWeekCalendar-corner" role="columnheader" aria-label="Hora" />
+                {weekDays.map(day => (
+                  <div
+                    className={[
+                      'TodoWeekCalendar-dayHeader',
+                      day.isToday ? 'TodoWeekCalendar-dayHeader--today' : '',
+                    ].filter(Boolean).join(' ')}
+                    role="columnheader"
+                    key={day.dateValue}
+                  >
+                    <span>{day.dayName}</span>
+                    <time dateTime={day.dateValue}>{formatShortDate(day.dateValue)}</time>
+                  </div>
+                ))}
+              </div>
 
               {hourSlots.map(hour => (
-                <React.Fragment key={hour}>
+                <div className="TodoWeekCalendar-row" role="row" key={hour}>
                   <div className="TodoWeekCalendar-hour" role="rowheader">
                     {formatHourSlot(hour)}
                   </div>
@@ -664,7 +666,7 @@ function TodoWeekCalendar({
                       </div>
                     );
                   })}
-                </React.Fragment>
+                </div>
               ))}
             </div>
           </div>
