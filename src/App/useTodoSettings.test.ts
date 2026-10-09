@@ -2,6 +2,10 @@ import { describe, expect, test } from 'vitest';
 import { DEFAULT_TODO_SETTINGS, normalizeTodoSettings } from './useTodoSettings';
 
 describe('todo settings', () => {
+  test('uses planning as the default workspace view', () => {
+    expect(DEFAULT_TODO_SETTINGS.defaultView).toBe('agenda');
+  });
+
   test('normalizes persisted preferences', () => {
     expect(normalizeTodoSettings({
       defaultView: 'agenda',
