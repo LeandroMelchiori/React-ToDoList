@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'taskflow-shell-';
-const CACHE_NAME = `${CACHE_PREFIX}v3`;
+const CACHE_NAME = `${CACHE_PREFIX}v4`;
 const MANIFEST_CACHE_KEY = '/__taskflow_asset_manifest__';
 const CORE_ASSETS = [
   '/',
