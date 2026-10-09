@@ -50,6 +50,11 @@ function toTimeInputValue(date) {
 describe('App', () => {
   beforeEach(() => {
     localStorage.clear();
+    localStorage.setItem('TODO_SETTINGS_V2', JSON.stringify({
+      defaultView: 'list',
+      density: 'comfortable',
+      showQuickAdd: true,
+    }));
     document.body.innerHTML = '';
     delete document.documentElement.dataset.theme;
     Object.defineProperty(window.navigator, 'onLine', {
@@ -1595,7 +1600,7 @@ describe('App', () => {
 
     await user.selectOptions(screen.getByLabelText('Vista inicial'), 'calendar');
     expect(screen.getByRole('tab', { name: 'Calendario' })).toHaveAttribute('aria-selected', 'true');
-    expect(JSON.parse(localStorage.getItem('TODO_SETTINGS_V1'))).toEqual({
+    expect(JSON.parse(localStorage.getItem('TODO_SETTINGS_V2'))).toEqual({
       defaultView: 'calendar',
       density: 'compact',
       showQuickAdd: false,
