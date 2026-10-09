@@ -64,6 +64,21 @@ describe('getTodoAgendaEntries', () => {
     expect(getUnscheduledAgendaTodos(todos, '2026-10-08').map(todo => todo.id)).toEqual(['unscheduled']);
   });
 
+  test('projects the next weekly due date for a recurring task', () => {
+    const entries = getTodoAgendaEntries([
+      {
+        ...baseTodo,
+        id: 'weekly-task',
+        text: 'Preparar demo',
+        dueDate: '2026-07-20',
+        recurrence: 'weekly',
+      },
+    ], '2026-10-09');
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0].dateValue).toBe('2026-10-12');
+  });
+
   test('includes the next occurrence of recurring todos', () => {
     const entries = getTodoAgendaEntries([
       {
