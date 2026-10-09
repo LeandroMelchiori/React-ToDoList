@@ -200,6 +200,10 @@
   min-width: 980px;
 }
 
+.TodoWeekCalendar-row {
+  display: contents;
+}
+
 .TodoWeekCalendar-corner,
 .TodoWeekCalendar-dayHeader,
 .TodoWeekCalendar-hour,
@@ -487,4 +491,23 @@
   .TodoWeekCalendar-allDay {
     grid-template-columns: repeat(7, minmax(112px, 1fr));
   }
+}
+
+
+.TodoWeekCalendar--embedded {
+  margin: 0;
+  max-width: none;
+  padding-bottom: 0;
+}
+
+.TodoWeekCalendar--embedded .TodoWeekCalendar-header {
+  margin-bottom: 12px;
+}
+
+.TodoWeekCalendar--embedded .TodoWeekCalendar-header h2 {
+  font-size: 20px;
+}
+
+.TodoWeekCalendar--embedded .TodoWeekCalendar-emptyWeek {
+  margin-bottom: 0;
 }

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import type { Todo } from '../../App/todoModel';
-import { getTodoAgendaEntries } from './TodoAgenda';
+import { getTodoAgendaEntries, getUnscheduledAgendaTodos } from './TodoAgenda';
 
 const baseTodo: Todo = {
   completed: false,
@@ -41,6 +41,42 @@ describe('getTodoAgendaEntries', () => {
     ], '2026-10-08');
 
     expect(entries.map(entry => entry.todo.text)).toEqual(['Parcial 1', 'Parcial 2']);
+  });
+
+  test('keeps only pending tasks without dates in the unscheduled column', () => {
+    const todos = [
+      { ...baseTodo, id: 'unscheduled', text: 'Actualizar portfolio' },
+      { ...baseTodo, id: 'dated', text: 'Parcial', dueDate: '2026-10-12' },
+      { ...baseTodo, id: 'done', text: 'Finalizada', completed: true },
+      {
+        ...baseTodo,
+        id: 'blocked',
+        text: 'Preparar demo',
+        timeBlocks: [{
+          id: 'block-1',
+          date: '2026-10-10',
+          startTime: '18:00',
+          endTime: '19:00',
+        }],
+      },
+    ];
+
+    expect(getUnscheduledAgendaTodos(todos, '2026-10-08').map(todo => todo.id)).toEqual(['unscheduled']);
+  });
+
+  test('projects the next weekly due date for a recurring task', () => {
+    const entries = getTodoAgendaEntries([
+      {
+        ...baseTodo,
+        id: 'weekly-task',
+        text: 'Preparar demo',
+        dueDate: '2026-07-20',
+        recurrence: 'weekly',
+      },
+    ], '2026-10-09');
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0].dateValue).toBe('2026-10-12');
   });
 
   test('includes the next occurrence of recurring todos', () => {

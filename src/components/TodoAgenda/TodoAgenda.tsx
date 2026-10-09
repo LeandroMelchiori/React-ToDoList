@@ -1,12 +1,13 @@
-import React, { ReactNode } from 'react';
+import React from 'react';
+import type { ReactNode } from 'react';
 import {
   TODO_KINDS,
   TODO_RECURRENCES,
-  Todo,
-  TodoKind,
   getTodoNextRecurringDate,
 } from '../../App/todoModel';
+import type { Todo, TodoKind } from '../../App/todoModel';
 import { getTodoScheduleRange } from '../TodoCalendar/TodoCalendar';
+import { TodoWeekCalendar } from '../TodoWeekCalendar/TodoWeekCalendar';
 import './TodoAgenda.css';
 
 type TodoAgendaEntry = {
@@ -23,6 +24,7 @@ type TodoAgendaEntry = {
 interface TodoAgendaProps {
   error?: boolean;
   loading?: boolean;
+  onCreateTodoForSlot?: (dateValue: string, hour: number) => void;
   onEditTodo: (id: string, occurrenceDate?: string) => void;
   onEmptySearchResults: () => ReactNode;
   onEmptyTodos: () => ReactNode;
@@ -55,7 +57,6 @@ function formatAgendaDate(dateValue: string): string {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
-    year: 'numeric',
   }).format(date);
 }
 
@@ -67,6 +68,10 @@ function formatShortDate(dateValue: string): string {
 
 function getTodoAgendaEntries(todos: Todo[], todayDate = toDateValue(new Date())): TodoAgendaEntry[] {
   const entries = todos.flatMap<TodoAgendaEntry>(todo => {
+    if (todo.archivedAt || (todo.kind === TODO_KINDS.task && todo.completed)) {
+      return [];
+    }
+
     const todoEntries: TodoAgendaEntry[] = [];
 
     (todo.timeBlocks || [])
@@ -129,9 +134,26 @@ function getTodoAgendaEntries(todos: Todo[], todayDate = toDateValue(new Date())
   });
 }
 
+function getUnscheduledAgendaTodos(todos: Todo[], todayDate = toDateValue(new Date())): Todo[] {
+  return todos
+    .filter(todo => {
+      const hasFutureTimeBlock = (todo.timeBlocks || []).some(timeBlock => timeBlock.date >= todayDate);
+
+      return (
+        todo.kind === TODO_KINDS.task &&
+        !todo.completed &&
+        !todo.archivedAt &&
+        !getTodoScheduleRange(todo) &&
+        !hasFutureTimeBlock
+      );
+    })
+    .sort((first, second) => first.order - second.order);
+}
+
 function TodoAgenda({
   error,
   loading,
+  onCreateTodoForSlot,
   onEditTodo,
   onEmptySearchResults,
   onEmptyTodos,
@@ -141,6 +163,10 @@ function TodoAgenda({
   visibleTodos,
 }: TodoAgendaProps) {
   const entries = React.useMemo(() => getTodoAgendaEntries(visibleTodos), [visibleTodos]);
+  const unscheduledTodos = React.useMemo(
+    () => getUnscheduledAgendaTodos(visibleTodos),
+    [visibleTodos],
+  );
   const groupedEntries = React.useMemo(() => {
     const groups = new Map<string, TodoAgendaEntry[]>();
 
@@ -152,62 +178,140 @@ function TodoAgenda({
   }, [entries]);
 
   return (
-    <section className="TodoAgenda" id="todo-list" tabIndex={-1} aria-label="Agenda cronologica">
+    <section className="TodoAgenda" id="todo-list" tabIndex={-1} aria-label="Planificacion personal">
       {error && onError()}
       {loading && onLoading()}
-      {!loading && !totalTodos && onEmptyTodos()}
-      {!!totalTodos && !visibleTodos.length && onEmptySearchResults()}
 
-      {!loading && !error && !!visibleTodos.length && (
+      {!loading && !error && (
         <>
-          <header className="TodoAgenda-header">
+          <header className="TodoAgenda-overviewHeader">
             <div>
-              <p>Proximos compromisos</p>
-              <h2>Agenda cronologica</h2>
+              <p>Tu planificación</p>
+              <h2>Planificación</h2>
+              <span>Semana, próximos compromisos y pendientes sin fecha en una sola vista.</span>
             </div>
-            <span>{entries.length === 1 ? '1 proximo' : `${entries.length} proximos`}</span>
+            <div className="TodoAgenda-overviewStats" aria-label="Resumen de planificacion">
+              <span><strong>{entries.length}</strong> con fecha</span>
+              <span><strong>{unscheduledTodos.length}</strong> sin fecha</span>
+            </div>
           </header>
 
-          {entries.length === 0 ? (
-            <p className="TodoAgenda-empty">No hay proximos elementos con fecha.</p>
-          ) : (
-            <div className="TodoAgenda-groups">
-              {groupedEntries.map(([dateValue, dayEntries]) => (
-                <section className="TodoAgenda-day" key={dateValue}>
-                  <h3><time dateTime={dateValue}>{formatAgendaDate(dateValue)}</time></h3>
-                  <ul>
-                    {dayEntries.map(entry => {
-                      const isPeriod = entry.todo.kind === TODO_KINDS.period && entry.endDate && entry.endDate !== entry.dateValue;
-                      const timeLabel = entry.startTime
-                        ? entry.endTime
-                          ? `${entry.startTime} - ${entry.endTime}`
-                          : entry.startTime
-                        : 'Sin horario';
+          <section className="TodoAgenda-weekPanel" aria-label="Plan semanal">
+            <TodoWeekCalendar
+              embedded
+              error={false}
+              loading={false}
+              onCreateTodoForSlot={onCreateTodoForSlot}
+              onEditTodo={onEditTodo}
+              onEmptySearchResults={() => null}
+              onEmptyTodos={() => null}
+              onError={() => null}
+              onLoading={() => null}
+              renderWhenEmpty
+              showUnscheduled={false}
+              totalTodos={totalTodos}
+              visibleTodos={visibleTodos}
+            />
+          </section>
 
-                      return (
-                        <li key={entry.id}>
-                          <button
-                            className="TodoAgenda-item"
-                            type="button"
-                            onClick={() => onEditTodo(entry.todo.id, entry.occurrenceDate || undefined)}
-                          >
-                            <span className="TodoAgenda-time">{timeLabel}</span>
-                            <span className="TodoAgenda-content">
-                              <strong>{entry.todo.text}</strong>
-                              <small>
-                                {entry.source === 'timeBlock'
-                                  ? 'Bloque de trabajo'
-                                  : TODO_KIND_LABELS[entry.todo.kind]}
-                                {isPeriod && entry.endDate ? ` · hasta ${formatShortDate(entry.endDate)}` : ''}
-                              </small>
-                            </span>
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </section>
-              ))}
+          {!!totalTodos && !visibleTodos.length && (
+            <div className="TodoAgenda-filterEmpty">
+              {onEmptySearchResults()}
+            </div>
+          )}
+
+          <div className="TodoAgenda-dashboardGrid">
+            <section className="TodoAgenda-panel" aria-labelledby="todo-agenda-upcoming-title">
+              <header className="TodoAgenda-panelHeader">
+                <div>
+                  <p>Orden cronológico</p>
+                  <h3 id="todo-agenda-upcoming-title">Próximos</h3>
+                </div>
+                <span>{entries.length}</span>
+              </header>
+
+              {groupedEntries.length === 0 ? (
+                <p className="TodoAgenda-empty">No hay próximos elementos con fecha.</p>
+              ) : (
+                <div className="TodoAgenda-groups">
+                  {groupedEntries.map(([dateValue, dayEntries]) => (
+                    <section className="TodoAgenda-day" key={dateValue}>
+                      <h4><time dateTime={dateValue}>{formatAgendaDate(dateValue)}</time></h4>
+                      <ul>
+                        {dayEntries.map(entry => {
+                          const isPeriod = (
+                            entry.todo.kind === TODO_KINDS.period &&
+                            entry.endDate &&
+                            entry.endDate !== entry.dateValue
+                          );
+                          const timeLabel = entry.startTime
+                            ? entry.endTime
+                              ? `${entry.startTime} - ${entry.endTime}`
+                              : entry.startTime
+                            : 'Sin horario';
+
+                          return (
+                            <li key={entry.id}>
+                              <button
+                                className="TodoAgenda-item"
+                                type="button"
+                                onClick={() => onEditTodo(entry.todo.id, entry.occurrenceDate || undefined)}
+                              >
+                                <span className="TodoAgenda-time">{timeLabel}</span>
+                                <span className="TodoAgenda-content">
+                                  <strong>{entry.todo.text}</strong>
+                                  <small>
+                                    {entry.source === 'timeBlock'
+                                      ? 'Bloque de trabajo'
+                                      : TODO_KIND_LABELS[entry.todo.kind]}
+                                    {isPeriod && entry.endDate ? ` · hasta ${formatShortDate(entry.endDate)}` : ''}
+                                  </small>
+                                </span>
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </section>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <aside className="TodoAgenda-panel TodoAgenda-unscheduled" aria-labelledby="todo-agenda-unscheduled-title">
+              <header className="TodoAgenda-panelHeader">
+                <div>
+                  <p>Sin calendario</p>
+                  <h3 id="todo-agenda-unscheduled-title">Pendientes sin fecha</h3>
+                </div>
+                <span>{unscheduledTodos.length}</span>
+              </header>
+
+              {unscheduledTodos.length === 0 ? (
+                <p className="TodoAgenda-empty">
+                  No tenés pendientes sin fecha. Lo que tenga día u horario aparecerá en la planificación.
+                </p>
+              ) : (
+                <ul className="TodoAgenda-unscheduledList">
+                  {unscheduledTodos.map(todo => (
+                    <li key={todo.id}>
+                      <button type="button" onClick={() => onEditTodo(todo.id)}>
+                        <span>
+                          <strong>{todo.text}</strong>
+                          <small>Sin fecha asignada</small>
+                        </span>
+                        <span aria-hidden="true">→</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </aside>
+          </div>
+
+          {!totalTodos && (
+            <div className="TodoAgenda-onboarding">
+              {onEmptyTodos()}
             </div>
           )}
         </>
@@ -216,4 +320,4 @@ function TodoAgenda({
   );
 }
 
-export { TodoAgenda, getTodoAgendaEntries };
+export { TodoAgenda, getTodoAgendaEntries, getUnscheduledAgendaTodos };

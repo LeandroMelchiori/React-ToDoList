@@ -84,6 +84,7 @@ type TodoTimedLayoutEntry = {
 };
 
 interface TodoWeekCalendarProps {
+  embedded?: boolean;
   error?: boolean;
   loading?: boolean;
   onEditTodo: (id: string, occurrenceDate?: string) => void;
@@ -92,6 +93,8 @@ interface TodoWeekCalendarProps {
   onEmptyTodos: () => ReactNode;
   onError: () => ReactNode;
   onLoading: () => ReactNode;
+  renderWhenEmpty?: boolean;
+  showUnscheduled?: boolean;
   totalTodos: number;
   visibleTodos: Todo[];
 }
@@ -402,6 +405,7 @@ function formatHourSlot(hour: number): string {
 }
 
 function TodoWeekCalendar({
+  embedded = false,
   error,
   loading,
   onEditTodo,
@@ -410,6 +414,8 @@ function TodoWeekCalendar({
   onEmptyTodos,
   onError,
   onLoading,
+  renderWhenEmpty = false,
+  showUnscheduled = true,
   totalTodos,
   visibleTodos,
 }: TodoWeekCalendarProps) {
@@ -440,23 +446,23 @@ function TodoWeekCalendar({
 
   return (
     <section
-      className="TodoWeekCalendar"
-      id="todo-list"
-      tabIndex={-1}
+      className={embedded ? 'TodoWeekCalendar TodoWeekCalendar--embedded' : 'TodoWeekCalendar'}
+      id={embedded ? undefined : 'todo-list'}
+      tabIndex={embedded ? undefined : -1}
       aria-label="Agenda semanal"
     >
       {error && onError()}
       {loading && onLoading()}
 
-      {!loading && !totalTodos && onEmptyTodos()}
+      {!renderWhenEmpty && !loading && !totalTodos && onEmptyTodos()}
 
-      {(!!totalTodos && !visibleTodos.length) && onEmptySearchResults()}
+      {!renderWhenEmpty && (!!totalTodos && !visibleTodos.length) && onEmptySearchResults()}
 
-      {!loading && !error && !!visibleTodos.length && (
+      {!loading && !error && (renderWhenEmpty || !!visibleTodos.length) && (
         <>
           <div className="TodoWeekCalendar-header">
             <div>
-              <p>Agenda semanal</p>
+              <p>{embedded ? 'Esta semana' : 'Agenda semanal'}</p>
               <h2>{weekLabel}</h2>
             </div>
             <div className="TodoWeekCalendar-actions">
@@ -558,23 +564,25 @@ function TodoWeekCalendar({
 
           <div className="TodoWeekCalendar-scroller">
             <div className="TodoWeekCalendar-grid" role="grid" aria-label={`Agenda semanal ${weekLabel}`}>
-              <div className="TodoWeekCalendar-corner" aria-hidden="true" />
-              {weekDays.map(day => (
-                <div
-                  className={[
-                    'TodoWeekCalendar-dayHeader',
-                    day.isToday ? 'TodoWeekCalendar-dayHeader--today' : '',
-                  ].filter(Boolean).join(' ')}
-                  role="columnheader"
-                  key={day.dateValue}
-                >
-                  <span>{day.dayName}</span>
-                  <time dateTime={day.dateValue}>{formatShortDate(day.dateValue)}</time>
-                </div>
-              ))}
+              <div className="TodoWeekCalendar-row" role="row">
+                <div className="TodoWeekCalendar-corner" role="columnheader" aria-label="Hora" />
+                {weekDays.map(day => (
+                  <div
+                    className={[
+                      'TodoWeekCalendar-dayHeader',
+                      day.isToday ? 'TodoWeekCalendar-dayHeader--today' : '',
+                    ].filter(Boolean).join(' ')}
+                    role="columnheader"
+                    key={day.dateValue}
+                  >
+                    <span>{day.dayName}</span>
+                    <time dateTime={day.dateValue}>{formatShortDate(day.dateValue)}</time>
+                  </div>
+                ))}
+              </div>
 
               {hourSlots.map(hour => (
-                <React.Fragment key={hour}>
+                <div className="TodoWeekCalendar-row" role="row" key={hour}>
                   <div className="TodoWeekCalendar-hour" role="rowheader">
                     {formatHourSlot(hour)}
                   </div>
@@ -658,7 +666,7 @@ function TodoWeekCalendar({
                       </div>
                     );
                   })}
-                </React.Fragment>
+                </div>
               ))}
             </div>
           </div>
@@ -669,7 +677,7 @@ function TodoWeekCalendar({
             </p>
           )}
 
-          {unscheduledTodos.length > 0 && (
+          {showUnscheduled && unscheduledTodos.length > 0 && (
             <aside className="TodoWeekCalendar-sideList" aria-label="Elementos sin fecha">
               <h3>Sin fecha</h3>
               <ul>

@@ -10,6 +10,16 @@ function getBoardSwitcher(page) {
   return page.getByRole('group', { name: 'Cambiar tablero' });
 }
 
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('TODO_SETTINGS_V2', JSON.stringify({
+      defaultView: 'list',
+      density: 'comfortable',
+      showQuickAdd: true,
+    }));
+  });
+});
+
 async function seedAnchorTodo(page) {
   await page.addInitScript(() => {
     localStorage.setItem('TODOS_V1', JSON.stringify([{
@@ -68,8 +78,10 @@ test('manages a todo through the production flow', async ({ page }) => {
   await expect(page.getByRole('button', { name: /Limite Semanal Preparar demo del proyecto/ }).first()).toBeVisible();
 
   await page.getByRole('tab', { name: 'Agenda' }).click();
-  await expect(page.getByRole('heading', { name: 'Agenda cronologica' })).toBeVisible();
-  await expect(page.getByText('Preparar demo del proyecto')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Planificación' })).toBeVisible();
+  await expect(page.getByLabel('Plan semanal')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Próximos' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Pendientes sin fecha' })).toBeVisible();
   await page.getByRole('tab', { name: 'Lista' }).click();
 
   await page.getByRole('button', { name: 'Filtrar por etiqueta frontend' }).click();

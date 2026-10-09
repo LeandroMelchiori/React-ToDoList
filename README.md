@@ -36,6 +36,7 @@ TaskFlow comenzó como una lista de tareas y evolucionó hacia un workspace de p
 - Funciona como PWA.
 - Mantiene compatibilidad con versiones antiguas de los datos.
 - Ofrece varias formas de visualizar la misma información.
+- Usa Planificación como vista inicial del workspace para concentrar semana, próximos y pendientes.
 - Incluye pruebas automáticas de comportamiento y accesibilidad.
 
 ---
@@ -72,7 +73,8 @@ TaskFlow comenzó como una lista de tareas y evolucionó hacia un workspace de p
 - Vista Hoy.
 - Calendario mensual.
 - Agenda semanal con grilla horaria.
-- Agenda cronologica de proximos compromisos ordenada por fecha y hora.
+- Vista de Planificación que combina la semana, próximos compromisos y pendientes sin fecha.
+- Agenda cronológica de próximos compromisos ordenada por fecha y hora.
 - Tablero visual por estado.
 - Resumen del elemento actual o próximo según su horario.
 - Compactación de recurrencias diarias para evitar saturar el calendario.
