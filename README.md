@@ -182,27 +182,24 @@ Las vistas de calendario y planificación se cargan de forma diferida. Esto mant
 
 ```text
 src/
-├── App/
+├── app/                       # Composición, tema, PWA y estilos globales
 │   ├── App.tsx
-│   ├── todoModel.ts
-│   ├── todoStorage.ts
-│   ├── todoBoards.ts
-│   ├── todoSavedViews.ts
-│   ├── todoWorkspaceBackup.ts
-│   ├── useTodos.ts
-│   ├── useLocalStorage.ts
-│   ├── usePwaStatus.ts
-│   └── useTheme.ts
-├── components/
-│   ├── TodoList/
-│   ├── TodoToday/
-│   ├── TodoBoardView/
-│   ├── TodoCalendar/
-│   ├── TodoWeekCalendar/
-│   ├── Modal/
-│   ├── PwaStatus/
-│   └── UndoToast/
-└── serviceWorkerRegistration.ts
+│   └── architecture.test.js   # Límites de dependencia entre módulos
+├── features/
+│   ├── calendars/             # Workspace, componentes y hooks de agenda
+│   ├── sync/                  # Persistencia local y cambios externos
+│   ├── account/               # Alcance definido; implementación pendiente
+│   ├── friendships/           # Alcance definido; implementación pendiente
+│   ├── groups/                # Alcance definido; implementación pendiente
+│   └── meetings/              # Alcance definido; implementación pendiente
+├── shared/
+│   ├── calendar/              # Modelo, recurrencias, ICS y backups puros
+│   ├── hooks/
+│   └── ui/                    # Modal, iconos, comandos y avisos reutilizables
+├── server/
+│   ├── modules/               # Dominios de backend y sus entradas públicas
+│   └── contracts/             # Tests del contrato OpenAPI
+└── index.tsx
 
 public/
 ├── manifest.json
@@ -212,6 +209,8 @@ public/
 tests/
 └── e2e/
 ```
+
+La arquitectura por funcionalidades y sus límites se describen en [docs/architecture.md](docs/architecture.md). La preparación multiusuario está en [docs/backend/architecture.md](docs/backend/architecture.md); autenticación, API HTTP y base remota todavía no están activadas.
 
 ---
 

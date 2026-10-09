@@ -1,0 +1,78 @@
+import React from 'react';
+import { TodoDetails } from '../../../../../shared/calendar/todoModel';
+import { parseTodoQuickAdd } from '../../../../../shared/calendar/todoQuickAdd';
+import './TodoQuickAdd.css';
+
+type TodoActionResult = { ok: true } | { ok: false; error: string };
+
+interface TodoQuickAddProps {
+  compact?: boolean;
+  loading?: boolean;
+  onAddTodo: (text: string, details: TodoDetails) => TodoActionResult;
+}
+
+function TodoQuickAdd({ compact = false, loading = false, onAddTodo }: TodoQuickAddProps) {
+  const [value, setValue] = React.useState('');
+  const [error, setError] = React.useState('');
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const parsedTodo = React.useMemo(() => parseTodoQuickAdd(value), [value]);
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!parsedTodo.text) {
+      setError('Escribe el nombre de la tarea.');
+      inputRef.current?.focus();
+      return;
+    }
+
+    const result = onAddTodo(parsedTodo.text, parsedTodo.details);
+
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+
+    setValue('');
+    setError('');
+    inputRef.current?.focus();
+  };
+
+  return (
+    <form className={`TodoQuickAdd ${compact ? 'TodoQuickAdd--compact' : ''}`} onSubmit={handleSubmit}>
+      <label htmlFor="todo-quick-add">Agregar rapido</label>
+      <div className="TodoQuickAdd-row">
+        <input
+          id="todo-quick-add"
+          ref={inputRef}
+          type="text"
+          value={value}
+          disabled={loading}
+          placeholder={compact ? 'Agregar una tarea rapidamente...' : 'Ej: preparar parcial manana 10:30 #facultad !alta'}
+          aria-describedby={compact ? 'todo-quick-add-feedback' : 'todo-quick-add-help todo-quick-add-feedback'}
+          onChange={(event) => {
+            setValue(event.target.value);
+            setError('');
+          }}
+        />
+        <button type="submit" disabled={loading}>
+          <span className="TodoQuickAdd-buttonLabel" aria-hidden="true">Agregar rapido</span>
+          <span className="TodoQuickAdd-buttonSymbol" aria-hidden="true">+</span>
+          <span className="TodoQuickAdd-buttonAccessible">Agregar rapido</span>
+        </button>
+      </div>
+      <div className="TodoQuickAdd-feedback" id="todo-quick-add-feedback" aria-live="polite">
+        {error ? (
+          <span className="TodoQuickAdd-error">{error}</span>
+        ) : parsedTodo.summary.length > 0 ? (
+          <span>Detectado: {parsedTodo.summary.join(' · ')}</span>
+        ) : null}
+      </div>
+      {!compact && (
+        <p id="todo-quick-add-help">Usa hoy, manana, 18/07, 10:30, #etiqueta, !alta o cada semana.</p>
+      )}
+    </form>
+  );
+}
+
+export { TodoQuickAdd };

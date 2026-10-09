@@ -9,16 +9,18 @@ Actua siempre como un programador experto, con criterio senior, buen manejo de U
 Este repositorio es una aplicacion React local-first de tareas, agenda y horarios creada con Vite.
 
 - Entrada principal: `src/index.tsx`.
-- Registro PWA: `src/serviceWorkerRegistration.ts`.
-- Componente raiz: `src/App/App.tsx`.
-- Estado de todos: `src/App/useTodos.ts`.
-- Modelos puros: `src/App/todoModel.ts` (tareas, agenda, recurrencias avanzadas, recordatorios, export/import ICS), `src/App/todoBoards.ts` (tableros), `src/App/todoSavedViews.ts` (vistas guardadas), `src/App/todoWorkspaceBackup.ts` (backups).
-- Persistencia: `src/App/useLocalStorage.ts` + `src/App/todoStorage.ts`.
+- Registro PWA: `src/app/pwa/serviceWorkerRegistration.ts`.
+- Componente raiz y composicion: `src/app/App.tsx`.
+- Workspace de calendario: `src/features/calendars/CalendarWorkspace.tsx`.
+- Estado de todos: `src/features/calendars/hooks/useTodos.ts`.
+- Modelos puros: `src/shared/calendar/todoModel.ts` (tareas, agenda, recurrencias avanzadas, recordatorios, export/import ICS), `src/shared/calendar/todoBoards.ts` (tableros), `src/shared/calendar/todoSavedViews.ts` (vistas guardadas), `src/shared/calendar/todoWorkspaceBackup.ts` (backups).
+- Persistencia: `src/features/sync/useLocalStorage.ts` + `src/features/sync/storage.ts`.
 - Base local principal: IndexedDB (`taskflow-db`), con migracion/espejo desde `localStorage`.
 - Claves locales: tareas `TODOS_V1`, tema `THEME_V1`.
-- Tema visual: `src/App/useTheme.ts`, con modo claro/oscuro persistido.
-- Estado PWA: `src/App/usePwaStatus.ts`.
-- Componentes UI: `src/components/`, organizados por dominio visual. Las vistas principales incluyen `TodoList`, `TodoBoardView`, `TodoToday`, `TodoCalendar` y `TodoWeekCalendar`.
+- Tema visual: `src/app/hooks/useTheme.ts`, con modo claro/oscuro persistido.
+- Estado PWA: `src/app/hooks/usePwaStatus.ts`.
+- Componentes de calendario: `src/features/calendars/components/`. UI reutilizable: `src/shared/ui/`.
+- Modulos de backend: `src/server/modules/`; el calculo de disponibilidad vive en `meetings/domain/availability.ts`.
 - Estilos: archivos `.css` junto a cada componente.
 - PWA/offline shell: `public/sw.js` y `public/manifest.json`.
 - Configuracion de Vite/Vitest: `vite.config.mjs`.
@@ -67,11 +69,20 @@ Los tests unitarios e integracion corren con `npm test`, usando Vitest, jsdom y 
 
 - Prefiere componentes funcionales y hooks.
 - Manten la logica de estado en hooks cuando sea compartida o compleja.
-- Manten helpers puros en los archivos del dominio (`src/App/todoModel.ts`, `todoBoards.ts`, `todoSavedViews.ts`, `todoWorkspaceBackup.ts`); no vuelvas a mezclar modelo puro dentro de los hooks como `useTodos.ts`.
+- Manten helpers puros en los archivos del dominio (`src/shared/calendar/todoModel.ts`, `todoBoards.ts`, `todoSavedViews.ts`, `todoWorkspaceBackup.ts`); no vuelvas a mezclar modelo puro dentro de los hooks como `useTodos.ts`.
 - Evita mutar objetos de estado directamente; crea nuevas referencias antes de guardar.
 - Usa nombres consistentes y corrige typos solo cuando el cambio sea seguro o este dentro del alcance.
 - Evita logs de depuracion en produccion salvo que sean parte explicita del comportamiento esperado.
 - Manten imports simples y elimina codigo muerto cuando sea parte del cambio.
+
+## Modulos y dependencias
+
+- `src/app/` compone funcionalidades y controla tema/PWA; las features no importan la composicion.
+- `src/features/calendars/` contiene la UI y los hooks de agenda. Las reglas puras compartidas permanecen en `src/shared/calendar/`.
+- El acceso entre features usa entradas publicas. Para persistencia local: `features/sync/storage.ts`, `features/sync/useLocalStorage.ts` y `features/sync/ChangeAlert.tsx`.
+- `src/server/modules/` no importa componentes, hooks ni persistencia del navegador. Puede reutilizar el dominio puro de `shared/calendar`.
+- Los modulos futuros de cuenta, amistades, grupos y reuniones estan definidos por responsabilidad; no asumir que sus pantallas, autenticacion o endpoints ya existen.
+- `src/app/architecture.test.js` verifica estos limites. Actualiza sus reglas solo cuando exista una dependencia intencional documentada.
 
 ## Comentarios en codigo
 

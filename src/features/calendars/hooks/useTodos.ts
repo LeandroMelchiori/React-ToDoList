@@ -1,0 +1,1452 @@
+import React from 'react';
+import { useLocalStorage } from '../../sync/useLocalStorage';
+import { removeTodoAttachmentsForTodo } from '../../sync/storage';
+import {
+    createTodosCalendarExport,
+    readTodosCalendarImport,
+} from '../../../shared/calendar/todoCalendarIcs';
+import {
+    TODO_FILTERS,
+    TODO_KINDS,
+    TODO_RECURRENCES,
+    analyzeTodosImport,
+    applyTodosImport,
+    createTodo,
+    applyTodoScheduleChange,
+    undoTodoScheduleChange,
+    getTodoFacets,
+    getTodoFilterCounts,
+    getTodoGroups,
+    getTodoInsights,
+    getTodoNextOccurrenceDate,
+    getTodoNextRecurringDate,
+    getTodosDateCounts,
+    getVisibleTodos,
+    isTodoArchived,
+    isTodoOccurrenceCompleted,
+    isTaskTodo,
+    mergeSubtasks,
+    moveTodoToPosition as reorderTodoToPosition,
+    normalizeDateTypeForTodoKind,
+    normalizeDescription,
+    normalizeDueDate,
+    normalizePriority,
+    normalizeProject,
+    normalizeRecurrenceCount,
+    normalizeRecurrenceDays,
+    normalizeReminder,
+    normalizeTags,
+    normalizeTimeBlocks,
+    normalizeTodoKind,
+    normalizeTodoRecurrenceForKind,
+    normalizeTodoSchedule,
+    normalizeTodoTimes,
+    normalizeTodos,
+    reindexTodos,
+    setTodoOccurrenceCompletion,
+    setTodoOccurrenceExcluded,
+    toggleTodoOccurrence,
+} from '../../../shared/calendar/todoModel';
+import {
+    DEFAULT_TODO_BOARD_ID,
+    addTodoBoard,
+    ensureDefaultTodoBoard,
+    getActiveTodoBoard,
+    getActiveTodoBoardId,
+    normalizeTodoBoards,
+    removeTodoBoard,
+    renameTodoBoard,
+    upsertTodoBoardTodos,
+} from '../../../shared/calendar/todoBoards';
+import {
+    addTodoSavedView,
+    normalizeTodoSavedViews,
+    removeTodoSavedView,
+} from '../../../shared/calendar/todoSavedViews';
+import {
+    createTodoWorkspaceBackup,
+    readTodoWorkspaceBackup,
+} from '../../../shared/calendar/todoWorkspaceBackup';
+import {
+    addTodoSnapshot,
+    hasWorkspaceContent,
+    normalizeTodoSnapshots,
+    removeTodoSnapshot,
+} from '../../../shared/calendar/todoSnapshotHistory';
+import type {
+    ImportMode,
+    Todo,
+    TodoDetails,
+    TodoFilter,
+    TodoScheduleChange,
+    TodoScheduleUndo,
+} from '../../../shared/calendar/todoModel';
+import type { TodoBoard } from '../../../shared/calendar/todoBoards';
+import type { TodoSavedView } from '../../../shared/calendar/todoSavedViews';
+import type { TodoSnapshot } from '../../../shared/calendar/todoSnapshotHistory';
+import { getTodoScheduleConflictMatches } from '../../../shared/calendar/todoScheduleConflicts';
+import type { TodoScheduleConflictMatch } from '../../../shared/calendar/todoScheduleConflicts';
+
+const STORAGE_KEY = 'TODOS_V1';
+const BOARD_STORAGE_KEY = 'TODO_BOARDS_V1';
+const ACTIVE_BOARD_STORAGE_KEY = 'ACTIVE_TODO_BOARD_V1';
+const SAVED_VIEWS_STORAGE_KEY = 'TODO_SAVED_VIEWS_V1';
+const SNAPSHOTS_STORAGE_KEY = 'TODO_SNAPSHOTS_V1';
+const DEFAULT_TODOS: Todo[] = [];
+const DEFAULT_TODO_BOARDS: TodoBoard[] = [];
+const DEFAULT_TODO_SAVED_VIEWS: TodoSavedView[] = [];
+const DEFAULT_TODO_SNAPSHOTS: TodoSnapshot[] = [];
+
+type TodoActionResult = { ok: true } | { ok: false; error: string };
+type TodoImportOptions = { mode?: ImportMode; targetBoardId?: string };
+
+function getDuplicateTodoText(todos: Todo[], text: string): string {
+    const existingTexts = new Set(todos.map(todo => todo.text.toLowerCase()));
+    const baseText = `Copia de ${text}`;
+
+    if (!existingTexts.has(baseText.toLowerCase())) {
+        return baseText;
+    }
+
+    let copyNumber = 2;
+    let nextText = `Copia ${copyNumber} de ${text}`;
+
+    while (existingTexts.has(nextText.toLowerCase())) {
+        copyNumber += 1;
+        nextText = `Copia ${copyNumber} de ${text}`;
+    }
+
+    return nextText;
+}
+
+function isTodoList(item: unknown): boolean {
+    return Array.isArray(item);
+}
+
+function isTodoBoardList(item: unknown): boolean {
+    return Array.isArray(item);
+}
+
+function isActiveBoardId(item: unknown): boolean {
+    return typeof item === 'string';
+}
+
+function isSavedViewList(item: unknown): boolean {
+    return Array.isArray(item);
+}
+
+function isTodoSnapshotList(item: unknown): boolean {
+    return Array.isArray(item);
+}
+
+function useTodos() {
+    const { 
+        item: todos,
+        saveItem: saveTodos,
+        synchronizeItem: syncTodos,
+        loading,
+        error
+        } = useLocalStorage<Todo[]>(STORAGE_KEY, DEFAULT_TODOS, isTodoList);
+
+    const {
+        item: storedBoards,
+        saveItem: saveBoards,
+        loading: boardsLoading,
+        error: boardsError,
+    } = useLocalStorage<TodoBoard[]>(BOARD_STORAGE_KEY, DEFAULT_TODO_BOARDS, isTodoBoardList);
+
+    const {
+        item: storedActiveBoardId,
+        saveItem: saveActiveBoardId,
+        loading: activeBoardLoading,
+        error: activeBoardError,
+    } = useLocalStorage<string>(ACTIVE_BOARD_STORAGE_KEY, DEFAULT_TODO_BOARD_ID, isActiveBoardId);
+
+    const {
+        item: storedSavedViews,
+        saveItem: saveSavedViews,
+        loading: savedViewsLoading,
+        error: savedViewsError,
+    } = useLocalStorage<TodoSavedView[]>(SAVED_VIEWS_STORAGE_KEY, DEFAULT_TODO_SAVED_VIEWS, isSavedViewList);
+
+    const {
+        item: storedSnapshots,
+        saveItem: saveSnapshots,
+        loading: snapshotsLoading,
+        error: snapshotsError,
+    } = useLocalStorage<TodoSnapshot[]>(SNAPSHOTS_STORAGE_KEY, DEFAULT_TODO_SNAPSHOTS, isTodoSnapshotList);
+
+    const initializedBoardsRef = React.useRef(false);
+    const hydratedActiveBoardRef = React.useRef(false);
+  
+    const [searchValue, setSearchValue] =
+     React.useState('');
+
+    const [filter, setFilter] =
+     React.useState<TodoFilter>(TODO_FILTERS.all);
+
+    const [activeProject, setActiveProject] =
+     React.useState<string | null>(null);
+
+    const [activeTag, setActiveTag] =
+     React.useState<string | null>(null);
+
+    const [openModal, setOpenModal] =
+     React.useState(false);
+
+    const [editingTodoId, setEditingTodoId] =
+     React.useState<string | null>(null);
+
+    const [editingOccurrenceDate, setEditingOccurrenceDate] =
+     React.useState<string | null>(null);
+
+    const [deletingTodoId, setDeletingTodoId] =
+     React.useState<string | null>(null);
+
+    const [detailTodoId, setDetailTodoId] =
+     React.useState<string | null>(null);
+
+    const [detailOccurrenceDate, setDetailOccurrenceDate] =
+     React.useState<string | null>(null);
+
+    const [recentlyDeletedTodo, setRecentlyDeletedTodo] =
+     React.useState<Todo | null>(null);
+    const [calendarUndo, setCalendarUndo] = React.useState<(TodoScheduleUndo & { boardId: string }) | null>(null);
+
+    const normalizedTodos = normalizeTodos(todos);
+    const normalizedStoredBoards = normalizeTodoBoards(storedBoards);
+    const savedViews = normalizeTodoSavedViews(storedSavedViews);
+    const todoSnapshots = normalizeTodoSnapshots(storedSnapshots);
+    const todoBoards = ensureDefaultTodoBoard(normalizedStoredBoards, normalizedTodos);
+    const activeBoardId = getActiveTodoBoardId(todoBoards, storedActiveBoardId);
+    const activeBoard = getActiveTodoBoard(todoBoards, activeBoardId);
+    const editingTodo = normalizedTodos.find(todo => todo.id === editingTodoId) || null;
+    const deletingTodo = normalizedTodos.find(todo => todo.id === deletingTodoId) || null;
+    const detailTodo = normalizedTodos.find(todo => todo.id === detailTodoId) || null;
+
+    const activeTodos = normalizedTodos.filter(todo => !isTodoArchived(todo));
+    const taskTodos = activeTodos.filter(isTaskTodo);
+    const completedTodos = taskTodos.filter(todo => todo.completed).length;
+    const totalTasks = taskTodos.length;
+    const totalTodos = activeTodos.length;
+    const pendingTodos = totalTasks - completedTodos;
+    const dateCounts = getTodosDateCounts(activeTodos);
+    const filterCounts = getTodoFilterCounts(normalizedTodos);
+    const insights = getTodoInsights(activeTodos);
+    const facets = getTodoFacets(activeTodos);
+
+    const visibleTodos = getVisibleTodos(normalizedTodos, searchValue, filter, undefined, {
+        project: activeProject,
+        tag: activeTag,
+    });
+    const visibleTodoGroups = getTodoGroups(visibleTodos);
+
+    React.useEffect(() => {
+        if (
+            initializedBoardsRef.current ||
+            loading ||
+            boardsLoading ||
+            activeBoardLoading ||
+            normalizedStoredBoards.length > 0
+        ) {
+            return;
+        }
+
+        initializedBoardsRef.current = true;
+        saveBoards(todoBoards);
+        saveActiveBoardId(activeBoardId);
+    }, [
+        activeBoardId,
+        activeBoardLoading,
+        boardsLoading,
+        loading,
+        normalizedStoredBoards.length,
+        saveActiveBoardId,
+        saveBoards,
+        todoBoards,
+    ]);
+
+    React.useEffect(() => {
+        if (
+            hydratedActiveBoardRef.current ||
+            loading ||
+            boardsLoading ||
+            activeBoardLoading ||
+            normalizedStoredBoards.length === 0 ||
+            !activeBoard
+        ) {
+            return;
+        }
+
+        hydratedActiveBoardRef.current = true;
+
+        if (JSON.stringify(activeBoard.todos) !== JSON.stringify(normalizedTodos)) {
+            saveTodos(activeBoard.todos);
+        }
+
+        if (activeBoard.id !== storedActiveBoardId) {
+            saveActiveBoardId(activeBoard.id);
+        }
+    }, [
+        activeBoard,
+        activeBoardLoading,
+        boardsLoading,
+        loading,
+        normalizedStoredBoards.length,
+        normalizedTodos,
+        saveActiveBoardId,
+        saveTodos,
+        storedActiveBoardId,
+    ]);
+
+    const saveActiveTodos = React.useCallback((newTodos: Todo[]) => {
+        const nextTodos = normalizeTodos(newTodos);
+
+        saveTodos(nextTodos);
+        saveBoards(upsertTodoBoardTodos(todoBoards, activeBoardId, nextTodos));
+    }, [activeBoardId, saveBoards, saveTodos, todoBoards]);
+
+    const createAutomaticSnapshot = (reason: string): boolean => {
+        const backup = createTodoWorkspaceBackup({
+            activeBoardId,
+            boards: todoBoards,
+            savedViews,
+            todos: normalizedTodos,
+        });
+
+        if (!hasWorkspaceContent(backup)) {
+            return false;
+        }
+
+        saveSnapshots(addTodoSnapshot(todoSnapshots, backup, reason));
+        return true;
+    };
+
+    const createManualTodoSnapshot = (): TodoActionResult => (
+        createAutomaticSnapshot('Copia manual')
+            ? { ok: true }
+            : { ok: false, error: 'Agrega datos antes de crear una copia local.' }
+    );
+
+    const resetTodoView = ({ preserveProject = false }: { preserveProject?: boolean } = {}) => {
+        setSearchValue('');
+        setFilter(TODO_FILTERS.all);
+
+        if (preserveProject) {
+            setActiveTag(null);
+        } else {
+            clearFacetFilters();
+        }
+
+        setDetailTodoId(null);
+        setDetailOccurrenceDate(null);
+        setEditingTodoId(null);
+        setEditingOccurrenceDate(null);
+        setDeletingTodoId(null);
+        setRecentlyDeletedTodo(null);
+    }
+
+    const selectTodoBoard = (boardId: string): TodoActionResult => {
+        if (boardId === activeBoardId) {
+            return { ok: true };
+        }
+
+        const boardsWithCurrentTodos = upsertTodoBoardTodos(todoBoards, activeBoardId, normalizedTodos);
+        const nextBoard = getActiveTodoBoard(boardsWithCurrentTodos, boardId);
+
+        if (!nextBoard) {
+            return { ok: false, error: 'No encontramos ese tablero.' };
+        }
+
+        saveBoards(boardsWithCurrentTodos);
+        saveActiveBoardId(nextBoard.id);
+        saveTodos(nextBoard.todos);
+        resetTodoView();
+
+        return { ok: true };
+    }
+
+    const createBoard = (name: string): TodoActionResult => {
+        const boardsWithCurrentTodos = upsertTodoBoardTodos(todoBoards, activeBoardId, normalizedTodos);
+        const result = addTodoBoard(boardsWithCurrentTodos, name);
+
+        if (!result.ok) {
+            return result;
+        }
+
+        saveBoards(result.boards);
+        saveActiveBoardId(result.board.id);
+        saveTodos(result.board.todos);
+        resetTodoView();
+
+        return { ok: true };
+    }
+
+    const renameBoard = (boardId: string, name: string): TodoActionResult => {
+        const boardsWithCurrentTodos = upsertTodoBoardTodos(todoBoards, activeBoardId, normalizedTodos);
+        const result = renameTodoBoard(boardsWithCurrentTodos, boardId, name);
+
+        if (!result.ok) {
+            return result;
+        }
+
+        saveBoards(result.boards);
+
+        return { ok: true };
+    }
+
+    const deleteBoard = (boardId: string): TodoActionResult => {
+        const boardsWithCurrentTodos = upsertTodoBoardTodos(todoBoards, activeBoardId, normalizedTodos);
+        const result = removeTodoBoard(boardsWithCurrentTodos, boardId);
+
+        if (!result.ok) {
+            return result;
+        }
+
+        const boardName = todoBoards.find(board => board.id === boardId)?.name || 'un tablero';
+        createAutomaticSnapshot(`Antes de eliminar el tablero ${boardName}`);
+
+        const nextActiveBoard = boardId === activeBoardId
+            ? result.nextBoard
+            : getActiveTodoBoard(result.boards, activeBoardId);
+
+        saveBoards(result.boards);
+
+        if (nextActiveBoard) {
+            saveActiveBoardId(nextActiveBoard.id);
+            saveTodos(nextActiveBoard.todos);
+        }
+
+        resetTodoView();
+
+        return { ok: true };
+    }
+
+    const saveCurrentView = (name: string): TodoActionResult => {
+        const result = addTodoSavedView(savedViews, name, {
+            searchValue,
+            filter,
+            project: activeProject,
+            tag: activeTag,
+        });
+
+        if (!result.ok) {
+            return result;
+        }
+
+        saveSavedViews(result.views);
+
+        return { ok: true };
+    }
+
+    const applySavedView = (viewId: string): TodoActionResult => {
+        const savedView = savedViews.find(view => view.id === viewId);
+
+        if (!savedView) {
+            return { ok: false, error: 'No encontramos esos filtros guardados.' };
+        }
+
+        setSearchValue(savedView.searchValue);
+        setFilter(savedView.filter);
+        setActiveProject(savedView.project);
+        setActiveTag(savedView.tag);
+
+        return { ok: true };
+    }
+
+    const deleteSavedView = (viewId: string) => {
+        saveSavedViews(removeTodoSavedView(savedViews, viewId));
+    }
+
+    const deleteTodoSnapshot = (snapshotId: string): boolean => {
+        if (!todoSnapshots.some(snapshot => snapshot.id === snapshotId)) {
+            return false;
+        }
+
+        saveSnapshots(removeTodoSnapshot(todoSnapshots, snapshotId));
+        return true;
+    };
+
+    const restoreTodoSnapshot = (snapshotId: string): TodoActionResult => {
+        const snapshot = todoSnapshots.find(item => item.id === snapshotId);
+
+        if (!snapshot) {
+            return { ok: false, error: 'No encontramos esa copia local.' };
+        }
+
+        const workspaceResult = readTodoWorkspaceBackup(snapshot.backup);
+
+        if (!workspaceResult.ok) {
+            return { ok: false, error: workspaceResult.error };
+        }
+
+        createAutomaticSnapshot('Antes de restaurar una copia local');
+
+        const activeSnapshotBoard = getActiveTodoBoard(
+            workspaceResult.backup.boards,
+            workspaceResult.backup.activeBoardId
+        );
+
+        saveBoards(workspaceResult.backup.boards);
+        saveActiveBoardId(workspaceResult.backup.activeBoardId);
+        saveTodos(activeSnapshotBoard?.todos || workspaceResult.backup.todos);
+        saveSavedViews(workspaceResult.backup.savedViews);
+        resetTodoView();
+
+        return { ok: true };
+    };
+
+    const completeTodo = (id: string) => {
+        const newTodos = normalizedTodos.map(todo =>
+            {
+                if (todo.id !== id) {
+                    return todo;
+                }
+
+                if (!isTaskTodo(todo)) {
+                    return todo;
+                }
+
+                if (todo.recurrence !== TODO_RECURRENCES.none) {
+                    const occurrenceDate = getTodoNextOccurrenceDate(todo);
+                    const occurrenceCompleted = isTodoOccurrenceCompleted(todo, occurrenceDate);
+                    const nextTodo = toggleTodoOccurrence(todo, occurrenceDate);
+
+                    return {
+                        ...nextTodo,
+                        subtasks: occurrenceCompleted
+                            ? todo.subtasks
+                            : todo.subtasks.map(subtask => ({ ...subtask, completed: false })),
+                    };
+                }
+
+                const isCompletedBySubtasks = todo.completed &&
+                    todo.subtasks.length > 0 &&
+                    todo.subtasks.every(subtask => subtask.completed);
+
+                if (isCompletedBySubtasks) {
+                    return todo;
+                }
+
+                const nextCompleted = !todo.completed;
+
+                return {
+                    ...todo,
+                    completed: nextCompleted,
+                    completedAt: nextCompleted ? new Date().toISOString() : null,
+                    subtasks: nextCompleted
+                        ? todo.subtasks.map(subtask => ({ ...subtask, completed: true }))
+                        : todo.subtasks,
+                };
+            }
+        );
+        saveActiveTodos(newTodos);
+    }
+
+    const completeTodos = (ids: string[]) => {
+        const selectedIds = new Set(ids);
+        let completedCount = 0;
+        const newTodos = normalizedTodos.map(todo => {
+            if (!selectedIds.has(todo.id) || !isTaskTodo(todo) || isTodoArchived(todo)) {
+                return todo;
+            }
+
+            if (todo.recurrence !== TODO_RECURRENCES.none) {
+                const occurrenceDate = getTodoNextOccurrenceDate(todo);
+
+                if (!occurrenceDate || isTodoOccurrenceCompleted(todo, occurrenceDate)) {
+                    return todo;
+                }
+
+                completedCount += 1;
+
+                return {
+                    ...setTodoOccurrenceCompletion(todo, occurrenceDate, true),
+                    subtasks: todo.subtasks.map(subtask => ({ ...subtask, completed: false })),
+                };
+            }
+
+            if (todo.completed) {
+                return todo;
+            }
+
+            completedCount += 1;
+
+            return {
+                ...todo,
+                completed: true,
+                completedAt: new Date().toISOString(),
+                subtasks: todo.subtasks.map(subtask => ({ ...subtask, completed: true })),
+            };
+        });
+
+        if (completedCount > 0) {
+            saveActiveTodos(newTodos);
+        }
+
+        return completedCount;
+    }
+
+    const deleteTodo = (id: string) => {
+        const todoToDelete = normalizedTodos.find(todo => todo.id === id);
+
+        if (!todoToDelete) {
+            return;
+        }
+
+        createAutomaticSnapshot('Antes de eliminar una tarea');
+        const newTodos = reindexTodos(normalizedTodos.filter(todo => todo.id !== id));
+        saveActiveTodos(newTodos);
+        setRecentlyDeletedTodo(todoToDelete);
+    }
+
+    const archiveTodo = (id: string): TodoActionResult => {
+        const todoToArchive = normalizedTodos.find(todo => todo.id === id);
+
+        if (!todoToArchive || !isTaskTodo(todoToArchive)) {
+            return { ok: false, error: 'Solo se pueden archivar tareas.' };
+        }
+
+        if (!todoToArchive.completed) {
+            return { ok: false, error: 'Completa la tarea antes de archivarla.' };
+        }
+
+        saveActiveTodos(normalizedTodos.map(todo =>
+            todo.id === id
+                ? { ...todo, archivedAt: todo.archivedAt || new Date().toISOString() }
+                : todo
+        ));
+        resetTodoView();
+
+        return { ok: true };
+    }
+
+    const unarchiveTodo = (id: string): TodoActionResult => {
+        const todoToUnarchive = normalizedTodos.find(todo => todo.id === id);
+
+        if (!todoToUnarchive) {
+            return { ok: false, error: 'No encontramos esa tarea archivada.' };
+        }
+
+        saveActiveTodos(normalizedTodos.map(todo =>
+            todo.id === id
+                ? { ...todo, archivedAt: null }
+                : todo
+        ));
+
+        return { ok: true };
+    }
+
+    const archiveTodos = (ids: string[]) => {
+        const selectedIds = new Set(ids);
+        const archivedAt = new Date().toISOString();
+        let archivedCount = 0;
+        const newTodos = normalizedTodos.map(todo => {
+            if (
+                !selectedIds.has(todo.id) ||
+                !isTaskTodo(todo) ||
+                todo.recurrence !== TODO_RECURRENCES.none ||
+                !todo.completed ||
+                isTodoArchived(todo)
+            ) {
+                return todo;
+            }
+
+            archivedCount += 1;
+
+            return { ...todo, archivedAt };
+        });
+
+        if (archivedCount > 0) {
+            saveActiveTodos(newTodos);
+            resetTodoView();
+        }
+
+        return archivedCount;
+    }
+
+    const deleteTodos = (ids: string[]) => {
+        const selectedIds = new Set(ids);
+        const newTodos = reindexTodos(normalizedTodos.filter(todo => !selectedIds.has(todo.id)));
+        const deletedCount = normalizedTodos.length - newTodos.length;
+
+        if (deletedCount > 0) {
+            createAutomaticSnapshot(`Antes de eliminar ${deletedCount} tareas`);
+            saveActiveTodos(newTodos);
+            ids.forEach(id => {
+                removeTodoAttachmentsForTodo(id).catch(() => undefined);
+            });
+        }
+
+        return deletedCount;
+    }
+
+    const checkTodoScheduleConflicts = (
+        text: string,
+        details: TodoDetails,
+        excludedTodoId: string | null = null
+    ): TodoScheduleConflictMatch[] => {
+        const candidate = createTodo(text.trim() || 'Nuevo elemento', details);
+
+        return getTodoScheduleConflictMatches(normalizedTodos, candidate, excludedTodoId);
+    };
+
+    const addTodo = (text: string, details: TodoDetails = {}): TodoActionResult => {
+        const trimmedText = text.trim();
+
+        if (!trimmedText) {
+            return { ok: false, error: 'Escribe una tarea antes de agregarla.' };
+        }
+
+        const alreadyExists = normalizedTodos.some(todo =>
+            todo.text.toLowerCase() === trimmedText.toLowerCase()
+        );
+
+        if (alreadyExists) {
+            return { ok: false, error: 'Esa tarea ya existe.' };
+        }
+
+        const project = activeProject || normalizeProject(details.project);
+        const newTodos = [
+            ...normalizedTodos,
+            createTodo(trimmedText, { ...details, project, order: normalizedTodos.length }),
+        ];
+        saveActiveTodos(newTodos);
+        resetTodoView({ preserveProject: Boolean(activeProject) });
+        return { ok: true };
+    }
+
+    const duplicateTodo = (id: string): TodoActionResult => {
+        const todoToDuplicate = normalizedTodos.find(todo => todo.id === id);
+
+        if (!todoToDuplicate) {
+            return { ok: false, error: 'No encontramos ese elemento.' };
+        }
+
+        const newTodo = createTodo(getDuplicateTodoText(normalizedTodos, todoToDuplicate.text), {
+            kind: todoToDuplicate.kind,
+            description: todoToDuplicate.description,
+            priority: todoToDuplicate.priority,
+            dateType: todoToDuplicate.dateType,
+            dueDate: todoToDuplicate.dueDate,
+            startDate: todoToDuplicate.startDate,
+            endDate: todoToDuplicate.endDate,
+            startTime: todoToDuplicate.startTime,
+            endTime: todoToDuplicate.endTime,
+            recurrence: todoToDuplicate.recurrence,
+            recurrenceDays: todoToDuplicate.recurrenceDays,
+            recurrenceEndDate: todoToDuplicate.recurrenceEndDate,
+            recurrenceCount: todoToDuplicate.recurrenceCount,
+            reminder: todoToDuplicate.reminder,
+            project: todoToDuplicate.project,
+            tags: todoToDuplicate.tags,
+            timeBlocks: todoToDuplicate.timeBlocks,
+            subtasks: todoToDuplicate.subtasks.map(subtask => subtask.text),
+            order: normalizedTodos.length,
+        });
+
+        saveActiveTodos([...normalizedTodos, newTodo]);
+        resetTodoView({ preserveProject: Boolean(activeProject) });
+        setOpenModal(false);
+
+        return { ok: true };
+    }
+
+    const changeTodoSchedule = (change: TodoScheduleChange): TodoActionResult => {
+        const result = applyTodoScheduleChange(normalizedTodos, change);
+        if (!result.ok) return result;
+        saveActiveTodos(result.todos);
+        setCalendarUndo({ ...result.undo, boardId: activeBoardId });
+        return { ok: true };
+    };
+    const checkScheduleChange = (change: TodoScheduleChange): TodoScheduleConflictMatch[] => {
+        const result = applyTodoScheduleChange(normalizedTodos, change);
+        if (!result.ok) return [];
+        let candidate = result.undo.createdTodo || result.undo.after;
+        let sources = result.todos.filter(todo => !todo.archivedAt && !todo.completed);
+        if (candidate.kind === TODO_KINDS.task) {
+            const changedBlock = change.timeBlockId
+                ? candidate.timeBlocks.find(block => block.id === change.timeBlockId)
+                : candidate.timeBlocks[candidate.timeBlocks.length - 1];
+            sources = sources.map(todo => todo.id === candidate.id
+                ? { ...todo, timeBlocks: todo.timeBlocks.filter(block => block.id !== changedBlock?.id) } : todo);
+            candidate = { ...candidate, id: `preview-${candidate.id}`, dueDate: null, startTime: null,
+                endTime: null, recurrence: TODO_RECURRENCES.none, timeBlocks: changedBlock ? [changedBlock] : [] };
+        }
+        return getTodoScheduleConflictMatches(sources, candidate);
+    };
+    const undoScheduleChange = (): TodoActionResult => {
+        if (!calendarUndo || calendarUndo.boardId !== activeBoardId) {
+            setCalendarUndo(null);
+            return { ok: false, error: 'El cambio pertenece a otro espacio.' };
+        }
+        const result = undoTodoScheduleChange(normalizedTodos, calendarUndo);
+        setCalendarUndo(null);
+        if (!result.ok) return result;
+        saveActiveTodos(result.todos);
+        return { ok: true };
+    };
+    const dismissScheduleUndo = React.useCallback(() => setCalendarUndo(null), []);
+
+    const updateTodo = (id: string, text: string, details: TodoDetails = {}): TodoActionResult => {
+        const trimmedText = text.trim();
+
+        if (!trimmedText) {
+            return { ok: false, error: 'Escribe una tarea antes de guardar los cambios.' };
+        }
+
+        const todoExists = normalizedTodos.some(todo => todo.id === id);
+
+        if (!todoExists) {
+            return { ok: false, error: 'No encontramos esa tarea.' };
+        }
+
+        const alreadyExists = normalizedTodos.some(todo =>
+            todo.id !== id && todo.text.toLowerCase() === trimmedText.toLowerCase()
+        );
+
+        if (alreadyExists) {
+            return { ok: false, error: 'Ya existe otra tarea con ese texto.' };
+        }
+
+        const kind = normalizeTodoKind(details.kind, details.dateType);
+        const dateType = normalizeDateTypeForTodoKind(kind, details.dateType);
+        const schedule = normalizeTodoSchedule({
+            dateType,
+            dueDate: details.dueDate,
+            startDate: details.startDate,
+            endDate: details.endDate,
+        });
+        const times = normalizeTodoTimes({
+            kind,
+            dateType: schedule.dateType,
+            startTime: details.startTime,
+            endTime: details.endTime,
+        });
+        const recurrence = normalizeTodoRecurrenceForKind(kind, schedule.dateType, details.recurrence);
+        const newTodos = normalizedTodos.map(todo =>
+            todo.id === id
+                ? {
+                    ...todo,
+                    text: trimmedText,
+                    kind,
+                    description: normalizeDescription(details.description),
+                    priority: normalizePriority(details.priority),
+                    dateType: schedule.dateType,
+                    dueDate: schedule.dueDate,
+                    startDate: schedule.startDate,
+                    endDate: schedule.endDate,
+                    startTime: times.startTime,
+                    endTime: times.endTime,
+                    recurrence,
+                    recurrenceDays: recurrence === TODO_RECURRENCES.weekly
+                        ? normalizeRecurrenceDays(details.recurrenceDays)
+                        : [],
+                    recurrenceEndDate: recurrence !== TODO_RECURRENCES.none
+                        ? normalizeDueDate(details.recurrenceEndDate)
+                        : null,
+                    recurrenceCount: recurrence !== TODO_RECURRENCES.none
+                        ? normalizeRecurrenceCount(details.recurrenceCount)
+                        : null,
+                    completedOccurrences: recurrence !== TODO_RECURRENCES.none &&
+                        todo.recurrence !== TODO_RECURRENCES.none
+                        ? todo.completedOccurrences
+                        : [],
+                    excludedOccurrences: recurrence !== TODO_RECURRENCES.none &&
+                        todo.recurrence !== TODO_RECURRENCES.none
+                        ? todo.excludedOccurrences
+                        : [],
+                    reminder: normalizeReminder(details.reminder),
+                    project: normalizeProject(details.project),
+                    tags: normalizeTags(details.tags),
+                    timeBlocks: kind === TODO_KINDS.task ? normalizeTimeBlocks(details.timeBlocks) : [],
+                    subtasks: kind === TODO_KINDS.task ? mergeSubtasks(todo.subtasks, details.subtasks) : [],
+                    completed: kind === TODO_KINDS.task && recurrence === TODO_RECURRENCES.none
+                        ? todo.completed
+                        : false,
+                    completedAt: kind === TODO_KINDS.task && recurrence === TODO_RECURRENCES.none
+                        ? todo.completedAt
+                        : null,
+                }
+                : todo
+        );
+        saveActiveTodos(newTodos);
+        resetTodoView();
+        setEditingTodoId(null);
+        return { ok: true };
+    }
+
+    const updateTodoOccurrence = (
+        id: string,
+        dateValue: string,
+        text: string,
+        details: TodoDetails = {}
+    ): TodoActionResult => {
+        const todo = normalizedTodos.find(item => item.id === id);
+        const trimmedText = text.trim();
+
+        if (!todo || todo.recurrence === TODO_RECURRENCES.none) {
+            return { ok: false, error: 'No encontramos esa serie recurrente.' };
+        }
+
+        if (!trimmedText) {
+            return { ok: false, error: 'Escribe un titulo antes de guardar los cambios.' };
+        }
+
+        const kind = normalizeTodoKind(details.kind, details.dateType);
+        const detachedOccurrence = createTodo(trimmedText, {
+            ...details,
+            kind,
+            dueDate: kind === TODO_KINDS.task ? dateValue : null,
+            startDate: kind === TODO_KINDS.task ? null : dateValue,
+            endDate: kind === TODO_KINDS.schedule || kind === TODO_KINDS.period ? dateValue : null,
+            recurrence: TODO_RECURRENCES.none,
+            recurrenceDays: [],
+            recurrenceEndDate: null,
+            recurrenceCount: null,
+            excludedOccurrences: [],
+            order: normalizedTodos.length,
+        });
+        const nextTodos = normalizedTodos.map(item => (
+            item.id === id ? setTodoOccurrenceExcluded(item, dateValue, true) : item
+        ));
+
+        saveActiveTodos([...nextTodos, detachedOccurrence]);
+        resetTodoView({ preserveProject: Boolean(activeProject) });
+        setEditingOccurrenceDate(null);
+        setOpenModal(false);
+
+        return { ok: true };
+    };
+
+    const selectProjectFilter = (project: string | null) => {
+        setActiveProject(currentProject => currentProject === project ? null : project);
+    }
+
+    const selectTagFilter = (tag: string | null) => {
+        setActiveTag(currentTag => currentTag === tag ? null : tag);
+    }
+
+    const clearFacetFilters = () => {
+        setActiveProject(null);
+        setActiveTag(null);
+    }
+
+    const toggleSubtask = (todoId: string, subtaskId: string) => {
+        const newTodos = normalizedTodos.map(todo =>
+            {
+                if (todo.id !== todoId) {
+                    return todo;
+                }
+
+                if (!isTaskTodo(todo)) {
+                    return todo;
+                }
+
+                const subtasks = todo.subtasks.map(subtask =>
+                    subtask.id === subtaskId
+                        ? { ...subtask, completed: !subtask.completed }
+                        : subtask
+                );
+                const allSubtasksCompleted = subtasks.length > 0 &&
+                    subtasks.every(subtask => subtask.completed);
+
+                if (todo.recurrence !== TODO_RECURRENCES.none) {
+                    const occurrenceDate = getTodoNextOccurrenceDate(todo);
+                    const nextTodo = allSubtasksCompleted
+                        ? setTodoOccurrenceCompletion(todo, occurrenceDate, true)
+                        : todo;
+
+                    return {
+                        ...nextTodo,
+                        subtasks: allSubtasksCompleted
+                            ? subtasks.map(subtask => ({ ...subtask, completed: false }))
+                            : subtasks,
+                    };
+                }
+
+                const nextCompleted = allSubtasksCompleted
+                    ? true
+                    : todo.completed && subtasks.some(subtask => !subtask.completed)
+                        ? false
+                        : todo.completed;
+
+                return {
+                    ...todo,
+                    completed: nextCompleted,
+                    completedAt: nextCompleted && !todo.completed
+                        ? new Date().toISOString()
+                        : !nextCompleted
+                            ? null
+                            : todo.completedAt,
+                    subtasks,
+                };
+            }
+        );
+
+        saveActiveTodos(newTodos);
+    }
+
+    const moveTodo = (id: string, direction: 'up' | 'down') => {
+        const currentIndex = normalizedTodos.findIndex(todo => todo.id === id);
+        const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+
+        if (currentIndex < 0 || targetIndex < 0 || targetIndex >= normalizedTodos.length) {
+            return;
+        }
+
+        const reorderedTodos = [...normalizedTodos];
+        const currentTodo = reorderedTodos[currentIndex];
+        reorderedTodos[currentIndex] = reorderedTodos[targetIndex];
+        reorderedTodos[targetIndex] = currentTodo;
+
+        saveActiveTodos(reindexTodos(reorderedTodos));
+    }
+
+    const moveTodoToPosition = (sourceId: string, targetId: string, placement: 'before' | 'after') => {
+        const reorderedTodos = reorderTodoToPosition(normalizedTodos, sourceId, targetId, placement);
+        const didChangeOrder = reorderedTodos.some((todo, index) =>
+            todo.id !== normalizedTodos[index]?.id
+        );
+
+        if (didChangeOrder) {
+            saveActiveTodos(reorderedTodos);
+        }
+    }
+
+    const openCreateModal = () => {
+        setDetailTodoId(null);
+        setDetailOccurrenceDate(null);
+        setEditingTodoId(null);
+        setEditingOccurrenceDate(null);
+        setDeletingTodoId(null);
+        setOpenModal(true);
+    }
+
+    const startViewingTodo = (id: string, occurrenceDate: string | null = null) => {
+        const todo = normalizedTodos.find(item => item.id === id);
+
+        setDetailTodoId(id);
+        setDetailOccurrenceDate(todo && todo.recurrence !== TODO_RECURRENCES.none
+            ? occurrenceDate || getTodoNextRecurringDate(todo)
+            : null);
+        setEditingTodoId(null);
+        setEditingOccurrenceDate(null);
+        setDeletingTodoId(null);
+        setOpenModal(true);
+    }
+
+    const startEditingTodo = (id: string) => {
+        setEditingTodoId(id);
+        setEditingOccurrenceDate(null);
+        setDetailTodoId(null);
+        setDetailOccurrenceDate(null);
+        setDeletingTodoId(null);
+        setOpenModal(true);
+    }
+
+    const startEditingTodoOccurrence = (id: string, dateValue: string): TodoActionResult => {
+        const todo = normalizedTodos.find(item => item.id === id);
+
+        if (!todo || todo.recurrence === TODO_RECURRENCES.none) {
+            return { ok: false, error: 'No encontramos esa ocurrencia.' };
+        }
+
+        setEditingTodoId(id);
+        setEditingOccurrenceDate(dateValue);
+        setDetailTodoId(null);
+        setDetailOccurrenceDate(null);
+        setDeletingTodoId(null);
+        setOpenModal(true);
+
+        return { ok: true };
+    };
+
+    const skipTodoOccurrence = (id: string, dateValue: string): TodoActionResult => {
+        const todo = normalizedTodos.find(item => item.id === id);
+
+        if (!todo || todo.recurrence === TODO_RECURRENCES.none) {
+            return { ok: false, error: 'No encontramos esa ocurrencia.' };
+        }
+
+        const updatedTodo = setTodoOccurrenceExcluded(todo, dateValue, true);
+        saveActiveTodos(normalizedTodos.map(item => item.id === id ? updatedTodo : item));
+        setDetailOccurrenceDate(getTodoNextRecurringDate(updatedTodo, dateValue));
+
+        return { ok: true };
+    };
+
+    const restoreTodoOccurrence = (id: string, dateValue: string): TodoActionResult => {
+        const todo = normalizedTodos.find(item => item.id === id);
+
+        if (!todo || !todo.excludedOccurrences.includes(dateValue)) {
+            return { ok: false, error: 'No encontramos esa fecha omitida.' };
+        }
+
+        saveActiveTodos(normalizedTodos.map(item => (
+            item.id === id ? setTodoOccurrenceExcluded(item, dateValue, false) : item
+        )));
+
+        return { ok: true };
+    };
+
+    const startDeletingTodo = (id: string) => {
+        setDeletingTodoId(id);
+        setDetailTodoId(null);
+        setEditingTodoId(null);
+        setOpenModal(true);
+    }
+
+    const confirmDeleteTodo = () => {
+        if (!deletingTodoId) {
+            return;
+        }
+
+        deleteTodo(deletingTodoId);
+        setDeletingTodoId(null);
+        setDetailTodoId(null);
+        setDetailOccurrenceDate(null);
+        setOpenModal(false);
+    }
+
+    const undoDeleteTodo = () => {
+        if (!recentlyDeletedTodo) {
+            return;
+        }
+
+        if (normalizedTodos.some(todo => todo.id === recentlyDeletedTodo.id)) {
+            setRecentlyDeletedTodo(null);
+            return;
+        }
+
+        const restoredTodos = [...normalizedTodos];
+        const restoredIndex = Math.min(recentlyDeletedTodo.order, restoredTodos.length);
+        restoredTodos.splice(restoredIndex, 0, recentlyDeletedTodo);
+        saveActiveTodos(reindexTodos(restoredTodos));
+        setRecentlyDeletedTodo(null);
+    }
+
+    const dismissUndoDelete = () => {
+        if (recentlyDeletedTodo) {
+            removeTodoAttachmentsForTodo(recentlyDeletedTodo.id).catch(() => undefined);
+        }
+
+        setRecentlyDeletedTodo(null);
+    }
+
+    const closeModal = () => {
+        setOpenModal(false);
+        setDetailTodoId(null);
+        setDetailOccurrenceDate(null);
+        setEditingTodoId(null);
+        setEditingOccurrenceDate(null);
+        setDeletingTodoId(null);
+    }
+
+    const exportTodos = () => createTodoWorkspaceBackup({
+        activeBoardId,
+        boards: todoBoards,
+        savedViews,
+        todos: normalizedTodos,
+    });
+
+    const exportCalendar = () => createTodosCalendarExport(normalizedTodos);
+
+    const previewTodosImport = (backup: unknown) => {
+        const workspaceResult = readTodoWorkspaceBackup(backup);
+
+        if (workspaceResult.ok) {
+            const activeImportedBoard = getActiveTodoBoard(
+                workspaceResult.backup.boards,
+                workspaceResult.backup.activeBoardId
+            );
+            const activeImportedTodos = activeImportedBoard?.todos || workspaceResult.backup.todos;
+            const activeTodoPreview = analyzeTodosImport(normalizedTodos, { todos: activeImportedTodos });
+
+            return {
+                ok: true,
+                kind: 'workspace',
+                todos: workspaceResult.backup.todos,
+                totalCount: workspaceResult.totalTodos,
+                newCount: activeTodoPreview.ok ? activeTodoPreview.newCount : activeImportedTodos.length,
+                duplicateCount: activeTodoPreview.ok ? activeTodoPreview.duplicateCount : 0,
+                boardCount: workspaceResult.backup.boards.length,
+                savedViewCount: workspaceResult.backup.savedViews.length,
+            };
+        }
+
+        if (workspaceResult.isWorkspaceBackup) {
+            return workspaceResult;
+        }
+
+        const result = analyzeTodosImport(normalizedTodos, backup);
+
+        if (!result.ok) {
+            return result;
+        }
+
+        const previewBoards = todoBoards.map(board =>
+            board.id === activeBoardId
+                ? { ...board, todos: normalizedTodos }
+                : board
+        );
+        const boardPreviews = previewBoards.map(board => {
+            const boardPreview = analyzeTodosImport(board.todos, backup);
+
+            return boardPreview.ok
+                ? {
+                    id: board.id,
+                    name: board.name,
+                    totalTodos: normalizeTodos(board.todos).length,
+                    totalCount: boardPreview.totalCount,
+                    newCount: boardPreview.newCount,
+                    duplicateCount: boardPreview.duplicateCount,
+                }
+                : null;
+        }).filter((board): board is {
+            id: string;
+            name: string;
+            totalTodos: number;
+            totalCount: number;
+            newCount: number;
+            duplicateCount: number;
+        } => Boolean(board));
+
+        return {
+            ...result,
+            kind: 'todos',
+            boardPreviews,
+        };
+    };
+
+    const previewCalendarImport = (content: unknown) => {
+        const calendarResult = readTodosCalendarImport(content);
+
+        if (!calendarResult.ok) {
+            return calendarResult;
+        }
+
+        const result = analyzeTodosImport(normalizedTodos, { todos: calendarResult.todos });
+
+        return result.ok
+            ? { ...result, kind: 'calendar' }
+            : result;
+    };
+
+    const importTodos = (backup: unknown, options: TodoImportOptions = {}) => {
+        const mode = options.mode === 'merge' ? 'merge' : 'replace';
+        const workspaceResult = readTodoWorkspaceBackup(backup);
+
+        if (workspaceResult.ok) {
+            if (mode === 'merge') {
+                return {
+                    ok: false,
+                    error: 'El backup completo debe restaurarse para conservar tableros y filtros guardados.',
+                };
+            }
+
+            const activeImportedBoard = getActiveTodoBoard(
+                workspaceResult.backup.boards,
+                workspaceResult.backup.activeBoardId
+            );
+
+            createAutomaticSnapshot('Antes de restaurar un backup');
+            saveBoards(workspaceResult.backup.boards);
+            saveActiveBoardId(workspaceResult.backup.activeBoardId);
+            saveTodos(activeImportedBoard?.todos || workspaceResult.backup.todos);
+            saveSavedViews(workspaceResult.backup.savedViews);
+            resetTodoView();
+
+            return {
+                ok: true,
+                mode: 'workspace',
+                count: workspaceResult.totalTodos,
+                boardCount: workspaceResult.backup.boards.length,
+                savedViewCount: workspaceResult.backup.savedViews.length,
+            };
+        }
+
+        if (workspaceResult.isWorkspaceBackup) {
+            return workspaceResult;
+        }
+
+        if (mode === 'merge' && options.targetBoardId) {
+            const boardsWithCurrentTodos = upsertTodoBoardTodos(todoBoards, activeBoardId, normalizedTodos);
+            const targetBoard = boardsWithCurrentTodos.find(board => board.id === options.targetBoardId);
+
+            if (!targetBoard) {
+                return {
+                    ok: false,
+                    error: 'No encontramos el tablero destino.',
+                };
+            }
+
+            if (targetBoard.id !== activeBoardId) {
+                const result = applyTodosImport(targetBoard.todos, backup, mode);
+
+                if (!result.ok) {
+                    return result;
+                }
+
+                saveBoards(upsertTodoBoardTodos(boardsWithCurrentTodos, targetBoard.id, result.todos));
+
+                return {
+                    ok: true,
+                    count: result.importedCount,
+                    skippedDuplicates: result.skippedDuplicates,
+                    totalCount: result.totalCount,
+                    mode,
+                    targetBoardId: targetBoard.id,
+                    targetBoardName: targetBoard.name,
+                };
+            }
+        }
+
+        const result = applyTodosImport(normalizedTodos, backup, mode);
+
+        if (!result.ok) {
+            return result;
+        }
+
+        if (mode === 'replace') {
+            createAutomaticSnapshot('Antes de reemplazar las tareas');
+        }
+
+        saveActiveTodos(result.todos);
+        resetTodoView();
+
+        return {
+            ok: true,
+            count: result.importedCount,
+            skippedDuplicates: result.skippedDuplicates,
+            totalCount: result.totalCount,
+            mode,
+            targetBoardId: activeBoardId,
+            targetBoardName: mode === 'merge' ? activeBoard?.name : undefined,
+        };
+    }
+
+    const importCalendar = (content: unknown) => {
+        const calendarResult = readTodosCalendarImport(content);
+
+        if (!calendarResult.ok) {
+            return calendarResult;
+        }
+
+        const result = applyTodosImport(normalizedTodos, { todos: calendarResult.todos }, 'merge');
+
+        if (!result.ok) {
+            return result;
+        }
+
+        saveActiveTodos(result.todos);
+        resetTodoView();
+
+        return {
+            ok: true,
+            count: result.importedCount,
+            skippedDuplicates: result.skippedDuplicates,
+            totalCount: result.totalCount,
+            mode: 'calendar',
+        };
+    }
+
+    const states = {
+        loading: loading || boardsLoading || activeBoardLoading || savedViewsLoading || snapshotsLoading,
+        error: error || boardsError || activeBoardError || savedViewsError || snapshotsError,
+        searchValue,
+        filter,
+        todoBoards: todoBoards.map(board => ({
+            id: board.id,
+            name: board.name,
+            totalTodos: normalizeTodos(board.todos).length,
+        })),
+        activeBoardId,
+        activeBoardName: activeBoard?.name || '',
+        savedViews,
+        todoSnapshots,
+        totalTodos,
+        totalTasks,
+        completedTodos,
+        pendingTodos,
+        overdueTodos: dateCounts[TODO_FILTERS.overdue],
+        todayTodos: dateCounts[TODO_FILTERS.today],
+        upcomingTodos: dateCounts[TODO_FILTERS.upcoming],
+        filterCounts,
+        insights,
+        projectOptions: facets.projects,
+        tagOptions: facets.tags,
+        activeProject,
+        activeTag,
+        reminderTodos: activeTodos,
+        visibleTodos,
+        visibleTodoGroups,
+        openModal,
+        detailTodo,
+        detailOccurrenceDate,
+        editingTodo,
+        editingOccurrenceDate,
+        deletingTodo,
+        recentlyDeletedTodo,
+        calendarUndoMessage: calendarUndo?.boardId === activeBoardId ? `Actualizaste el horario de "${calendarUndo.before.text}".` : '',
+    }
+
+    const stateUpdaters = {
+        setSearchValue,
+        setFilter,
+        selectProjectFilter,
+        selectTagFilter,
+        clearFacetFilters,
+        selectTodoBoard,
+        createBoard,
+        renameBoard,
+        deleteBoard,
+        saveCurrentView,
+        applySavedView,
+        deleteSavedView,
+        deleteTodoSnapshot,
+        createManualTodoSnapshot,
+        restoreTodoSnapshot,
+        completeTodo,
+        completeTodos,
+        deleteTodo,
+        deleteTodos,
+        checkTodoScheduleConflicts,
+        archiveTodo,
+        archiveTodos,
+        unarchiveTodo,
+        duplicateTodo,
+        toggleSubtask,
+        moveTodo,
+        moveTodoToPosition,
+        openCreateModal,
+        startViewingTodo,
+        startEditingTodo,
+        startEditingTodoOccurrence,
+        skipTodoOccurrence,
+        restoreTodoOccurrence,
+        startDeletingTodo,
+        confirmDeleteTodo,
+        undoDeleteTodo,
+        dismissUndoDelete,
+        closeModal,
+        addTodo,
+        updateTodo,
+        changeTodoSchedule,
+        checkScheduleChange,
+        undoScheduleChange,
+        dismissScheduleUndo,
+        updateTodoOccurrence,
+        exportTodos,
+        exportCalendar,
+        previewTodosImport,
+        previewCalendarImport,
+        importTodos,
+        importCalendar,
+        syncTodos
+    }
+
+    return { states, stateUpdaters };
+}
+
+export { useTodos }; 

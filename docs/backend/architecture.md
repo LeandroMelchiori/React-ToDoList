@@ -6,7 +6,7 @@ Estado: diseño y lógica de dominio preparados; todavía no hay API HTTP, auten
 
 Cada persona tiene su agenda, puede aceptar amistades, comparar disponibilidad individual y pertenecer a varios grupos. Los primeros cinco usuarios entrarán por invitación; el modelo no limita el producto a cinco personas ni a un grupo fijo. El registro público será una configuración posterior.
 
-La primera entrega remota conservará tareas, eventos, horarios, períodos, recurrencias y excepciones, proyectos, etiquetas, subtareas y bloques de trabajo. Las reglas de esos elementos siguen en `src/App/todoModel.ts`. Los grupos sociales son entidades nuevas, diferentes de los tableros personales existentes.
+La primera entrega remota conservará tareas, eventos, horarios, períodos, recurrencias y excepciones, proyectos, etiquetas, subtareas y bloques de trabajo. Las reglas de esos elementos siguen en `src/shared/calendar/todoModel.ts`. Los grupos sociales son entidades nuevas, diferentes de los tableros personales existentes.
 
 ## Arquitectura
 
@@ -20,7 +20,7 @@ flowchart LR
 
 - Mantener React/Vite y la PWA. La API podrá desplegarse mediante Vercel Functions con un runtime TypeScript; no es necesario migrar el frontend a Next.js.
 - PostgreSQL contiene los datos compartidos. IndexedDB conserva la copia de la cuenta actual y la cola de cambios offline.
-- `src/server/availability.ts` calcula intersecciones de disponibilidad. Recibe intervalos UTC ya autorizados y expandidos; no consulta usuarios ni almacena datos.
+- `src/server/modules/meetings/domain/availability.ts` calcula intersecciones de disponibilidad. Recibe intervalos UTC ya autorizados y expandidos; no consulta usuarios ni almacena datos.
 - El proveedor de identidad y el proveedor de PostgreSQL quedan pendientes de elección/configuración. El contrato usa una sesión verificada y no depende de un proveedor particular.
 - `schema.sql` es un esquema inicial para revisar y ejecutar en un entorno de desarrollo cuando exista conexión. No fue aplicado a ninguna base.
 - `openapi.json` describe las operaciones previstas; no anuncia endpoints disponibles en producción.
