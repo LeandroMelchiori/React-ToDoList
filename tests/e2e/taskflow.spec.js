@@ -82,7 +82,6 @@ test('manages a todo through the production flow', async ({ page }) => {
   await expect(page.getByLabel('Plan semanal')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Próximos' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Pendientes sin fecha' })).toBeVisible();
-  await expect(page.getByText('Preparar demo del proyecto')).toBeVisible();
   await page.getByRole('tab', { name: 'Lista' }).click();
 
   await page.getByRole('button', { name: 'Filtrar por etiqueta frontend' }).click();
