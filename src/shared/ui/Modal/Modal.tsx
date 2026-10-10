@@ -18,10 +18,28 @@ interface ModalProps {
     variant?: 'center' | 'side';
 }
 
+let openModalCount = 0;
+let previousBodyOverflow = '';
+
 function Modal({ children, label = 'Dialogo', onClose, variant = 'center' }: ModalProps) {
     const dialogRef = React.useRef<HTMLDivElement>(null);
     const onCloseRef = React.useRef(onClose);
     const previousFocusRef = React.useRef<Element | null>(null);
+
+    React.useEffect(() => {
+        if (openModalCount === 0) {
+            previousBodyOverflow = document.body.style.overflow;
+            document.body.style.overflow = 'hidden';
+        }
+        openModalCount += 1;
+
+        return () => {
+            openModalCount -= 1;
+            if (openModalCount === 0) {
+                document.body.style.overflow = previousBodyOverflow;
+            }
+        };
+    }, []);
 
     React.useEffect(() => {
         onCloseRef.current = onClose;

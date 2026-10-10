@@ -3,7 +3,6 @@
   backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
-  justify-content: center;
   align-items: center;
   color: var(--color-text);
   position: fixed;
@@ -17,16 +16,20 @@
 }
 
 .ModalContent {
-  display: flex;
-  justify-content: center;
+  background: var(--color-surface);
+  border-radius: 8px;
+  display: block;
   max-height: calc(100vh - 48px);
+  min-width: 0;
   outline: none;
+  overscroll-behavior: contain;
   overflow-y: auto;
   width: min(100%, 560px);
   animation: modalEnter var(--transition-fast) ease-out;
 }
 
 .ModalContent > * {
+  margin-inline: auto;
   width: 100%;
 }
 
@@ -38,6 +41,7 @@
 
 .ModalContent--side {
   animation: modalSideEnter var(--transition-fast) ease-out;
+  border-radius: 0;
   max-height: 100dvh;
   width: min(100%, 560px);
 }
@@ -84,6 +88,7 @@
   }
 
   .ModalContent {
+    border-radius: 8px 8px 0 0;
     max-height: 94dvh;
     width: 100%;
   }
