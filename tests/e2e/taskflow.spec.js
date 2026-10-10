@@ -462,7 +462,7 @@ test('reloads the application shell while offline', async ({ context, page }) =>
 
   const cacheState = await page.evaluate(async () => {
     const cacheNames = await caches.keys();
-    const shellCache = await caches.open('taskflow-shell-v4');
+    const shellCache = await caches.open('taskflow-shell-v5');
     const cachedRequests = await shellCache.keys();
 
     return {
@@ -470,7 +470,7 @@ test('reloads the application shell while offline', async ({ context, page }) =>
       assets: cachedRequests.map(request => new URL(request.url).pathname),
     };
   });
-  expect(cacheState.cacheNames).toEqual(['taskflow-shell-v4']);
+  expect(cacheState.cacheNames).toEqual(['taskflow-shell-v5']);
   expect(cacheState.assets.filter(asset => asset.startsWith('/assets/')).length).toBeGreaterThanOrEqual(6);
   expect(cacheState.assets).toContain('/fonts/outfit-latin.woff2');
 
