@@ -33,6 +33,38 @@
   padding-bottom: 14px;
 }
 
+.App > header .TodoCounterBlock,
+.App-searchTools .TodoSearch-label,
+.App-searchTools .App-filterRow {
+  margin-inline: 0;
+  max-width: none;
+}
+
+.App > header .TodoCounterBlock {
+  padding: 0;
+}
+
+.App > header h1 {
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.App-headingRow {
+  align-items: flex-start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.App-headingRow > :first-child {
+  min-width: 0;
+}
+
+.App-headingRow .ThemeToggle {
+  flex: 0 0 auto;
+  position: static;
+}
+
 .App--compact .TodoSearch {
   height: 48px;
 }
@@ -102,6 +134,10 @@
   justify-self: end;
 }
 
+.App-viewControls .TodoViewNavigation {
+  min-width: 0;
+}
+
 .App-workspaceQuickAdd {
   margin: 8px auto 0;
   max-width: 960px;
@@ -147,6 +183,17 @@
   outline-offset: 5px;
 }
 
+@media (min-width: 641px) and (max-width: 1100px) {
+  .App-viewControls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .App-workspaceActions {
+    grid-column: 1;
+    justify-self: start;
+  }
+}
+
 @media (max-width: 640px) {
   .App {
     padding: 12px 12px 88px;
@@ -161,14 +208,14 @@
     align-items: stretch;
     display: grid;
     gap: 8px;
-    grid-template-columns: minmax(0, 1fr) 44px;
+    grid-template-columns: minmax(0, 1fr);
     margin-top: 0;
     width: 100%;
   }
 
   .App-workspaceActions {
-    grid-column: 2;
-    justify-content: flex-end;
+    grid-column: 1;
+    justify-self: stretch;
     margin-top: 0;
   }
 
@@ -176,7 +223,6 @@
     grid-column: 1;
     min-width: 0;
   }
-  .App-planningTitle { padding-right: 88px; }
 
   .App-filterRow {
     align-items: stretch;

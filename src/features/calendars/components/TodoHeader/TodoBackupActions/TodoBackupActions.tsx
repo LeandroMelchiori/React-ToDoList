@@ -113,6 +113,12 @@ function TodoBackupActions({
   const [statusMessage, setStatusMessage] = React.useState('');
   const [importPreview, setImportPreview] = React.useState<any>(null);
   const [targetBoardId, setTargetBoardId] = React.useState('');
+  const previewRef = React.useRef<HTMLDivElement>(null);
+  const importInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  React.useEffect(() => {
+    if (importPreview) previewRef.current?.focus();
+  }, [importPreview]);
 
   const boardPreviews: ImportBoardPreview[] = Array.isArray(importPreview?.boardPreviews)
     ? importPreview.boardPreviews
@@ -160,6 +166,7 @@ function TodoBackupActions({
   };
 
   const handleImport = async (event: ChangeEvent<HTMLInputElement>) => {
+    importInputRef.current = event.currentTarget;
     const file = event.target.files?.[0];
     event.target.value = '';
 
@@ -197,6 +204,7 @@ function TodoBackupActions({
   };
 
   const handleCalendarImport = async (event: ChangeEvent<HTMLInputElement>) => {
+    importInputRef.current = event.currentTarget;
     const file = event.target.files?.[0];
     event.target.value = '';
 
@@ -243,6 +251,7 @@ function TodoBackupActions({
 
       setImportPreview(null);
       setStatusMessage(getImportStatusMessage(result));
+      importInputRef.current?.focus();
       return;
     }
 
@@ -261,56 +270,76 @@ function TodoBackupActions({
     setImportPreview(null);
     setTargetBoardId('');
     setStatusMessage(getImportStatusMessage(result));
+    importInputRef.current?.focus();
   };
 
   const cancelImport = () => {
     setImportPreview(null);
     setTargetBoardId('');
     setStatusMessage('Importacion cancelada.');
+    importInputRef.current?.focus();
   };
 
   return (
     <div className="TodoBackupActions">
-      <button
-        type="button"
-        className="TodoBackupActions-button"
-        disabled={loading}
-        aria-label="Exportar backup completo"
-        onClick={handleExport}
-      >
-        Exportar backup
-      </button>
-      <button
-        type="button"
-        className="TodoBackupActions-button"
-        disabled={loading}
-        aria-label="Exportar calendario ICS"
-        onClick={handleCalendarExport}
-      >
-        Exportar calendario
-      </button>
-      <label className="TodoBackupActions-button">
-        Importar backup
-        <input
-          type="file"
-          accept="application/json,.json"
-          aria-label="Importar backup JSON"
-          disabled={loading}
-          onChange={handleImport}
-        />
-      </label>
-      <label className="TodoBackupActions-button">
-        Importar calendario
-        <input
-          type="file"
-          accept="text/calendar,.ics"
-          aria-label="Importar calendario ICS"
-          disabled={loading}
-          onChange={handleCalendarImport}
-        />
-      </label>
+      {statusMessage && (
+        <p className="TodoBackupActions-status" role="status">
+          {statusMessage}
+        </p>
+      )}
+      <section className="TodoBackupActions-group" aria-label="Backup JSON">
+        <h3>Backup de tu agenda</h3>
+        <p>Tareas, horarios, eventos, tableros y filtros guardados en un archivo JSON.</p>
+        <div className="TodoBackupActions-groupButtons">
+          <button
+            type="button"
+            className="TodoBackupActions-button"
+            disabled={loading}
+            aria-label="Exportar backup completo"
+            onClick={handleExport}
+          >
+            Exportar backup
+          </button>
+          <label className="TodoBackupActions-button">
+            Importar backup
+            <input
+              type="file"
+              accept="application/json,.json"
+              aria-label="Importar backup JSON"
+              disabled={loading}
+              onChange={handleImport}
+            />
+          </label>
+        </div>
+        <p className="TodoBackupActions-note">Guardado solo en este navegador. Descarga un backup para conservarlo o llevarlo a otro dispositivo. Los archivos adjuntos no se incluyen.</p>
+      </section>
+      <section className="TodoBackupActions-group" aria-label="Calendario ICS">
+        <h3>Compartir con otro calendario</h3>
+        <p>Intercambia elementos con fecha mediante archivos ICS. No reemplaza el backup JSON.</p>
+        <div className="TodoBackupActions-groupButtons">
+          <button
+            type="button"
+            className="TodoBackupActions-button"
+            disabled={loading}
+            aria-label="Exportar calendario ICS"
+            onClick={handleCalendarExport}
+          >
+            Exportar calendario
+          </button>
+          <label className="TodoBackupActions-button">
+            Importar calendario
+            <input
+              type="file"
+              accept="text/calendar,.ics"
+              aria-label="Importar calendario ICS"
+              disabled={loading}
+              onChange={handleCalendarImport}
+            />
+          </label>
+        </div>
+      </section>
       {importPreview && (
-        <div className="TodoBackupActions-preview" role="region" aria-label="Previsualizacion de importacion">
+        <div className="TodoBackupActions-preview" role="region" aria-label="Previsualizacion de importacion" ref={previewRef} tabIndex={-1}>
           <div>
             <p className="TodoBackupActions-previewTitle">Revisar importacion</p>
             {importPreview.kind === 'workspace' ? (
@@ -397,11 +426,6 @@ function TodoBackupActions({
             </button>
           </div>
         </div>
-      )}
-      {statusMessage && (
-        <p className="TodoBackupActions-status" role="status">
-          {statusMessage}
-        </p>
       )}
     </div>
   );

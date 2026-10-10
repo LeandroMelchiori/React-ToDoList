@@ -1,46 +1,14 @@
 .EmptyTodo-container {
-  align-items: flex-start;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: 1px dashed var(--color-border-strong);
   border-radius: 8px;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
-  display: flex;
-  gap: 16px;
-  justify-content: center;
   margin: 0;
   padding: 24px;
-  text-align: left;
-}
-
-.EmptyTodo-content {
-  display: grid;
-  gap: 16px;
-  max-width: 760px;
-  width: 100%;
-}
-
-.EmptyTodo-completeIcon {
-  align-items: center;
-  background: var(--color-accent-soft);
-  border-radius: 999px;
-  color: var(--color-accent-hover);
-  display: flex;
-  flex: 0 0 auto;
-  font-size: 26px;
-  font-weight: 900;
-  height: 48px;
-  justify-content: center;
-  margin: 0;
-  width: 48px;
-}
-
-.EmptyTodo-completeIcon::before {
-  content: "+";
+  text-align: center;
 }
 
 .EmptyTodo-title {
   color: var(--color-text);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 800;
   margin: 0 0 6px;
 }
@@ -48,68 +16,6 @@
 .EmptyTodo-text {
   color: var(--color-text-muted);
   font-size: 14px;
-  line-height: 1.45;
+  line-height: 1.5;
   margin: 0;
-}
-
-.EmptyTodo-templates {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-}
-
-.EmptyTodo-template {
-  background: var(--color-surface-muted);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  color: var(--color-text);
-  cursor: pointer;
-  display: grid;
-  gap: 5px;
-  min-height: 92px;
-  padding: 14px;
-  text-align: left;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    transform 0.2s ease;
-}
-
-.EmptyTodo-template:hover {
-  border-color: var(--color-accent);
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
-  transform: translateY(-1px);
-}
-
-.EmptyTodo-template:focus-visible {
-  border-color: var(--color-accent);
-  box-shadow: var(--shadow-focus);
-  outline: none;
-}
-
-.EmptyTodo-template span {
-  font-weight: 800;
-}
-
-.EmptyTodo-template small {
-  color: var(--color-text-muted);
-  font-size: 13px;
-  line-height: 1.35;
-}
-
-@media (max-width: 560px) {
-  .EmptyTodo-container {
-    align-items: center;
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .EmptyTodo-templates {
-    grid-template-columns: 1fr;
-  }
-
-  .EmptyTodo-template {
-    min-height: auto;
-    text-align: center;
-  }
 }

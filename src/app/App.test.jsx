@@ -705,57 +705,31 @@ describe('App', () => {
     expect(within(detailDialog).getByText('Rendir parcial')).toBeInTheDocument();
   });
 
-  test('creates a starter todo from the empty onboarding templates', async () => {
+  test('keeps the empty task state simple without starter templates', async () => {
     const user = userEvent.setup();
     renderApp();
 
     expect(await screen.findByText('Todavia no hay tareas')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Usar plantilla/ })).not.toBeInTheDocument();
+    expect(screen.getByText(/importa un backup de tu agenda/)).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Usar plantilla Preparar entrevista' }));
-
-    expect(screen.getByText('Preparar entrevista tecnica')).toBeInTheDocument();
-    expect(screen.getByText('Alta')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Filtrar por proyecto Carrera' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Filtrar por etiqueta portfolio' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Revisar proyectos')).toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem('TODOS_V1'))[0]).toEqual(expect.objectContaining({
-      text: 'Preparar entrevista tecnica',
-      priority: 'high',
-      project: 'Carrera',
-      tags: ['portfolio', 'react'],
-      subtasks: [
-        expect.objectContaining({ text: 'Revisar proyectos', completed: false }),
-        expect.objectContaining({ text: 'Practicar explicacion tecnica', completed: false }),
-      ],
-    }));
+    await user.click(screen.getByRole('button', { name: 'Crear nueva tarea' }));
+    await user.type(screen.getByLabelText('Nueva tarea'), 'Mi primera tarea');
+    await user.click(screen.getByRole('button', { name: 'Agregar' }));
+    expect(screen.getByText('Mi primera tarea')).toBeInTheDocument();
   });
 
-  test('creates a workshop todo from a local starter template', async () => {
+  test('does not append another empty state below the planning calendar', async () => {
     const user = userEvent.setup();
     renderApp();
 
     expect(await screen.findByText('Todavia no hay tareas')).toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'Usar plantilla Organizar taller' }));
-
-    expect(screen.getByText('Preparar material del taller')).toBeInTheDocument();
-    expect(screen.getByText('Alta')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Filtrar por proyecto Talleres' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Filtrar por etiqueta talleres' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Filtrar por etiqueta material' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Definir objetivos')).toBeInTheDocument();
-    expect(screen.getByLabelText('Revisar presentacion')).toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem('TODOS_V1'))[0]).toEqual(expect.objectContaining({
-      text: 'Preparar material del taller',
-      priority: 'high',
-      project: 'Talleres',
-      tags: ['talleres', 'material'],
-      subtasks: [
-        expect.objectContaining({ text: 'Definir objetivos', completed: false }),
-        expect.objectContaining({ text: 'Revisar presentacion', completed: false }),
-        expect.objectContaining({ text: 'Preparar recursos descargables', completed: false }),
-      ],
-    }));
+    await selectView(user, 'Agenda');
+    expect(await screen.findByRole('region', { name: 'Planificacion personal' })).toBeInTheDocument();
+    expect(screen.queryByText('Todavia no hay tareas')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Usar plantilla/ })).not.toBeInTheDocument();
+    await selectView(user, 'Lista');
+    expect(screen.getByText('Todavia no hay tareas')).toBeInTheDocument();
   });
 
   test('creates and switches local todo boards', async () => {
@@ -2563,7 +2537,7 @@ describe('App', () => {
     await openTools(user, 'Datos y copias');
 
     expect(screen.getByRole('heading', { name: 'Datos locales' })).toBeInTheDocument();
-    expect(screen.getByText('Sin backend')).toBeInTheDocument();
+    expect(screen.getByText('Solo local')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Crear copia ahora' }));
 
     expect(screen.getByText('Copia local creada.')).toBeInTheDocument();

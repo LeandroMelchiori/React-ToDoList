@@ -11,14 +11,17 @@ interface TodoToolSection {
 interface TodoHeaderToolsProps {
   loading?: boolean;
   sections: TodoToolSection[];
+  shortcutSectionId?: string;
 }
 
-function TodoHeaderTools({ loading, sections }: TodoHeaderToolsProps) {
+function TodoHeaderTools({ loading, sections, shortcutSectionId }: TodoHeaderToolsProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [activeSectionId, setActiveSectionId] = React.useState<string | null>(null);
   const containerRef = React.useRef<HTMLElement>(null);
+  const triggerRef = React.useRef<HTMLButtonElement | null>(null);
   const panelId = 'todo-header-tools-panel';
   const activeSection = sections.find(section => section.id === activeSectionId) || null;
+  const shortcutSection = sections.find(section => section.id === shortcutSectionId);
 
   const closeOptions = React.useCallback(() => {
     setIsOpen(false);
@@ -38,6 +41,7 @@ function TodoHeaderTools({ loading, sections }: TodoHeaderToolsProps) {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         closeOptions();
+        triggerRef.current?.focus();
       }
     };
 
@@ -60,17 +64,38 @@ function TodoHeaderTools({ loading, sections }: TodoHeaderToolsProps) {
 
   return (
     <section aria-label="Opciones de la aplicacion" className="TodoHeaderTools" ref={containerRef}>
+      {shortcutSection && (
+        <button
+          aria-controls={panelId}
+          aria-expanded={isOpen && activeSectionId === shortcutSectionId}
+          className="TodoHeaderTools-summary TodoHeaderTools-shortcut"
+          onClick={event => {
+            triggerRef.current = event.currentTarget;
+            if (isOpen && activeSectionId === shortcutSectionId) {
+              closeOptions();
+            } else {
+              setActiveSectionId(shortcutSectionId || null);
+              setIsOpen(true);
+            }
+          }}
+          type="button"
+        >
+          Exportar / importar
+        </button>
+      )}
       <button
         aria-controls={panelId}
         aria-expanded={isOpen}
         className="TodoHeaderTools-summary"
-        onClick={() => {
-          if (isOpen) {
+        onClick={event => {
+          triggerRef.current = event.currentTarget;
+          if (isOpen && activeSectionId === null) {
             closeOptions();
             return;
           }
 
           setIsOpen(true);
+          setActiveSectionId(null);
         }}
         type="button"
       >
@@ -93,7 +118,10 @@ function TodoHeaderTools({ loading, sections }: TodoHeaderToolsProps) {
               <strong>Opciones</strong>
             )}
             {activeSection && <strong>{activeSection.label}</strong>}
-            <button aria-label="Cerrar opciones" className="TodoHeaderTools-close" onClick={closeOptions} type="button">
+            <button aria-label="Cerrar opciones" className="TodoHeaderTools-close" onClick={() => {
+              closeOptions();
+              triggerRef.current?.focus();
+            }} type="button">
               &times;
             </button>
           </div>

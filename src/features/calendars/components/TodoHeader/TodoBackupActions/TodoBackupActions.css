@@ -1,11 +1,42 @@
 .TodoBackupActions {
-  align-items: center;
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  min-width: 0;
+}
+
+.TodoBackupActions-group {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.TodoBackupActions-group + .TodoBackupActions-group {
+  border-top: 1px solid var(--color-border);
+  padding-top: 16px;
+}
+
+.TodoBackupActions-group h3 {
+  color: var(--color-text-strong);
+  font-size: 14px;
+  margin: 0;
+}
+
+.TodoBackupActions-group p {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.TodoBackupActions-groupButtons {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  justify-content: flex-start;
-  margin: 16px auto 0;
-  max-width: 960px;
+  gap: 8px;
+}
+
+.TodoBackupActions-group .TodoBackupActions-note {
+  font-size: 12px;
 }
 
 .TodoBackupActions-button {
@@ -20,7 +51,7 @@
   font-size: 14px;
   font-weight: 800;
   justify-content: center;
-  min-height: 38px;
+  min-height: 44px;
   padding: 0 16px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
 }
@@ -77,12 +108,19 @@
   margin: 0 0 6px;
 }
 
+.TodoBackupActions-preview:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-focus);
+  outline: none;
+}
+
 .TodoBackupActions-previewText {
   color: var(--color-text-muted);
   font-size: 13px;
   font-weight: 700;
   line-height: 1.4;
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .TodoBackupActions-field {

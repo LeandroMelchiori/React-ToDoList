@@ -94,9 +94,9 @@ function TodoDataCenter({
       <div className="TodoDataCenter-heading">
         <div>
           <h3 id="todo-data-center-title">Datos locales</h3>
-          <p>La informacion se guarda en este navegador. IndexedDB es la base principal y localStorage mantiene compatibilidad.</p>
+          <p>Tu agenda se guarda en este navegador, sin cuenta ni sincronizacion en la nube.</p>
         </div>
-        <span className="TodoDataCenter-localBadge">Sin backend</span>
+        <span className="TodoDataCenter-localBadge">Solo local</span>
       </div>
 
       <dl className="TodoDataCenter-metrics">

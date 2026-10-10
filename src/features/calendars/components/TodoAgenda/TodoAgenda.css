@@ -184,7 +184,6 @@
 }
 
 .TodoAgenda-filterEmpty { margin-top: 16px; }
-.TodoAgenda-onboarding { margin-top: 18px; }
 
 @media (max-width: 900px) {
   .TodoAgenda-mainGrid { grid-template-columns: 1fr; }

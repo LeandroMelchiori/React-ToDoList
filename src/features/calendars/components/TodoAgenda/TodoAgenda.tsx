@@ -31,7 +31,6 @@ interface TodoAgendaProps {
   onScheduleTodo?: (id: string) => void;
   onScheduleTodoForSlot?: (id: string, dateValue: string, hour: number, source?: Pick<TodoScheduleChange, 'timeBlockId' | 'occurrenceDate'>) => void;
   onEmptySearchResults: () => ReactNode;
-  onEmptyTodos: () => ReactNode;
   onError: () => ReactNode;
   onLoading: () => ReactNode;
   totalTodos: number;
@@ -164,7 +163,6 @@ function TodoAgenda({
   onScheduleTodo,
   onScheduleTodoForSlot,
   onEmptySearchResults,
-  onEmptyTodos,
   onError,
   onLoading,
   totalTodos,
@@ -316,11 +314,6 @@ function TodoAgenda({
           </div>
           </div>
 
-          {!totalTodos && (
-            <div className="TodoAgenda-onboarding">
-              {onEmptyTodos()}
-            </div>
-          )}
         </>
       )}
     </section>

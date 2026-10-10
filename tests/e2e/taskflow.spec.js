@@ -161,9 +161,11 @@ test('manages a todo through the production flow', async ({ page }) => {
 });
 
 test('exports current todos as a JSON backup', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('TODOS_V1', JSON.stringify([
+    { id: 'export-task', text: 'Definir prioridades de la semana', project: 'Personal', tags: ['planificacion'] },
+  ])));
   await page.goto('/');
 
-  await page.getByRole('button', { name: 'Usar plantilla Plan semanal' }).click();
   await expect(page.getByText('Definir prioridades de la semana')).toBeVisible();
 
   await openTools(page, 'Datos y copias');
@@ -196,9 +198,11 @@ test('exports current todos as a JSON backup', async ({ page }) => {
 });
 
 test('previews and merges imported todos without duplicates', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('TODOS_V1', JSON.stringify([
+    { id: 'interview', text: 'Preparar entrevista tecnica', completed: false },
+  ])));
   await page.goto('/');
 
-  await page.getByRole('button', { name: 'Usar plantilla Preparar entrevista' }).click();
   await expect(page.getByText('Preparar entrevista tecnica', { exact: true })).toBeVisible();
 
   await openTools(page, 'Datos y copias');

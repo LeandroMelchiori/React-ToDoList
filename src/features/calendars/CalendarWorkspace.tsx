@@ -504,21 +504,24 @@ function CalendarWorkspace({ isDarkTheme, onToggleTheme: toggleTheme, appearance
                 className={`App ${settings.density === 'compact' ? 'App--compact' : ''}`}
                 aria-labelledby="app-title"
             >
-                {appearanceControl}
                 {status}
 
                 <TodoHeader loading={loading}>
 
+                <div className="App-headingRow">
                 {isPlanningView ? (
                     <div className="App-planningTitle">
                         <p>TaskFlow</p>
                         <h1 id="app-title">Planificación</h1>
                     </div>
                 ) : <TodoCounter
+                    loading={loading}
                     totalTodos={totalTasks}
                     totalItems={totalTodos}
                     completedTodos={completedTodos}
                 />}
+                {appearanceControl}
+                </div>
                 <p className="App-boardContext">Espacio: {states.activeBoardName || 'Personal'}</p>
                 <details className="App-searchTools" open={isSearchOpen}
                     onToggle={event => setIsSearchOpen(event.currentTarget.open)}>
@@ -573,6 +576,7 @@ function CalendarWorkspace({ isDarkTheme, onToggleTheme: toggleTheme, appearance
                     </button>
                     <TodoHeaderTools
                         loading={loading}
+                        shortcutSectionId="data"
                         sections={[
                             {
                                 id: 'reminders',
@@ -686,11 +690,7 @@ function CalendarWorkspace({ isDarkTheme, onToggleTheme: toggleTheme, appearance
                     onOpenTodo={startViewingTodo}
                     onError={() => <TodosError />}
                     onLoading={() => <TodosLoading />}
-                    onEmptyTodos={() => (
-                        <EmptyTodos
-                            onCreateTemplate={(template) => addTodo(template.todo.text, template.todo)}
-                        />
-                    )}
+                    onEmptyTodos={() => <EmptyTodos />}
                     onEmptySearchResults={() => (
                         <p className="TodoList-emptySearch">
                             {searchValue
@@ -721,11 +721,6 @@ function CalendarWorkspace({ isDarkTheme, onToggleTheme: toggleTheme, appearance
                     onScheduleTodoForSlot={scheduleTodo}
                     onError={() => <TodosError />}
                     onLoading={() => <TodosLoading />}
-                    onEmptyTodos={() => (
-                        <EmptyTodos
-                            onCreateTemplate={(template) => addTodo(template.todo.text, template.todo)}
-                        />
-                    )}
                     onEmptySearchResults={() => (
                         <p className="TodoList-emptySearch">
                             {searchValue
@@ -748,11 +743,7 @@ function CalendarWorkspace({ isDarkTheme, onToggleTheme: toggleTheme, appearance
                     })}
                     onError={() => <TodosError />}
                     onLoading={() => <TodosLoading />}
-                    onEmptyTodos={() => (
-                        <EmptyTodos
-                            onCreateTemplate={(template) => addTodo(template.todo.text, template.todo)}
-                        />
-                    )}
+                    onEmptyTodos={() => <EmptyTodos />}
                     onEmptySearchResults={() => (
                         <p className="TodoList-emptySearch">
                             {searchValue
@@ -778,11 +769,7 @@ function CalendarWorkspace({ isDarkTheme, onToggleTheme: toggleTheme, appearance
                     })}
                     onError={() => <TodosError />}
                     onLoading={() => <TodosLoading />}
-                    onEmptyTodos={() => (
-                        <EmptyTodos
-                            onCreateTemplate={(template) => addTodo(template.todo.text, template.todo)}
-                        />
-                    )}
+                    onEmptyTodos={() => <EmptyTodos />}
                     onEmptySearchResults={() => (
                         <p className="TodoList-emptySearch">
                             {searchValue
@@ -818,11 +805,7 @@ function CalendarWorkspace({ isDarkTheme, onToggleTheme: toggleTheme, appearance
                     searchValue={searchValue}
                     onError={() => <TodosError />}
                     onLoading={() => <TodosLoading />}
-                    onEmptyTodos={() => (
-                        <EmptyTodos
-                            onCreateTemplate={(template) => addTodo(template.todo.text, template.todo)}
-                        />
-                    )}
+                    onEmptyTodos={() => <EmptyTodos />}
                     onEmptySearchResults={() => (
                         <p className="TodoList-emptySearch">
                             {searchValue
