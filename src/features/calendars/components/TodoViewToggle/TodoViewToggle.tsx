@@ -1,12 +1,14 @@
 import type { KeyboardEvent } from 'react';
 import { handleButtonGroupNavigation } from '../../../../shared/ui/buttonGroupNavigation';
 import './TodoViewToggle.css';
+import { WorkspaceNavigation } from '../../../../shared/ui/WorkspaceNavigation/WorkspaceNavigation';
 
 type TodoViewMode = 'list' | 'board' | 'today' | 'days' | 'agenda' | 'calendar' | 'week';
 
 interface TodoViewToggleProps {
   activeView: TodoViewMode;
   onChangeView: (view: TodoViewMode) => void;
+  onOpenOrders?: () => void;
 }
 
 const TASK_VIEWS: Array<{ label: string; value: TodoViewMode }> = [
@@ -20,7 +22,7 @@ const PLANNING_VIEWS: Array<{ label: string; value: TodoViewMode }> = [
   { label: 'Mes', value: 'calendar' },
 ];
 
-function TodoViewToggle({ activeView, onChangeView }: TodoViewToggleProps) {
+function TodoViewToggle({ activeView, onChangeView, onOpenOrders }: TodoViewToggleProps) {
   const isPlanning = !['list', 'board'].includes(activeView);
   const selectedView = activeView === 'week' ? 'agenda' : activeView;
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -35,14 +37,7 @@ function TodoViewToggle({ activeView, onChangeView }: TodoViewToggleProps) {
 
   return (
     <div className="TodoViewNavigation">
-      <nav aria-label="Espacios de trabajo" className="TodoViewNavigation-primary">
-        <button aria-pressed={isPlanning} onClick={() => onChangeView('agenda')} type="button">
-          Planificación
-        </button>
-        <button aria-pressed={!isPlanning} onClick={() => onChangeView('list')} type="button">
-          Tareas
-        </button>
-      </nav>
+      <WorkspaceNavigation active={isPlanning ? 'planning' : 'tasks'} onPlanning={() => onChangeView('agenda')} onTasks={() => onChangeView('list')} onOrders={onOpenOrders} />
     <div
       aria-label="Cambiar vista"
       aria-orientation="horizontal"

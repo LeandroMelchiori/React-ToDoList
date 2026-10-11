@@ -1700,6 +1700,7 @@ export {
     TODO_REMINDERS,
     TODO_RECURRENCES,
     analyzeTodosImport,
+    splitImportedTodos,
     applyTodosImport,
     createTodosBackup,
     createTodo,

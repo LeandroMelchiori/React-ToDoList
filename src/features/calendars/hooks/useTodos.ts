@@ -150,6 +150,7 @@ function useTodos() {
 
     const {
         item: storedBoards,
+        synchronizeItem: syncBoards,
         saveItem: saveBoards,
         loading: boardsLoading,
         error: boardsError,
@@ -157,6 +158,7 @@ function useTodos() {
 
     const {
         item: storedActiveBoardId,
+        synchronizeItem: syncActiveBoard,
         saveItem: saveActiveBoardId,
         loading: activeBoardLoading,
         error: activeBoardError,
@@ -164,6 +166,7 @@ function useTodos() {
 
     const {
         item: storedSavedViews,
+        synchronizeItem: syncSavedViews,
         saveItem: saveSavedViews,
         loading: savedViewsLoading,
         error: savedViewsError,
@@ -1392,6 +1395,7 @@ function useTodos() {
     }
 
     const stateUpdaters = {
+        reloadWorkspace: () => { syncTodos(); syncBoards(); syncActiveBoard(); syncSavedViews(); resetTodoView(); },
         setSearchValue,
         setFilter,
         selectProjectFilter,

@@ -34,6 +34,7 @@ type TodoTimeBlockEntry = {
 };
 
 interface TodoCalendarProps {
+  initialDate?: string;
   error?: boolean;
   loading?: boolean;
   onEditTodo: (id: string, occurrenceDate?: string) => void;
@@ -123,6 +124,7 @@ function getTodoRecurrenceLabel(todo: Todo): string {
 }
 
 function TodoCalendar({
+  initialDate,
   error,
   loading,
   onEditTodo,
@@ -136,7 +138,7 @@ function TodoCalendar({
 }: TodoCalendarProps) {
   const todayDateValue = toDateValue(new Date());
   const [monthDate, setMonthDate] = React.useState(() => {
-    const today = new Date();
+    const today = initialDate ? parseDateValue(initialDate) : new Date();
 
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });

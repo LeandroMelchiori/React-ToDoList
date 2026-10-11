@@ -1,6 +1,6 @@
 import React from 'react';
 import './CalendarWorkspace.css';
-import { useTodos } from './hooks/useTodos';
+import type { useTodos } from './hooks/useTodos';
 import { TodoCounter } from './components/TodoHeader/TodoCounter/TodoCounter';
 import { TodoSearch } from './components/TodoHeader/TodoSearch/TodoSearch';
 import { TodoQuickAdd } from './components/TodoHeader/TodoQuickAdd/TodoQuickAdd';
@@ -28,14 +28,14 @@ import { ChangeAlert } from '../sync/ChangeAlert';
 import { UndoToast } from '../../shared/ui/UndoToast/UndoToast';
 import { TodoBulkActions } from './components/TodoList/TodoBulkActions/TodoBulkActions';
 import { BulkDeleteDialog } from './components/TodoList/BulkDeleteDialog/BulkDeleteDialog';
-import { useTodoReminders } from './hooks/useTodoReminders';
+import type { useTodoReminders } from './hooks/useTodoReminders';
 import { TodoSettings as TodoSettingsPanel } from './components/TodoHeader/TodoSettings/TodoSettings';
 import { TodoSnapshots } from './components/TodoHeader/TodoSnapshots/TodoSnapshots';
 import { TodoDataCenter } from './components/TodoHeader/TodoDataCenter/TodoDataCenter';
 import type { CommandPaletteItem } from '../../shared/ui/CommandPalette/CommandPalette';
 import { TodoSettings, useTodoSettings } from './hooks/useTodoSettings';
-import { getTodoNextRecurringDate, getTodoPlanningSlot } from '../../shared/calendar/todoModel';
-import type { TodoKind, TodoRecurrence, TodoScheduleChange } from '../../shared/calendar/todoModel';
+import { getTodoNextRecurringDate, getTodoPlanningSlot, getVisibleTodos, getTodoFilterCounts, getTodoFacets } from '../../shared/calendar/todoModel';
+import type { Todo, TodoKind, TodoRecurrence, TodoScheduleChange } from '../../shared/calendar/todoModel';
 import { TodoOverdueTray } from './components/TodoAgenda/TodoOverdueTray';
 import { TodoMobileSummary } from './components/TodoHeader/TodoMobileSummary/TodoMobileSummary';
 
@@ -77,19 +77,29 @@ function getTodoDropPosition(event: React.DragEvent<any>): 'before' | 'after' {
 }
 
 interface CalendarWorkspaceProps {
+    controller: ReturnType<typeof useTodos>;
+    reminderStatus: ReturnType<typeof useTodoReminders>;
+    initialView?: TodoViewMode;
+    initialDate?: string;
+    onViewChange?: (view: TodoViewMode) => void;
+    onOpenOrders?: () => void;
+    agendaItems?: Todo[];
+    onOpenAgendaItem?: (id: string) => boolean;
+    backupActions?: React.ReactNode;
     isDarkTheme: boolean;
     onToggleTheme: () => void;
     appearanceControl: React.ReactNode;
     status: React.ReactNode;
 }
 
-function CalendarWorkspace({ isDarkTheme, onToggleTheme: toggleTheme, appearanceControl, status }: CalendarWorkspaceProps) {
+function CalendarWorkspace({ controller, reminderStatus, initialView, initialDate, onViewChange, onOpenOrders,
+    agendaItems = [], onOpenAgendaItem, backupActions, isDarkTheme, onToggleTheme: toggleTheme, appearanceControl, status }: CalendarWorkspaceProps) {
 
-    const { states, stateUpdaters } = useTodos();
+    const { states, stateUpdaters } = controller;
     const { settings, updateSettings } = useTodoSettings();
     const searchInputRef = React.useRef<HTMLInputElement>(null);
-    const [todoViewMode, setTodoViewMode] = React.useState<TodoViewMode>(settings.defaultView);
-    const [isSearchOpen, setIsSearchOpen] = React.useState(() => ['list', 'board'].includes(settings.defaultView));
+    const [todoViewMode, setTodoViewMode] = React.useState<TodoViewMode>(initialView ?? settings.defaultView);
+    const [isSearchOpen, setIsSearchOpen] = React.useState(() => ['list', 'board'].includes(initialView ?? settings.defaultView));
     const [planningTodoId, setPlanningTodoId] = React.useState<string | null>(null);
     const [planningSlot, setPlanningSlot] = React.useState<{ date: string; startTime: string; endTime: string } | null>(null);
     const [planningSource, setPlanningSource] = React.useState<Pick<TodoScheduleChange, 'timeBlockId' | 'occurrenceDate'> | null>(null);
@@ -194,7 +204,16 @@ function CalendarWorkspace({ isDarkTheme, onToggleTheme: toggleTheme, appearance
         importCalendar,
         syncTodos
     } = stateUpdaters;
-    const reminderStatus = useTodoReminders(reminderTodos);
+    const linkedVisibleTodos = getVisibleTodos(agendaItems, searchValue, filter, undefined, { project: activeProject, tag: activeTag });
+    const calendarVisibleTodos = [...visibleTodos, ...linkedVisibleTodos];
+    const calendarTotal = totalTodos + agendaItems.length;
+    const linkedFilterCounts = getTodoFilterCounts(agendaItems);
+    const calendarFilterCounts = Object.fromEntries(Object.entries(filterCounts).map(([key, count]) =>
+        [key, count + linkedFilterCounts[key as keyof typeof filterCounts]])) as typeof filterCounts;
+    const calendarFacets = getTodoFacets([...reminderTodos, ...agendaItems]);
+    const openCalendarItem = (id: string, occurrenceDate?: string) => {
+        if (!onOpenAgendaItem?.(id)) startViewingTodo(id, occurrenceDate);
+    };
     const planningTodo = reminderTodos.find(todo => todo.id === planningTodoId && !todo.completed && !todo.archivedAt);
     const scheduleTodo = (id: string, date?: string, hour?: number, source?: Pick<TodoScheduleChange, 'timeBlockId' | 'occurrenceDate'>) => {
         const todo = reminderTodos.find(item => item.id === id);
@@ -259,6 +278,7 @@ function CalendarWorkspace({ isDarkTheme, onToggleTheme: toggleTheme, appearance
     };
     const changeTodoView = (view: TodoViewMode) => {
         setTodoViewMode(view);
+        onViewChange?.(view);
         setIsSearchOpen(['list', 'board'].includes(view));
 
         if (view !== 'list') {
@@ -502,6 +522,7 @@ function CalendarWorkspace({ isDarkTheme, onToggleTheme: toggleTheme, appearance
             <a className="SkipLink" href="#todo-list">Saltar al contenido</a>
             <main
                 className={`App ${settings.density === 'compact' ? 'App--compact' : ''}`}
+                tabIndex={-1}
                 aria-labelledby="app-title"
             >
                 {status}
@@ -535,15 +556,15 @@ function CalendarWorkspace({ isDarkTheme, onToggleTheme: toggleTheme, appearance
                     <TodoFilters
                         filter={filter}
                         setFilter={setFilter}
-                        filterCounts={filterCounts}
+                        filterCounts={isPlanningView ? calendarFilterCounts : filterCounts}
                     />
                     <TodoMobileSummary
-                        summary={`${totalTodos} elementos - ${insights?.completionRate || 0}%`}
+                        summary={isPlanningView ? `${totalTasks} tareas · ${calendarTotal - totalTasks} compromisos` : `${totalTodos} elementos - ${insights?.completionRate || 0}%`}
                     >
                         <TodoInsights insights={insights} />
                         <TodoFacetFilters
-                            projectOptions={projectOptions}
-                            tagOptions={tagOptions}
+                            projectOptions={isPlanningView ? calendarFacets.projects : projectOptions}
+                            tagOptions={isPlanningView ? calendarFacets.tags : tagOptions}
                             activeProject={activeProject}
                             activeTag={activeTag}
                             onSelectProject={selectProjectFilter}
@@ -564,6 +585,7 @@ function CalendarWorkspace({ isDarkTheme, onToggleTheme: toggleTheme, appearance
                 <TodoViewToggle
                     activeView={todoViewMode}
                     onChangeView={changeTodoView}
+                    onOpenOrders={onOpenOrders}
                 />
                 <div className="App-workspaceActions">
                     <button
@@ -621,7 +643,7 @@ function CalendarWorkspace({ isDarkTheme, onToggleTheme: toggleTheme, appearance
                                 label: 'Datos y copias',
                                 description: 'Importar, exportar y recuperar',
                                 content: [
-                                    <TodoBackupActions
+                                    backupActions || <TodoBackupActions
                                         activeBoardId={activeBoardId}
                                         key="backups"
                                         onExportTodos={exportTodos}
@@ -700,13 +722,13 @@ function CalendarWorkspace({ isDarkTheme, onToggleTheme: toggleTheme, appearance
                     )}
                 />
             ) : todoViewMode === 'agenda' || todoViewMode === 'days' || todoViewMode === 'today' ? (
-                <TodoAgenda
+<TodoAgenda
                     key={todoViewMode}
                     calendarSpan={todoViewMode === 'today' ? 'day' : todoViewMode === 'days' ? 'threeDays' : 'week'}
                     error={error}
                     loading={loading}
-                    visibleTodos={visibleTodos}
-                    totalTodos={totalTodos}
+                    visibleTodos={calendarVisibleTodos}
+                    totalTodos={calendarTotal}
                     onCreateTodoForSlot={(dateValue, hour) => launchCreateTodo({
                         kind: 'schedule',
                         startDate: dateValue,
@@ -715,7 +737,7 @@ function CalendarWorkspace({ isDarkTheme, onToggleTheme: toggleTheme, appearance
                         endTime: hour < 23 ? `${String(hour + 1).padStart(2, '0')}:00` : '23:59',
                         recurrence: 'none',
                     })}
-                    onEditTodo={startViewingTodo}
+                    onEditTodo={openCalendarItem}
                     onCompleteTodo={completeTodo}
                     onScheduleTodo={id => scheduleTodo(id)}
                     onScheduleTodoForSlot={scheduleTodo}
@@ -731,11 +753,12 @@ function CalendarWorkspace({ isDarkTheme, onToggleTheme: toggleTheme, appearance
                 />
             ) : todoViewMode === 'calendar' ? (
                 <TodoCalendar
+                    initialDate={initialDate}
                     error={error}
                     loading={loading}
-                    visibleTodos={visibleTodos}
-                    totalTodos={totalTodos}
-                    onEditTodo={startViewingTodo}
+                    visibleTodos={calendarVisibleTodos}
+                    totalTodos={calendarTotal}
+                    onEditTodo={openCalendarItem}
                     onCreateTodoForDate={(dateValue) => launchCreateTodo({
                         kind: 'event',
                         startDate: dateValue,
@@ -756,9 +779,9 @@ function CalendarWorkspace({ isDarkTheme, onToggleTheme: toggleTheme, appearance
                 <TodoWeekCalendar
                     error={error}
                     loading={loading}
-                    visibleTodos={visibleTodos}
-                    totalTodos={totalTodos}
-                    onEditTodo={startViewingTodo}
+                    visibleTodos={calendarVisibleTodos}
+                    totalTodos={calendarTotal}
+                    onEditTodo={openCalendarItem}
                     onCreateTodoForSlot={(dateValue, hour) => launchCreateTodo({
                         kind: 'schedule',
                         startDate: dateValue,

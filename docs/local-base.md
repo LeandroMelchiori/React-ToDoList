@@ -5,10 +5,11 @@ Esta entrega mantiene una agenda local utilizable sin cuenta, autenticación, AP
 ## Qué incluye
 
 - Tareas, eventos, horarios y períodos; recurrencias, fechas límite y bloques de trabajo.
+- Pedidos manuales, cliente/contacto, cantidades, estados, cobro opcional y compromisos vinculados en la agenda.
 - Planificación diaria, tres días, semanal y mensual; lista y tablero de tareas.
 - IndexedDB como persistencia principal y compatibilidad con localStorage.
 - Exportar/importar JSON versionado con revisión antes de fusionar o reemplazar.
-- Backup de tareas y agenda, tableros y filtros guardados. Los archivos adjuntos, preferencias de apariencia y copias históricas no se incluyen en el JSON.
+- Backup JSON versión 2 de tareas y agenda, pedidos, tableros y filtros guardados. Los archivos adjuntos, preferencias de apariencia y copias históricas no se incluyen. Los backups antiguos sin pedidos conservan los pedidos actuales; los antiguos clientes de TaskFlow que solo leen versión 1 no pueden restaurar la versión 2.
 - Intercambio ICS de elementos con fecha; no sustituye al backup completo.
 - Modo claro/oscuro, teclado y funcionamiento offline en el despliegue independiente.
 

@@ -8,6 +8,8 @@ TaskFlow conserva una sola aplicación React/Vite y una base preparada para una 
 | --- | --- | --- |
 | `src/app` | Componer features y controlar tema/PWA | `App.tsx` |
 | `src/features/calendars` | Agenda, tareas, horarios, vistas, formularios, backups y recordatorios | `CalendarWorkspace.tsx` |
+| `src/features/orders` | Pedidos manuales, estados, cobro y preparación/entrega | `OrdersWorkspace.tsx`, `useOrders.ts` |
+| `src/shared/orders` | Validación, centavos enteros, filtros y proyecciones de agenda | `orderModel.ts`, `orderAgenda.ts` |
 | `src/features/sync` | IndexedDB, compatibilidad con localStorage, adjuntos y eventos externos | `storage.ts`, `useLocalStorage.ts`, `ChangeAlert.tsx` |
 | `src/shared/calendar` | Reglas puras: normalización, recurrencias, conflictos, ICS, tableros y backups | Archivos de dominio, sin imports de React/CSS/persistencia |
 | `src/shared/ui` | Modal, iconos, avisos y paleta de comandos | Componentes con datos y callbacks |
@@ -35,6 +37,8 @@ Las features nunca importan `app` ni código de servidor. `shared` nunca importa
 La lógica de calendario tiene una única implementación en `shared/calendar`. `calendarPresentation.ts` contiene los helpers puros antes alojados en `TodoCalendar.tsx`; las vistas semanal, diaria, de tres días y de agenda los consumen directamente. Así la vista mensual no se carga solo por usar uno de sus helpers.
 
 ## Módulos próximos
+
+`app/hooks/useOrderWorkspace.ts` orquesta los controladores públicos de calendario y pedidos. Las pantallas se montan según la navegación; el estado y los recordatorios permanecen activos en la composición. Los eventos de pedidos son proyecciones, no copias almacenadas como tareas. La excepción intencional de dependencia es `shared/calendar/todoWorkspaceBackup.ts` → `shared/orders/orderModel.ts`, para validar el JSON completo de ambos dominios; el resto del modelo de calendario permanece independiente.
 
 Cuenta, amistades, grupos y reuniones compartidas tienen guías de responsabilidad en sus carpetas de frontend y backend. Son límites para la implementación siguiente, no pantallas o servicios funcionales. La sincronización remota también sigue pendiente.
 

@@ -177,7 +177,8 @@ test('exports current todos as a JSON backup', async ({ page }) => {
 
   expect(download.suggestedFilename()).toMatch(/^taskflow-backup-\d{4}-\d{2}-\d{2}\.json$/);
   expect(backup).toEqual(expect.objectContaining({
-    version: 1,
+    version: 2,
+    orders: [],
     kind: 'taskflow-workspace',
     exportedAt: expect.any(String),
     todos: [

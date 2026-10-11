@@ -38,3 +38,20 @@ test('only shows a shortcut when its public section exists', () => {
   render(<TodoHeaderTools sections={sections} shortcutSectionId="missing" />);
   expect(screen.queryByRole('button', { name: 'Exportar / importar' })).not.toBeInTheDocument();
 });
+
+test('renders fragment and DOM slots without injecting component-only loading props', async () => {
+  const user = userEvent.setup();
+  const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+  try {
+    render(<TodoHeaderTools loading sections={[
+      { id: 'data', label: 'Datos', description: 'Datos', content: <><button>Exportar</button></> },
+      { id: 'other', label: 'Otra', description: 'Otra', content: <button>Otro control</button> },
+    ]} shortcutSectionId="data" />);
+    await user.click(screen.getByRole('button', { name: 'Exportar / importar' }));
+    expect(screen.getByRole('button', { name: 'Exportar' })).not.toHaveAttribute('loading');
+    await user.click(screen.getByRole('button', { name: 'Opciones' }));
+    await user.click(screen.getByRole('button', { name: /Otra/ }));
+    expect(screen.getByRole('button', { name: 'Otro control' })).not.toHaveAttribute('loading');
+    expect(errors).not.toHaveBeenCalled();
+  } finally { errors.mockRestore(); }
+});

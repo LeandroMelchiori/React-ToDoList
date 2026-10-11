@@ -1,0 +1,5 @@
+.WorkspaceNavigation { display: flex; flex-wrap: wrap; gap: 8px; }
+.WorkspaceNavigation button { background: transparent; border: 0; border-bottom: 3px solid transparent; color: var(--color-text-muted); cursor: pointer; font: inherit; font-weight: 800; min-height: 44px; padding: 8px 12px; }
+.WorkspaceNavigation button[aria-pressed='true'] { border-color: var(--color-accent); color: var(--color-text-strong); }
+.WorkspaceNavigation button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+@media (max-width: 640px) { .WorkspaceNavigation { width: 100%; } .WorkspaceNavigation button { flex: 1; padding-inline: 6px; } }

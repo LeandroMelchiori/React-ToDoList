@@ -1,0 +1,55 @@
+.OrdersWorkspace h1 { color: var(--color-text-strong); font-size: 28px; margin: 0; }
+.OrdersWorkspace, .OrderForm { color-scheme: light; }
+[data-theme='dark'] .OrdersWorkspace, [data-theme='dark'] .OrderForm { color-scheme: dark; }
+.Orders-eyebrow { color: var(--color-accent-hover); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; margin: 0 0 4px; }
+.Orders-muted, .Orders-localNote { color: var(--color-text-muted); font-size: 14px; line-height: 1.5; }
+.Orders-toolbar, .Orders-listHeader { align-items: center; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; }
+.Orders-listHeader { margin-top: 24px; }
+.OrdersWorkspace button, .OrderForm button, .Orders-data > summary { background: var(--color-surface); border: 1px solid var(--color-border-strong); border-radius: 8px; color: var(--color-text); cursor: pointer; font: inherit; font-weight: 700; min-height: 44px; padding: 8px 12px; }
+.OrdersWorkspace .WorkspaceNavigation button { background: transparent; border-radius: 0; border: 0; border-bottom: 3px solid transparent; }
+.OrdersWorkspace .WorkspaceNavigation button[aria-pressed='true'] { border-bottom-color: var(--color-accent); }
+.OrdersWorkspace .Orders-primary, .OrderForm .Orders-primary { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-active-text); }
+.OrdersWorkspace button:hover:not(:disabled), .OrderForm button:hover:not(:disabled) { border-color: var(--color-accent); }
+.OrdersWorkspace .Orders-primary:hover:not(:disabled), .OrderForm .Orders-primary:hover:not(:disabled) { background: var(--color-accent-hover); }
+.OrdersWorkspace button:disabled, .OrderForm button:disabled, .OrdersWorkspace select:disabled { cursor: wait; opacity: .6; }
+.OrdersWorkspace label, .OrderForm label { color: var(--color-text); display: grid; gap: 8px; font-size: 14px; font-weight: 700; min-width: 0; }
+.OrdersWorkspace input, .OrdersWorkspace select, .OrderForm input, .OrderForm select, .OrderForm textarea { background: var(--color-surface); border: 1px solid var(--color-border-strong); border-radius: 8px; color: var(--color-text); font: inherit; font-size: 16px; min-height: 44px; min-width: 0; padding: 10px 12px; width: 100%; }
+.Orders-filters { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr) minmax(140px, 220px); margin: 16px 0; }
+.Orders-list { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); list-style: none; padding: 0; }
+.OrderCard { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px; padding: 20px; min-width: 0; overflow-wrap: anywhere; }
+.OrderCard-heading { align-items: center; display: flex; gap: 12px; flex-wrap: wrap; justify-content: space-between; }
+.OrderCard h2 { color: var(--color-text-strong); font-size: 20px; margin: 0; }
+.OrderCard-items { margin-block: 16px; padding-left: 20px; line-height: 1.5; }
+.OrderCard-notes { white-space: pre-wrap; }
+.OrderCard-delivery { font-size: 14px; }
+.OrderCard-actions { align-items: end; display: flex; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--color-border); padding-top: 16px; }
+.OrderCard-actions button, .OrderCard-actions label { font-size: 12px; }
+.OrderCard-actions label { flex: 1 1 160px; }
+.Orders-badge { background: var(--color-accent-soft); color: var(--color-accent-hover); padding: 6px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; }
+.Orders-badge--delivered, .Orders-badge--cancelled { background: var(--color-surface-muted); color: var(--color-text-muted); }
+.Orders-empty { border: 1px dashed var(--color-border-strong); border-radius: 12px; padding: 24px; text-align: center; }
+.Orders-empty h2 { font-size: 18px; }
+.Orders-empty p { color: var(--color-text-muted); }
+.Orders-error { color: var(--color-danger-hover); line-height: 1.5; }
+.Orders-notice { border: 1px solid var(--color-border); padding: 16px; margin-top: 16px; }
+.OrdersWorkspace .Orders-danger, .OrderForm .Orders-danger { color: var(--color-danger-hover); }
+[data-theme='dark'] .OrdersWorkspace .Orders-danger, [data-theme='dark'] .OrderForm .Orders-danger, [data-theme='dark'] .Orders-error { color: var(--color-danger); }
+.Orders-data { position: relative; }
+.Orders-data > summary { list-style: none; }
+.Orders-data > summary::-webkit-details-marker { display: none; }
+.Orders-data > div { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 8px; max-height: 65dvh; overflow-y: auto; overscroll-behavior: contain; padding: 16px; position: absolute; right: 0; top: calc(100% + 8px); width: min(420px, calc(100vw - 24px)); z-index: 9; }
+.OrderForm { background: var(--color-surface); display: grid; gap: 16px; margin: 0; min-width: 0; padding: 24px; }
+.OrderForm h2, .OrderForm p { margin: 0; }
+.OrderForm-items { border: 1px solid var(--color-border); border-radius: 8px; display: grid; gap: 16px; margin: 0; min-width: 0; padding: 16px; }
+.OrderForm-items legend { color: var(--color-text-strong); font-weight: 700; padding-inline: 4px; }
+.OrderForm-item { align-items: end; display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr) 88px; }
+.OrderForm-item > button { grid-column: 1 / -1; justify-self: end; }
+.OrderForm-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.OrderForm details { border: 1px solid var(--color-border); border-radius: 8px; padding: 12px; }
+.OrderForm summary { color: var(--color-text-strong); cursor: pointer; font-weight: 700; min-height: 44px; }
+.OrderForm details > label, .OrderForm details > div { margin-top: 12px; }
+.OrderForm-actions { background: var(--color-surface); border-top: 1px solid var(--color-border); display: flex; gap: 12px; justify-content: flex-end; padding-top: 16px; }
+.Orders-localNote { font-size: 12px; margin-top: 24px; }
+.OrdersWorkspace .ThemeToggle { border-radius: 999px; font-size: 14px; }
+@media (max-width: 760px) { .Orders-list { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 480px) { .Orders-filters, .OrderForm-fields { grid-template-columns: minmax(0, 1fr); } .Orders-toolbar > .Orders-data { width: 100%; } .Orders-data > summary { text-align: center; } .OrderForm { padding: 20px 16px max(20px, env(safe-area-inset-bottom)); } .OrderForm-actions { flex-wrap: wrap; } .OrderForm-actions button { flex: 1; } }

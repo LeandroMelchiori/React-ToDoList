@@ -1729,7 +1729,8 @@ describe('App', () => {
     const backup = JSON.parse(await backupBlob.text());
 
     expect(backup).toEqual(expect.objectContaining({
-      version: 1,
+      version: 2,
+      orders: [],
       kind: 'taskflow-workspace',
       exportedAt: expect.any(String),
       todos: [
@@ -2075,7 +2076,7 @@ describe('App', () => {
     await user.upload(screen.getByLabelText('Importar backup JSON'), backupFile);
 
     expect(screen.getByText('taskflow-workspace.json: 2 tableros, 2 tareas y 1 filtro guardado.')).toBeInTheDocument();
-    expect(screen.getByText('Al restaurar, se reemplazan tus tableros, tareas y filtros guardados.')).toBeInTheDocument();
+    expect(screen.getByText(/Al restaurar, se reemplazan tus tableros, tareas y filtros guardados/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Restaurar backup' }));
 
     expect(screen.getByText('Preparar workspace')).toBeInTheDocument();

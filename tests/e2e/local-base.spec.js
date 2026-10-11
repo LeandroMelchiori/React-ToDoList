@@ -118,7 +118,7 @@ test('exports and restores a local agenda from the direct data action', async ({
     expect(await cleanPage.evaluate(() => JSON.parse(localStorage.getItem('TODOS_V1') || '[]').length)).toBe(0);
     await cleanPage.screenshot({ path: testInfo.outputPath('local-import-mobile.png'), animations: 'disabled' });
     await preview.getByRole('button', { name: 'Restaurar backup' }).click();
-    await expect(cleanPage.getByText('Backup restaurado: 1 tablero, 2 tareas y 0 filtros guardados.')).toBeVisible();
+    await expect(cleanPage.getByText(/Backup restaurado: 1 tablero, 2 tareas y 0 filtros guardados/)).toBeVisible();
     const restored = await cleanPage.evaluate(() => JSON.parse(localStorage.getItem('TODOS_V1')));
     expect(restored).toEqual(backup.todos);
     await cleanPage.reload();

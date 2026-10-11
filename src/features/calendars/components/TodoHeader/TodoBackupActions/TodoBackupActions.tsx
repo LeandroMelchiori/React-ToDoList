@@ -51,7 +51,7 @@ function getOmittedDuplicateLabel(count: number) {
 
 function getImportStatusMessage(result: any) {
   if (result.mode === 'workspace') {
-    return `Backup restaurado: ${getBoardLabel(result.boardCount)}, ${getTaskLabel(result.count)} y ${getSavedViewLabel(result.savedViewCount)}.`;
+    return `Backup restaurado: ${getBoardLabel(result.boardCount)}, ${getTaskLabel(result.count)} y ${getSavedViewLabel(result.savedViewCount)}.${result.orderCount === undefined ? '' : ` Pedidos restaurados: ${result.orderCount}.`}`;
   }
 
   if (result.mode === 'merge') {
@@ -113,6 +113,9 @@ function TodoBackupActions({
   const [statusMessage, setStatusMessage] = React.useState('');
   const [importPreview, setImportPreview] = React.useState<any>(null);
   const [targetBoardId, setTargetBoardId] = React.useState('');
+  const [isImporting, setIsImporting] = React.useState(false);
+  const importingRef = React.useRef(false);
+  const isBusy = Boolean(loading || isImporting);
   const previewRef = React.useRef<HTMLDivElement>(null);
   const importInputRef = React.useRef<HTMLInputElement | null>(null);
 
@@ -236,8 +239,8 @@ function TodoBackupActions({
     }
   };
 
-  const confirmImport = (mode: string) => {
-    if (!importPreview) {
+  const confirmImport = async (mode: string) => {
+    if (!importPreview || importingRef.current || loading) {
       return;
     }
 
@@ -255,7 +258,10 @@ function TodoBackupActions({
       return;
     }
 
-    const result = onImportTodos(importPreview.backup, {
+    importingRef.current = true;
+    setIsImporting(true);
+    try {
+    const result = await onImportTodos(importPreview.backup, {
       mode,
       targetBoardId: importPreview.kind === 'todos' && mode === 'merge'
         ? targetBoardId
@@ -271,6 +277,12 @@ function TodoBackupActions({
     setTargetBoardId('');
     setStatusMessage(getImportStatusMessage(result));
     importInputRef.current?.focus();
+    } catch {
+      setStatusMessage('No se pudo restaurar el backup. Revisa el almacenamiento y vuelve a intentarlo.');
+    } finally {
+      importingRef.current = false;
+      setIsImporting(false);
+    }
   };
 
   const cancelImport = () => {
@@ -289,12 +301,12 @@ function TodoBackupActions({
       )}
       <section className="TodoBackupActions-group" aria-label="Backup JSON">
         <h3>Backup de tu agenda</h3>
-        <p>Tareas, horarios, eventos, tableros y filtros guardados en un archivo JSON.</p>
+        <p>Tareas, horarios, eventos, pedidos, tableros y filtros guardados en un archivo JSON.</p>
         <div className="TodoBackupActions-groupButtons">
           <button
             type="button"
             className="TodoBackupActions-button"
-            disabled={loading}
+            disabled={isBusy}
             aria-label="Exportar backup completo"
             onClick={handleExport}
           >
@@ -306,7 +318,7 @@ function TodoBackupActions({
               type="file"
               accept="application/json,.json"
               aria-label="Importar backup JSON"
-              disabled={loading}
+              disabled={isBusy}
               onChange={handleImport}
             />
           </label>
@@ -320,7 +332,7 @@ function TodoBackupActions({
           <button
             type="button"
             className="TodoBackupActions-button"
-            disabled={loading}
+            disabled={isBusy}
             aria-label="Exportar calendario ICS"
             onClick={handleCalendarExport}
           >
@@ -332,7 +344,7 @@ function TodoBackupActions({
               type="file"
               accept="text/calendar,.ics"
               aria-label="Importar calendario ICS"
-              disabled={loading}
+              disabled={isBusy}
               onChange={handleCalendarImport}
             />
           </label>
@@ -348,8 +360,9 @@ function TodoBackupActions({
                   {importPreview.fileName}: {getBoardLabel(importPreview.boardCount)}, {getTaskLabel(importPreview.totalCount)} y {getSavedViewLabel(importPreview.savedViewCount)}.
                 </p>
                 <p className="TodoBackupActions-previewText">
-                  Al restaurar, se reemplazan tus tableros, tareas y filtros guardados.
+                  Al restaurar, se reemplazan tus tableros, tareas y filtros guardados{importPreview.orderCount === undefined ? '. Tus pedidos actuales se conservan.' : ', además de los pedidos.'}
                 </p>
+                {importPreview.orderCount !== undefined && <p className="TodoBackupActions-previewText">Pedidos incluidos: {importPreview.orderCount}.</p>}
               </>
             ) : importPreview.kind === 'calendar' ? (
               <>
@@ -369,7 +382,7 @@ function TodoBackupActions({
                   <label className="TodoBackupActions-field">
                     <span>Tablero destino</span>
                     <select
-                      disabled={loading || boardPreviews.length <= 1}
+                      disabled={isBusy || boardPreviews.length <= 1}
                       onChange={(event) => setTargetBoardId(event.target.value)}
                       value={selectedBoardPreview.id}
                     >
@@ -395,6 +408,7 @@ function TodoBackupActions({
               <button
                 type="button"
                 className="TodoBackupActions-button"
+                disabled={isBusy}
                 onClick={() => confirmImport('merge')}
               >
                 Importar calendario
@@ -403,6 +417,7 @@ function TodoBackupActions({
               <button
                 type="button"
                 className="TodoBackupActions-button"
+                disabled={isBusy}
                 onClick={() => confirmImport('merge')}
               >
                 Fusionar sin duplicados
@@ -412,6 +427,7 @@ function TodoBackupActions({
               <button
                 type="button"
                 className="TodoBackupActions-button TodoBackupActions-button--danger"
+                disabled={isBusy}
                 onClick={() => confirmImport('replace')}
               >
                 {importPreview.kind === 'workspace' ? 'Restaurar backup' : 'Reemplazar tareas'}
@@ -420,6 +436,7 @@ function TodoBackupActions({
             <button
               type="button"
               className="TodoBackupActions-button"
+                disabled={isBusy}
               onClick={cancelImport}
             >
               Cancelar importacion

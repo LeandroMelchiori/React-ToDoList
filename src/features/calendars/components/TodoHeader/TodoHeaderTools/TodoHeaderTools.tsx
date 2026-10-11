@@ -56,7 +56,7 @@ function TodoHeaderTools({ loading, sections, shortcutSectionId }: TodoHeaderToo
 
   const renderSectionContent = (content: ReactNode) => (
     React.Children.toArray(content).map(child => (
-      React.isValidElement(child)
+      React.isValidElement(child) && typeof child.type !== 'string' && child.type !== React.Fragment
         ? React.cloneElement(child as ReactElement<any>, { loading })
         : child
     ))
