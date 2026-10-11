@@ -29,6 +29,12 @@ function dependencies() {
 }
 
 describe('module boundaries', () => {
+  test('the orders domain stays pure and depends only on pure shared models', () => {
+    expect(dependencies().filter(dependency => dependency.source.startsWith('shared/orders/') &&
+      !/^(shared\/orders\/|shared\/calendar\/)/.test(dependency.target))).toEqual([]);
+    expect(sources.filter(file => relative(file).startsWith('shared/orders/') &&
+      /\b(window|document|localStorage|indexedDB)\s*\./.test(readFileSync(file, 'utf8')))).toEqual([]);
+  });
   test('server modules never depend on frontend or browser persistence', () => {
     const invalid = dependencies().filter(dependency => dependency.source.startsWith('server/') &&
       (/^(app\/|features\/|shared\/(ui|hooks)\/)/.test(dependency.target) || /^react(?:-dom)?(?:\/|$)/.test(dependency.target)));
@@ -37,7 +43,8 @@ describe('module boundaries', () => {
 
   test('the shared calendar domain remains pure and reusable by both runtimes', () => {
     const invalid = dependencies().filter(dependency => dependency.source.startsWith('shared/calendar/') &&
-      !dependency.target.startsWith('shared/calendar/'));
+      !dependency.target.startsWith('shared/calendar/') && !(dependency.source === 'shared/calendar/todoWorkspaceBackup.ts' &&
+        dependency.target === 'shared/orders/orderModel'));
     expect(invalid).toEqual([]);
     const globals = sources.filter(file => relative(file).startsWith('shared/calendar/')).flatMap(file => {
       const text = readFileSync(file, 'utf8');

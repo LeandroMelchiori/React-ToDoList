@@ -152,6 +152,31 @@ async function setStoredItem(itemName: string, value: string): Promise<void> {
   }
 }
 
+// Workspace restores commit all domains together in the primary database.
+async function setStoredItems(entries: Record<string, string>): Promise<void> {
+  if (canUseIndexedDB()) {
+    const database = await openDatabase();
+    await new Promise<void>((resolve, reject) => {
+      const transaction = database.transaction(STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+      transaction.onabort = () => reject(transaction.error || new Error('La restauración fue cancelada.'));
+      try { Object.entries(entries).forEach(([key, value]) => store.put(value, key)); }
+      catch (cause) { transaction.abort(); reject(cause); }
+    });
+    Object.entries(entries).forEach(([key, value]) => { try { localStorage.setItem(key, value); } catch { /* IndexedDB remains authoritative. */ } });
+    return;
+  }
+  const previous = Object.fromEntries(Object.keys(entries).map(key => [key, localStorage.getItem(key)]));
+  try {
+    Object.entries(entries).forEach(([key, value]) => localStorage.setItem(key, value));
+  } catch (cause) {
+    Object.entries(previous).forEach(([key, value]) => { if (value === null) localStorage.removeItem(key); else localStorage.setItem(key, value); });
+    throw cause;
+  }
+}
+
 type TodoAttachment = {
   id: string;
   todoId: string;
@@ -301,5 +326,6 @@ export {
   removeTodoAttachmentsForTodo,
   saveTodoAttachment,
   setStoredItem,
+  setStoredItems,
 };
 export type { StoredTodoAttachment, TodoAttachment };

@@ -13,6 +13,8 @@ import {
 import type { TodoBoard } from './todoBoards';
 import { normalizeTodoSavedViews } from './todoSavedViews';
 import type { TodoSavedView } from './todoSavedViews';
+import { readOrders } from '../orders/orderModel';
+import type { Order } from '../orders/orderModel';
 
 type TodoWorkspaceBackup = {
     version: number;
@@ -22,6 +24,7 @@ type TodoWorkspaceBackup = {
     boards: TodoBoard[];
     activeBoardId: string;
     savedViews: TodoSavedView[];
+    orders?: Order[];
 };
 
 type CreateTodoWorkspaceBackupOptions = {
@@ -29,6 +32,7 @@ type CreateTodoWorkspaceBackupOptions = {
     boards: TodoBoard[];
     activeBoardId: string;
     savedViews: TodoSavedView[];
+    orders?: Order[];
 };
 
 type TodoWorkspaceBackupReadResult =
@@ -59,7 +63,10 @@ function createTodoWorkspaceBackup({
     boards,
     savedViews,
     todos,
+    orders,
 }: CreateTodoWorkspaceBackupOptions): TodoWorkspaceBackup {
+    const orderResult = orders === undefined ? undefined : readOrders(orders);
+    if (orderResult && !orderResult.ok) throw new Error(orderResult.error);
     const normalizedTodos = normalizeTodos(todos);
     const normalizedBoards = ensureDefaultTodoBoard(normalizeTodoBoards(boards), normalizedTodos);
     const nextActiveBoardId = getActiveTodoBoardId(normalizedBoards, activeBoardId);
@@ -67,13 +74,14 @@ function createTodoWorkspaceBackup({
     const activeBoard = getActiveTodoBoard(boardsWithCurrentTodos, nextActiveBoardId);
 
     return {
-        version: TODO_BACKUP_VERSION,
+        version: orderResult ? 2 : TODO_BACKUP_VERSION,
         kind: TODO_WORKSPACE_BACKUP_KIND,
         exportedAt: new Date().toISOString(),
         todos: activeBoard?.todos || normalizedTodos,
         boards: boardsWithCurrentTodos,
         activeBoardId: nextActiveBoardId,
         savedViews: normalizeTodoSavedViews(savedViews),
+        ...(orderResult?.ok ? { orders: orderResult.orders } : {}),
     };
 }
 
@@ -91,7 +99,7 @@ function readTodoWorkspaceBackup(backup: unknown): TodoWorkspaceBackupReadResult
     if (
         isRecord(backup) &&
         typeof backup.version === 'number' &&
-        backup.version > TODO_BACKUP_VERSION
+        backup.version > 2
     ) {
         return {
             ok: false,
@@ -101,6 +109,12 @@ function readTodoWorkspaceBackup(backup: unknown): TodoWorkspaceBackupReadResult
     }
 
     const fallbackTodos = isRecord(backup) ? normalizeTodos(backup.todos) : [];
+    if (isRecord(backup) && backup.version === 2 && (backup.kind !== TODO_WORKSPACE_BACKUP_KIND ||
+        !Array.isArray(backup.todos) || !Array.isArray(backup.boards) || !Array.isArray(backup.savedViews) || typeof backup.activeBoardId !== 'string')) {
+        return { ok: false, error: 'El backup completo versión 2 no tiene una estructura válida.', isWorkspaceBackup: true };
+    }
+    const orderResult = isRecord(backup) && backup.version === 2 ? readOrders(backup.orders) : undefined;
+    if (orderResult && !orderResult.ok) return { ...orderResult, isWorkspaceBackup: true };
     const boards = ensureDefaultTodoBoard(
         normalizeTodoBoards(isRecord(backup) ? backup.boards : []),
         fallbackTodos
@@ -122,6 +136,7 @@ function readTodoWorkspaceBackup(backup: unknown): TodoWorkspaceBackupReadResult
         boards,
         activeBoardId,
         savedViews: normalizeTodoSavedViews(isRecord(backup) ? backup.savedViews : []),
+        ...(orderResult?.ok ? { orders: orderResult.orders } : {}),
     };
 
     return {
