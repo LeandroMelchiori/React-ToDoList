@@ -7,7 +7,7 @@ test('opens the orders screen and saves a new order offline before ever visiting
     await navigator.serviceWorker.ready;
     if (!navigator.serviceWorker.controller) await new Promise(resolve => navigator.serviceWorker.addEventListener('controllerchange', resolve, { once: true }));
   });
-  const assets = await page.evaluate(async () => (await (await caches.open('taskflow-shell-v6')).keys()).map(request => request.url));
+  const assets = await page.evaluate(async () => (await (await caches.open('taskflow-shell-v7')).keys()).map(request => request.url));
   expect(assets.some(url => /OrdersWorkspace.*\.js$/.test(url))).toBe(true);
   await context.setOffline(true);
   await page.getByRole('button', { name: 'Pedidos', exact: true }).click();
