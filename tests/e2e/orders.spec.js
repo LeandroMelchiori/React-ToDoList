@@ -26,10 +26,9 @@ async function createOrder(page) {
   await dialog.getByLabel('Cantidad 1', { exact: true }).fill('2');
   await dialog.getByLabel('Fecha de entrega o retiro', { exact: true }).fill('2026-10-16');
   await dialog.getByLabel('Hora de entrega (opcional)', { exact: true }).fill('18:00');
-  await dialog.getByText('Reservar tiempo de preparación', { exact: true }).click();
-  await dialog.getByLabel('Fecha de preparación', { exact: true }).fill('2026-10-16');
-  await dialog.getByLabel('Inicio de preparación', { exact: true }).fill('14:00');
-  await dialog.getByLabel('Fin de preparación', { exact: true }).fill('16:00');
+  await expect(dialog.getByText('Reservar tiempo de preparación', { exact: true })).toHaveCount(0);
+  await expect(dialog.getByLabel('Estado del pedido', { exact: true })).toHaveCount(0);
+  await expect(dialog.getByLabel('Observaciones (opcional)', { exact: true })).toHaveCount(0);
   await dialog.getByText('Importe y cobro', { exact: true }).click();
   await dialog.getByLabel('Importe total', { exact: true }).fill('10000');
   await dialog.getByLabel('Importe cobrado', { exact: true }).fill('2500');
@@ -51,7 +50,7 @@ test('takes a manual order, links its agenda and keeps payment and task metrics 
   await page.screenshot({ path: info.outputPath('orders-desktop-light.png'), animations: 'disabled' });
   await page.getByRole('button', { name: 'Ver en agenda' }).click();
   await expect(page.getByRole('button', { name: /Entrega · María/ }).first()).toBeVisible();
-  await expect(page.getByRole('button', { name: /Preparar · María/ }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: /Preparar · María/ })).toHaveCount(0);
   await page.getByRole('button', { name: /Entrega · María/ }).first().click();
   const editor = page.getByRole('dialog', { name: 'Editar pedido' });
   await expect(editor.getByLabel('Cliente', { exact: true })).toHaveValue('María');
@@ -61,6 +60,8 @@ test('takes a manual order, links its agenda and keeps payment and task metrics 
   const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('ORDERS_V1')).orders);
   expect(stored[0].deliveryDate).toBe('2026-10-20');
   expect(stored[0].paidCents).toBe(250000);
+  expect(stored[0].preparation).toBeNull();
+  expect(stored[0].notes).toBe('');
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('TODOS_V1')).map(item => item.text))).toEqual(['Actividad propia']);
   await page.reload();
   await openOrders(page);
@@ -124,7 +125,7 @@ test('backs up orders and calendar together, rejects invalid orders and does not
   expect(ics).toContain('Entrega');
   expect(ics).not.toContain('555-privado');
   await page.getByLabel('Importar calendario ICS').setInputFiles({ name: 'agenda.ics', mimeType: 'text/calendar', buffer: Buffer.from(ics) });
-  await expect(page.getByRole('region', { name: 'Previsualizacion de importacion' })).toContainText('2 duplicadas omitidas');
+  await expect(page.getByRole('region', { name: 'Previsualizacion de importacion' })).toContainText('1 duplicada omitida');
   await page.getByRole('button', { name: 'Importar calendario', exact: true }).click();
   await expect(page.getByText('No se agregaron elementos nuevos.')).toBeVisible();
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('TODOS_V1')).length)).toBe(1);

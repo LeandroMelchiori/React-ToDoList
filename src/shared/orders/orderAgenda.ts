@@ -17,8 +17,6 @@ export function orderAgendaEntries(orders: Order[]): Array<{ orderId: string; to
       raw.push({ ...base, id: `order-delivery:${order.id}`, text: `Entrega · ${order.customerName}`, startDate: order.deliveryDate,
         startTime: start, endTime });
     }
-    if (order.preparation) raw.push({ ...base, id: `order-preparation:${order.id}`, text: `Preparar · ${order.customerName}`,
-      startDate: order.preparation.date, startTime: order.preparation.startTime, endTime: order.preparation.endTime });
     return normalizeTodos(raw).map(todo => ({ orderId: order.id, todo }));
   });
 }

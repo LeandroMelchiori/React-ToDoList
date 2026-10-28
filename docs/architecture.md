@@ -8,7 +8,7 @@ TaskFlow conserva una sola aplicación React/Vite y una base preparada para una 
 | --- | --- | --- |
 | `src/app` | Componer features y controlar tema/PWA | `App.tsx` |
 | `src/features/calendars` | Agenda, tareas, horarios, vistas, formularios, backups y recordatorios | `CalendarWorkspace.tsx` |
-| `src/features/orders` | Pedidos manuales, estados, cobro y preparación/entrega | `OrdersWorkspace.tsx`, `useOrders.ts` |
+| `src/features/orders` | Pedidos manuales, estados, cobro y entrega | `OrdersWorkspace.tsx`, `useOrders.ts` |
 | `src/shared/orders` | Validación, centavos enteros, filtros y proyecciones de agenda | `orderModel.ts`, `orderAgenda.ts` |
 | `src/features/sync` | IndexedDB, compatibilidad con localStorage, adjuntos y eventos externos | `storage.ts`, `useLocalStorage.ts`, `ChangeAlert.tsx` |
 | `src/shared/calendar` | Reglas puras: normalización, recurrencias, conflictos, ICS, tableros y backups | Archivos de dominio, sin imports de React/CSS/persistencia |

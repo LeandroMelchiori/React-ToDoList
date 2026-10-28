@@ -1,6 +1,6 @@
 import React from 'react';
-import { moneyInput, ORDER_STATUSES, parseMoney, validateOrder } from '../../shared/orders/orderModel';
-import type { Order, OrderDraft, OrderResult, OrderStatus } from '../../shared/orders/orderModel';
+import { moneyInput, parseMoney, validateOrder } from '../../shared/orders/orderModel';
+import type { Order, OrderDraft, OrderResult } from '../../shared/orders/orderModel';
 import './OrdersWorkspace.css';
 
 interface OrderFormProps { order?: Order; saving: boolean; onCancel: () => void; onSave: (draft: OrderDraft, id?: string) => Promise<OrderResult> }
@@ -8,13 +8,8 @@ export function OrderForm({ order, saving, onCancel, onSave }: OrderFormProps) {
   const [customerName, setCustomer] = React.useState(order?.customerName ?? '');
   const [contact, setContact] = React.useState(order?.contact ?? '');
   const [items, setItems] = React.useState(order?.items ?? [{ description: '', quantity: 1 }]);
-  const [notes, setNotes] = React.useState(order?.notes ?? '');
-  const [status, setStatus] = React.useState<OrderStatus>(order?.status ?? 'received');
   const [deliveryDate, setDeliveryDate] = React.useState(order?.deliveryDate ?? '');
   const [deliveryTime, setDeliveryTime] = React.useState(order?.deliveryTime ?? '');
-  const [preparationDate, setPreparationDate] = React.useState(order?.preparation?.date ?? '');
-  const [preparationStart, setPreparationStart] = React.useState(order?.preparation?.startTime ?? '');
-  const [preparationEnd, setPreparationEnd] = React.useState(order?.preparation?.endTime ?? '');
   const [currency, setCurrency] = React.useState<Order['currency']>(order?.currency ?? 'ARS');
   const [amount, setAmount] = React.useState(moneyInput(order?.amountCents ?? null));
   const [paid, setPaid] = React.useState(order?.paidCents ? moneyInput(order.paidCents) : '');
@@ -29,10 +24,10 @@ export function OrderForm({ order, saving, onCancel, onSave }: OrderFormProps) {
     const amountCents = parseMoney(amount);
     const paidCents = parseMoney(paid);
     if (amountCents === undefined || paidCents === undefined) { fail('Usa importes positivos con hasta dos decimales, por ejemplo 2500,50.'); return; }
-    const draft: OrderDraft = { customerName, contact, items, notes, status, deliveryDate: deliveryDate || null,
+    const draft: OrderDraft = { customerName, contact, items, notes: order?.notes ?? '', status: order?.status ?? 'received', deliveryDate: deliveryDate || null,
       deliveryTime: deliveryTime || null, currency, amountCents, paidCents: paidCents ?? 0,
-      preparation: preparationDate || preparationStart || preparationEnd
-        ? { date: preparationDate, startTime: preparationStart, endTime: preparationEnd } : null };
+      // Preserve historical metadata in local backups when editing an existing order.
+      preparation: order?.preparation ?? null };
     const validation = validateOrder(draft);
     if (validation) { fail(validation); return; }
     submittingRef.current = true;
@@ -62,18 +57,6 @@ export function OrderForm({ order, saving, onCancel, onSave }: OrderFormProps) {
       <label>Hora de entrega (opcional)<input type="time" value={deliveryTime} onChange={event => setDeliveryTime(event.target.value)} /></label>
     </div>
     <p className="Orders-muted">Con fecha aparecerá en la agenda. Con hora reserva una ventana de 30 minutos; sin hora no bloquea toda la jornada.</p>
-    <label>Estado del pedido<select value={status} onChange={event => setStatus(event.target.value as OrderStatus)}>
-      {Object.entries(ORDER_STATUSES).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
-    </select></label>
-    <label>Observaciones (opcional)<textarea value={notes} onChange={event => setNotes(event.target.value)} maxLength={5000} rows={3} /></label>
-    <details open={Boolean(order?.preparation)}><summary>Reservar tiempo de preparación</summary>
-      <p className="Orders-muted">Opcional. Se vincula al pedido y se actualiza junto con él.</p>
-      <label>Fecha de preparación<input type="date" value={preparationDate} onChange={event => setPreparationDate(event.target.value)} /></label>
-      <div className="OrderForm-fields">
-        <label>Inicio de preparación<input type="time" value={preparationStart} onChange={event => setPreparationStart(event.target.value)} /></label>
-        <label>Fin de preparación<input type="time" value={preparationEnd} onChange={event => setPreparationEnd(event.target.value)} /></label>
-      </div>
-    </details>
     <details open={order?.amountCents !== null && order?.amountCents !== undefined}><summary>Importe y cobro</summary>
       <p className="Orders-muted">Seguimiento manual, no procesa pagos. Entregar un pedido no lo marca como pagado.</p>
       <label>Moneda<select value={currency} onChange={event => setCurrency(event.target.value as Order['currency'])}><option value="ARS">ARS — Peso argentino</option><option value="USD">USD — Dólar</option><option value="EUR">EUR — Euro</option></select></label>

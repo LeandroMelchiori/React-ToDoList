@@ -13,14 +13,13 @@
 .OrdersWorkspace .Orders-primary:hover:not(:disabled), .OrderForm .Orders-primary:hover:not(:disabled) { background: var(--color-accent-hover); }
 .OrdersWorkspace button:disabled, .OrderForm button:disabled, .OrdersWorkspace select:disabled { cursor: wait; opacity: .6; }
 .OrdersWorkspace label, .OrderForm label { color: var(--color-text); display: grid; gap: 8px; font-size: 14px; font-weight: 700; min-width: 0; }
-.OrdersWorkspace input, .OrdersWorkspace select, .OrderForm input, .OrderForm select, .OrderForm textarea { background: var(--color-surface); border: 1px solid var(--color-border-strong); border-radius: 8px; color: var(--color-text); font: inherit; font-size: 16px; min-height: 44px; min-width: 0; padding: 10px 12px; width: 100%; }
+.OrdersWorkspace input, .OrdersWorkspace select, .OrderForm input, .OrderForm select { background: var(--color-surface); border: 1px solid var(--color-border-strong); border-radius: 8px; color: var(--color-text); font: inherit; font-size: 16px; min-height: 44px; min-width: 0; padding: 10px 12px; width: 100%; }
 .Orders-filters { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr) minmax(140px, 220px); margin: 16px 0; }
 .Orders-list { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); list-style: none; padding: 0; }
 .OrderCard { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px; padding: 20px; min-width: 0; overflow-wrap: anywhere; }
 .OrderCard-heading { align-items: center; display: flex; gap: 12px; flex-wrap: wrap; justify-content: space-between; }
 .OrderCard h2 { color: var(--color-text-strong); font-size: 20px; margin: 0; }
 .OrderCard-items { margin-block: 16px; padding-left: 20px; line-height: 1.5; }
-.OrderCard-notes { white-space: pre-wrap; }
 .OrderCard-delivery { font-size: 14px; }
 .OrderCard-actions { align-items: end; display: flex; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--color-border); padding-top: 16px; }
 .OrderCard-actions button, .OrderCard-actions label { font-size: 12px; }

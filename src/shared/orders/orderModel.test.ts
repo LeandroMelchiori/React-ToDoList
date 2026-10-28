@@ -29,7 +29,6 @@ describe('manual orders', () => {
     expect(normalizeOrder({ ...order, status: '__proto__' })).toBeNull();
     expect(validateOrder({ ...order, paidCents: 10001 })).toMatch(/superar/);
     expect(validateOrder({ ...order, deliveryDate: null })).toMatch(/hora/);
-    expect(validateOrder({ ...order, preparation: { date: '2026-10-16', startTime: '17:00', endTime: '19:00' } })).toMatch(/antes/);
     expect(validateOrder({ ...order, preparation: { date: '2026-10-16', startTime: '17:00', endTime: '16:00' } })).toMatch(/posterior/);
   });
   test('never silently drops malformed or duplicate imported orders', () => {
@@ -44,15 +43,20 @@ describe('manual orders', () => {
   });
   test('projects linked events without copying private contact, payment or notes', () => {
     const entries = orderAgendaEntries([order]);
-    expect(entries).toHaveLength(2);
+    expect(entries).toHaveLength(1);
     expect(entries[0]).toMatchObject({ orderId: order.id, todo: { id: 'order-delivery:maria', kind: 'event', text: 'Entrega · María',
       startDate: '2026-10-16', startTime: '18:00', endTime: '18:30', completed: false } });
     expect(JSON.stringify(entries)).not.toMatch(/privado|no publicar|paidCents/);
     expect(orderAgendaEntries([{ ...order, status: 'cancelled' }])).toEqual([]);
     expect(orderAgendaEntries([{ ...order, status: 'delivered' }])).toEqual([]);
-    expect(orderAgendaEntries([{ ...order, deliveryDate: null, deliveryTime: null, preparation: null }])).toEqual([]);
+    expect(orderAgendaEntries([{ ...order, deliveryDate: null, deliveryTime: null }])).toEqual([]);
     expect(orderAgendaEntries([{ ...order, deliveryTime: '23:50', preparation: null }])[0].todo.endTime).toBe('23:59');
     expect(orderAgendaEntries([{ ...order, deliveryDate: '2026-11-02' }])[0].todo.startDate).toBe('2026-11-02');
+  });
+  test('preserves historical preparation without restricting delivery dates', () => {
+    const edited = { ...order, deliveryDate: '2026-10-15' };
+    expect(validateOrder(edited)).toBeNull();
+    expect(normalizeOrder(edited)?.preparation).toEqual(order.preparation);
   });
   test('round-trips orders in version 2 while preserving old calendar backups', () => {
     const base = { todos: [], boards: [], activeBoardId: 'personal', savedViews: [] };

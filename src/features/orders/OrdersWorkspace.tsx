@@ -48,7 +48,7 @@ export function OrdersWorkspace({ controller, navigation, appearanceControl, sta
     <a className="SkipLink" href="#orders-list">Saltar a los pedidos</a>
     {status}
     <header><div className="App-headingRow"><div><p className="Orders-eyebrow">TaskFlow</p><h1 id="orders-title" ref={headingRef} tabIndex={-1}>Pedidos</h1></div>{appearanceControl}</div>
-      <p className="Orders-muted">Registra lo que te encargan y organiza su preparación y entrega.</p>
+      <p className="Orders-muted">Registra lo que te encargan y organiza su entrega.</p>
     </header>
     <div className="Orders-toolbar">{navigation}<details className="Orders-data"><summary>Exportar / importar</summary><div>{backupActions}</div></details></div>
     {error && <div role="alert" className="Orders-error">{error} <button onClick={() => void controller.reload()} type="button">Reintentar carga</button></div>}
@@ -64,10 +64,9 @@ export function OrdersWorkspace({ controller, navigation, appearanceControl, sta
           <ul className="OrderCard-items">{order.items.map((item, index) => <li key={index}>{item.quantity} × {item.description}</li>)}</ul>
           <p className="OrderCard-delivery">Entrega: <strong>{deliveryLabel(order)}</strong></p>
           {order.contact && <p className="Orders-muted">Contacto: {order.contact}</p>}
-          {order.notes && <p className="OrderCard-notes">{order.notes}</p>}
           <p className="Orders-muted">{paymentLabel(order)}{order.amountCents !== null ? ` · ${formatOrderMoney(order.amountCents, order.currency)} · Saldo ${formatOrderMoney(order.amountCents - order.paidCents, order.currency)}` : ''}</p>
           <div className="OrderCard-actions"><button type="button" onClick={() => setEditing(order)}>Editar pedido de {order.customerName}</button>
-            {isActiveOrder(order) && (order.deliveryDate || order.preparation) && <button type="button" onClick={() => onOpenAgenda(order.deliveryDate ?? order.preparation!.date)}>Ver en agenda</button>}
+            {isActiveOrder(order) && order.deliveryDate && <button type="button" onClick={() => onOpenAgenda(order.deliveryDate!)}>Ver en agenda</button>}
             <label>Estado de {order.customerName}<select aria-label={`Estado de ${order.customerName}`} disabled={saving || hasExternalChanges || Boolean(error)} value={order.status} onChange={async event => {
               const result = await controller.saveOrder({ ...order, status: event.target.value as OrderStatus }, order.id);
               setMessage(result.ok ? 'Estado del pedido actualizado.' : result.error);

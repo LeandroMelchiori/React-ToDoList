@@ -55,10 +55,6 @@ export function validateOrder(draft: OrderDraft): string | null {
   if (block && (!isOrderDate(block.date) || !isOrderTime(block.startTime) || !isOrderTime(block.endTime) || block.endTime <= block.startTime)) {
     return 'La preparación necesita fecha, inicio y un fin posterior al inicio.';
   }
-  if (block && draft.deliveryDate && (block.date > draft.deliveryDate ||
-    (block.date === draft.deliveryDate && draft.deliveryTime && block.endTime > draft.deliveryTime))) {
-    return 'La preparación debe terminar antes de la entrega.';
-  }
   if (!['ARS', 'USD', 'EUR'].includes(draft.currency)) return 'La moneda no es válida.';
   if ((draft.amountCents !== null && (!Number.isSafeInteger(draft.amountCents) || draft.amountCents < 0 || draft.amountCents > MAX_CENTS)) ||
     !Number.isSafeInteger(draft.paidCents) || draft.paidCents < 0 || draft.paidCents > MAX_CENTS) return 'Revisa los importes; usa hasta dos decimales y valores positivos.';
