@@ -105,6 +105,8 @@ Los tests unitarios e integracion corren con `npm test`, usando Vitest, jsdom y 
 
 ## Commits
 
+- Usa nombres de ramas breves y descriptivos, con prefijos como `feature/`, `fix/` o `docs/`.
+- No incluyas referencias a IA, asistentes ni herramientas de generacion en nombres de ramas o mensajes de commit.
 - Haz commits pequenos y atomicos.
 - Usa mensajes breves, explicativos y en imperativo cuando sea posible.
 - Ejemplos:
