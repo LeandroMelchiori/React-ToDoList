@@ -43,3 +43,15 @@ test('availability exposes slots and an opaque revision token, not private event
   expect(contract.paths['/availability/query'].post.responses['403']).toBeDefined();
   expect(contract.paths['/meetings'].post.responses['409']).toBeDefined();
 });
+
+test('invitation enrollment binds the account to verified identity instead of client ownership fields', () => {
+  const operation = contract.paths['/account/invitations/redeem'].post;
+  expect(operation['x-implementation']).toBe('implemented');
+  expect(operation['x-mutation']).toBe(true);
+  expect(operation.parameters).toContainEqual({ $ref: '#/components/parameters/IdempotencyKey' });
+  expect(Object.keys(contract.components.schemas.EnrollmentRequest.properties).sort())
+    .toEqual(['displayName', 'handle', 'timeZone', 'token']);
+  expect(operation.responses['403']).toBeDefined();
+  expect(operation.responses['409']).toBeDefined();
+  expect(contract.paths['/calendars/{calendarId}'].get.responses['404']).toBeDefined();
+});

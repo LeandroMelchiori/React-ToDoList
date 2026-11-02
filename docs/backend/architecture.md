@@ -1,6 +1,6 @@
 # TaskFlow: base multiusuario
 
-Estado: `backend/` contiene el runtime Java/Spring Boot con comprobación de salud HTTP y rutas de negocio cerradas. Todavía no hay autenticación ni base remota activadas. La versión publicada continúa siendo local-first; la base está preservada en `release/local-base`.
+Estado: `backend/` implementa PostgreSQL/Flyway, autenticación de JWT emitidos por un proveedor configurable, alta por invitación y lectura del perfil/calendario propio. La conexión de React, los elementos de agenda remotos y la sincronización siguen pendientes. La versión publicada continúa siendo local-first; la base está preservada en `release/local-base`. Ver configuración y límites en `backend/README.md`.
 
 ## Producto y alcance
 
@@ -21,15 +21,16 @@ flowchart LR
 - Mantener React/Vite y la PWA. La API se implementa en Java/Spring Boot en `backend/`, como monolito modular con despliegue independiente. El frontend no requiere migrar a Next.js ni conectarse automáticamente a la API.
 - PostgreSQL contiene los datos compartidos. IndexedDB conserva la copia de la cuenta actual y la cola de cambios offline.
 - `src/server/modules/meetings/domain/availability.ts` es la referencia TypeScript del cálculo de disponibilidad: recibe intervalos UTC autorizados y expandidos, sin consultar usuarios ni almacenar datos. No se ejecuta dentro de Java. Su adaptación y la normalización de calendario requerirán pruebas de equivalencia antes de activar esos endpoints.
-- El proveedor de identidad y el proveedor de PostgreSQL quedan pendientes de elección/configuración. El contrato usa una sesión verificada y no depende de un proveedor particular.
-- `schema.sql` es un esquema inicial para revisar y ejecutar en un entorno de desarrollo cuando exista conexión. No fue aplicado a ninguna base.
-- `openapi.json` describe las operaciones previstas; no anuncia endpoints disponibles en producción.
+- La identidad usa JWT RS256, con emisor, claves y audiencia configurables, expiración y subject obligatorios. La invitación se vincula a un email verificado; el actor estable se resuelve por emisor/subject, sin enlaces automáticos por email. El proveedor concreto y sus credenciales quedan pendientes de configuración.
+- Las migraciones ejecutables están en `backend/src/main/resources/db/migration`. `schema.sql` conserva el diseño futuro; no aplicarlo junto a Flyway.
+- `openapi.json` marca con `x-implementation: implemented` las operaciones disponibles en el perfil `cloud`. El resto continúa como diseño; ninguna de estas operaciones se activa en la web publicada automáticamente.
 
 ## Modelo de datos
 
 | Entidad | Responsabilidad |
 | --- | --- |
 | users / auth_identities | Perfil estable y vínculos con identidades verificadas |
+| access_invitations / enrollment_requests | Acceso privado con vencimiento, token hash y alta transaccional idempotente |
 | groups / group_members | Grupos flexibles, invitación/aceptación y roles |
 | friendships | Solicitud dirigida y aceptación mutua; relación única por pareja |
 | calendars | Agenda personal o compartida; zona horaria propia |
@@ -53,7 +54,9 @@ El identificador remoto de un elemento es UUID. Su `client_id` conserva el `Todo
 6. Los detalles requieren un permiso explícito independiente. Compartir detalles tampoco concede escritura.
 7. Solo el dueño modifica su agenda personal. En calendarios de grupo la escritura depende del rol activo. Solo destinatarios aceptan amistades/invitaciones; solo administradores gestionan miembros. Impedir abandonar/eliminar al último administrador sin transferir el rol.
 8. Revocar permisos invalida las consultas futuras y emite una invalidación de caché. Salir de un grupo elimina el acceso derivado de ese grupo. Una amistad y una membresía siguen siendo relaciones independientes.
-9. Toda consulta, exportación y sincronización aplica autorización. Una capa de caché nunca amplía permisos. El esquema activa RLS sin políticas, de modo que roles ordinarios quedan cerrados hasta implementar las políticas del proveedor. Una cuenta de servicio que omita RLS debe aplicar estas reglas explícitamente en la API.
+9. Toda consulta, exportación y sincronización aplica autorización. Una capa de caché nunca amplía permisos. Las migraciones ejecutables fuerzan RLS para perfiles y calendarios; el rol de ejecución no puede omitirla. El diseño futuro de `schema.sql` mantiene cerrados los módulos cuyas políticas todavía no están implementadas.
+
+La migración V1 implementa únicamente perfiles y calendarios personales. Sus políticas fuerzan RLS por actor transaccional; el arranque rechaza roles superusuario o con bypass. Las tablas de bootstrap son exclusivas del servidor. La emisión de invitaciones es un comando administrativo sin HTTP; el alta comprueba email verificado, vencimiento, revocación y uso previo, y crea perfil/identidad/calendario en una transacción. Una clave idempotente se limita al emisor/subject y rechaza payloads diferentes. No se crean usuarios al recibir simplemente un token válido.
 
 ## Disponibilidad y reuniones
 
@@ -77,8 +80,8 @@ El identificador remoto de un elemento es UUID. Su `client_id` conserva el `Todo
 
 ## Secuencia de implementación
 
-1. Elegir/configurar identidad y PostgreSQL de desarrollo; aplicar el esquema y políticas. Verificar accesos cruzados entre dos cuentas antes de activar HTTP.
-2. Implementar sesión, perfil, calendario personal, operaciones normalizadas/versionadas e importación local. Mantener modo offline independiente.
+1. Implementado en desarrollo: PostgreSQL/Flyway, verificación de identidad, invitaciones y pruebas HTTP/SQL de aislamiento entre dos cuentas. Pendiente elegir/configurar proveedor y credenciales para el piloto.
+2. Implementados perfil y calendario personal de lectura. Sigue implementar elementos normalizados/versionados, importación local y conexión voluntaria de React. Mantener modo offline independiente.
 3. Implementar amistades y permisos, luego consulta individual de disponibilidad.
 4. Implementar grupos, invitaciones y propuestas de reunión con revalidación transaccional.
 5. Añadir sync offline completo, invalidación de permisos y pruebas de dos dispositivos.
@@ -89,6 +92,6 @@ El identificador remoto de un elemento es UUID. Su `client_id` conserva el `Todo
 
 El cálculo de disponibilidad tiene tests para dos/cinco usuarios, ventanas discontinuas, intervalos contiguos y solapados, falta de disponibilidad y entradas inválidas. TypeScript valida el módulo. El contrato JSON incluye respuestas de autorización, conflicto e idempotencia. Su sintaxis/referencias se pueden comprobar offline.
 
-`backend/` verifica mediante HTTP real que la salud sea pública, que no se expongan detalles internos y que las rutas restantes rechacen solicitudes anónimas o tokens no verificados, sin crear sesiones. Todavía faltan el adaptador de autenticación, políticas ejecutables, repositorios SQL, expansión de recurrencias con zonas horarias, endpoints de negocio y pruebas contra PostgreSQL. El algoritmo de referencia por sí solo no autoriza usuarios ni confirma reservas concurrentes. Esta rama no cambia la aplicación publicada.
+`backend/` prueba HTTP real con tokens firmados y un servidor JWKS temporal, contra PostgreSQL real en Testcontainers. Se comprueban políticas RLS con un rol sin bypass, invitaciones, altas concurrentes, idempotencia, rollback y accesos cruzados. Todavía faltan la configuración del proveedor real, conexión de React, elementos remotos, expansión de recurrencias con zonas horarias y los endpoints sociales/sync. El algoritmo de disponibilidad de referencia por sí solo no autoriza usuarios ni confirma reservas concurrentes. Esta rama no cambia la aplicación publicada.
 
 Referencias: [OpenAPI 3.1](https://spec.openapis.org/oas/v3.1.1.html), [restricciones de PostgreSQL](https://www.postgresql.org/docs/current/ddl-constraints.html), [Vercel Functions](https://vercel.com/docs/functions).

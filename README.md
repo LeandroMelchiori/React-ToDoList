@@ -25,7 +25,7 @@ La información se guarda en IndexedDB dentro del navegador, puede exportarse me
 
 🔗 **Aplicación publicada:** [taskflow.sachadev.me](https://taskflow.sachadev.me)
 
-La versión base local está preservada en [`release/local-base`](https://github.com/LeandroMelchiori/React-ToDoList/tree/release/local-base), commit `2ee0192`, para integrarla en herramientas para emprendedores. La evolución hacia la nube comienza con una [API Java/Spring Boot](backend/README.md) independiente; todavía no implementa cuentas ni persistencia remota.
+La versión base local está preservada en [`release/local-base`](https://github.com/LeandroMelchiori/React-ToDoList/tree/release/local-base), commit `2ee0192`, para integrarla en herramientas para emprendedores. La [API Java/Spring Boot](backend/README.md) independiente incorpora acceso privado por invitación, PostgreSQL y calendarios personales. La conexión de React y la sincronización de elementos de agenda siguen pendientes; la aplicación publicada conserva su funcionamiento local.
 
 ---
 

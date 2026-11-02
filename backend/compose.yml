@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: taskflow
+      POSTGRES_USER: taskflow
+      POSTGRES_PASSWORD: ${TASKFLOW_DB_ADMIN_PASSWORD:?Set TASKFLOW_DB_ADMIN_PASSWORD for database initialization}
+      # The runtime role is not a superuser, so FORCE RLS is enforced in development too.
+      TASKFLOW_DB_PASSWORD: ${TASKFLOW_DB_PASSWORD:?Set TASKFLOW_DB_PASSWORD for the application role}
+    ports:
+      - '127.0.0.1:${TASKFLOW_DB_PORT:-5432}:5432'
+    volumes:
+      - taskflow-data:/var/lib/postgresql/data
+      - ./postgres/init-app.sh:/docker-entrypoint-initdb.d/init-app.sh:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U taskflow -d taskflow']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  taskflow-data:

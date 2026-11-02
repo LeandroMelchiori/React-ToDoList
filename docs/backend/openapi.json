@@ -3,7 +3,7 @@
   "info": {
     "title": "TaskFlow multiuser API",
     "version": "0.1.0",
-    "description": "Design contract only. HTTP endpoints are not implemented or active. Authentication, PostgreSQL policies and repositories must be configured before activation."
+    "description": "Java API: invitation enrollment, own profile and personal calendar reads are implemented in the cloud profile. Other operations remain a design contract. Production frontend is still local-first; identity provider and database configuration are required."
   },
   "servers": [
     {
@@ -16,9 +16,46 @@
     }
   ],
   "paths": {
+    "/account/invitations/redeem": {
+      "post": {
+        "operationId": "redeemInvitation",
+        "summary": "Accept a private access invitation",
+        "description": "Requires a signed JWT with a verified email matching the invitation. Atomically creates the account and its personal calendar. Same identity, Idempotency-Key and payload replay the original result; conflicting reuse returns 409.",
+        "x-implementation": "implemented",
+        "x-mutation": true,
+        "parameters": [{ "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EnrollmentRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Enrolled profile or idempotent replay", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Profile" } } } },
+          "401": { "description": "Invalid or missing identity token", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Email unverified or invitation unavailable for this identity", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "Account, handle or idempotency conflict", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "422": { "description": "Invalid input, time zone or missing idempotency key", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/calendars/{calendarId}": {
+      "get": {
+        "operationId": "getPersonalCalendar",
+        "summary": "Read an owned personal calendar",
+        "x-implementation": "implemented",
+        "x-mutation": false,
+        "parameters": [{ "name": "calendarId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "Owned calendar", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Calendar" } } } },
+          "401": { "description": "Authentication required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Account invitation not accepted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Calendar absent or not owned by the actor", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
     "/me": {
       "get": {
         "operationId": "getProfile",
+        "x-implementation": "implemented",
         "summary": "get Profile",
         "description": "",
         "x-mutation": false,
@@ -193,6 +230,7 @@
     "/calendars": {
       "get": {
         "operationId": "listCalendars",
+        "x-implementation": "implemented",
         "summary": "list Calendars",
         "description": "",
         "x-mutation": false,
@@ -2782,6 +2820,17 @@
       }
     },
     "schemas": {
+      "EnrollmentRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["token", "handle", "displayName", "timeZone"],
+        "properties": {
+          "token": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43}$" },
+          "handle": { "type": "string", "pattern": "^[a-z0-9_]{3,32}$" },
+          "displayName": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "timeZone": { "type": "string", "minLength": 1, "maxLength": 100, "description": "Valid IANA zone or UTC" }
+        }
+      },
       "Error": {
         "type": "object",
         "additionalProperties": false,
