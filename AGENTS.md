@@ -22,6 +22,8 @@ Este repositorio es una aplicacion React local-first de tareas, agenda y horario
 - Estado PWA: `src/app/hooks/usePwaStatus.ts`.
 - Componentes de calendario: `src/features/calendars/components/`. UI reutilizable: `src/shared/ui/`.
 - Modulos de backend: `src/server/modules/`; el calculo de disponibilidad vive en `meetings/domain/availability.ts`.
+- Runtime Java: `backend/`, con Spring Boot y Maven Wrapper. Verificar con `.\mvnw.cmd -B -ntp verify` desde `backend/` (en Unix: `./mvnw -B -ntp verify`). La referencia TypeScript no se ejecuta dentro de Java.
+- Base local preservada: rama `release/local-base`, commit `2ee0192`. Mantener la evolucion con backend fuera de esa rama.
 - Estilos: archivos `.css` junto a cada componente.
 - PWA/offline shell: `public/sw.js` y `public/manifest.json`.
 - Configuracion de Vite/Vitest: `vite.config.mjs`.

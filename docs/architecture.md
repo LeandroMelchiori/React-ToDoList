@@ -16,6 +16,7 @@ TaskFlow conserva una sola aplicación React/Vite y una base preparada para una 
 | `src/shared/hooks` | Comportamiento genérico del navegador, como media queries | Hooks reutilizables |
 | `src/server/modules/meetings` | Intersección pura de disponibilidad común | `index.ts` |
 | `src/server/contracts` | Comprobar integridad y privacidad del contrato OpenAPI | Tests, sin endpoints HTTP |
+| `backend` | Runtime Java/Spring Boot, salud HTTP y cierre de rutas sin identidad | `TaskFlowApiApplication.java`; ver `backend/README.md` |
 
 Los tests se mantienen junto al código que verifican. La suite de integración de toda la aplicación está en `app/App.test.jsx`.
 
@@ -40,7 +41,7 @@ La lógica de calendario tiene una única implementación en `shared/calendar`. 
 
 `app/hooks/useOrderWorkspace.ts` orquesta los controladores públicos de calendario y pedidos. Las pantallas se montan según la navegación; el estado y los recordatorios permanecen activos en la composición. Los eventos de pedidos son proyecciones, no copias almacenadas como tareas. La excepción intencional de dependencia es `shared/calendar/todoWorkspaceBackup.ts` → `shared/orders/orderModel.ts`, para validar el JSON completo de ambos dominios; el resto del modelo de calendario permanece independiente.
 
-Cuenta, amistades, grupos y reuniones compartidas tienen guías de responsabilidad en sus carpetas de frontend y backend. Son límites para la implementación siguiente, no pantallas o servicios funcionales. La sincronización remota también sigue pendiente.
+Cuenta, amistades, grupos y reuniones compartidas tienen guías de responsabilidad en sus carpetas de frontend y en la referencia TypeScript `src/server`. Son límites para la implementación siguiente, no pantallas o servicios funcionales. Su runtime será el backend Java de `backend/`; no importar TypeScript en Java ni asumir que el contrato de negocio ya está implementado. La sincronización remota también sigue pendiente.
 
 Cada nueva feature podrá incorporar sus `components`, `hooks`, validaciones y cliente HTTP cuando sean necesarios. Cada módulo de servidor podrá incorporar `routes`, `application`, `domain` e `infrastructure`; no crear implementaciones vacías para simular funcionalidad existente. Sus consumidores utilizarán una entrada pública pequeña, sin importar repositorios internos.
 

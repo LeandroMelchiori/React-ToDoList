@@ -1,6 +1,6 @@
 # TaskFlow: base multiusuario
 
-Estado: diseño y lógica de dominio preparados; todavía no hay API HTTP, autenticación ni base remota activadas. La versión publicada continúa siendo local-first. Esta etapa define el modelo y el contrato antes de conectar un proveedor.
+Estado: `backend/` contiene el runtime Java/Spring Boot con comprobación de salud HTTP y rutas de negocio cerradas. Todavía no hay autenticación ni base remota activadas. La versión publicada continúa siendo local-first; la base está preservada en `release/local-base`.
 
 ## Producto y alcance
 
@@ -18,9 +18,9 @@ flowchart LR
     Agent[Nanami: acceso delegado] --> API
 ```
 
-- Mantener React/Vite y la PWA. La API podrá desplegarse mediante Vercel Functions con un runtime TypeScript; no es necesario migrar el frontend a Next.js.
+- Mantener React/Vite y la PWA. La API se implementa en Java/Spring Boot en `backend/`, como monolito modular con despliegue independiente. El frontend no requiere migrar a Next.js ni conectarse automáticamente a la API.
 - PostgreSQL contiene los datos compartidos. IndexedDB conserva la copia de la cuenta actual y la cola de cambios offline.
-- `src/server/modules/meetings/domain/availability.ts` calcula intersecciones de disponibilidad. Recibe intervalos UTC ya autorizados y expandidos; no consulta usuarios ni almacena datos.
+- `src/server/modules/meetings/domain/availability.ts` es la referencia TypeScript del cálculo de disponibilidad: recibe intervalos UTC autorizados y expandidos, sin consultar usuarios ni almacenar datos. No se ejecuta dentro de Java. Su adaptación y la normalización de calendario requerirán pruebas de equivalencia antes de activar esos endpoints.
 - El proveedor de identidad y el proveedor de PostgreSQL quedan pendientes de elección/configuración. El contrato usa una sesión verificada y no depende de un proveedor particular.
 - `schema.sql` es un esquema inicial para revisar y ejecutar en un entorno de desarrollo cuando exista conexión. No fue aplicado a ninguna base.
 - `openapi.json` describe las operaciones previstas; no anuncia endpoints disponibles en producción.
@@ -89,6 +89,6 @@ El identificador remoto de un elemento es UUID. Su `client_id` conserva el `Todo
 
 El cálculo de disponibilidad tiene tests para dos/cinco usuarios, ventanas discontinuas, intervalos contiguos y solapados, falta de disponibilidad y entradas inválidas. TypeScript valida el módulo. El contrato JSON incluye respuestas de autorización, conflicto e idempotencia. Su sintaxis/referencias se pueden comprobar offline.
 
-Todavía faltan el adaptador de autenticación, políticas ejecutables, repositorios SQL, expansión de recurrencias con zonas horarias, endpoints HTTP y pruebas contra PostgreSQL. El algoritmo por sí solo no autoriza usuarios ni confirma reservas concurrentes. Esta rama no cambia la aplicación publicada.
+`backend/` verifica mediante HTTP real que la salud sea pública, que no se expongan detalles internos y que las rutas restantes rechacen solicitudes anónimas o tokens no verificados, sin crear sesiones. Todavía faltan el adaptador de autenticación, políticas ejecutables, repositorios SQL, expansión de recurrencias con zonas horarias, endpoints de negocio y pruebas contra PostgreSQL. El algoritmo de referencia por sí solo no autoriza usuarios ni confirma reservas concurrentes. Esta rama no cambia la aplicación publicada.
 
 Referencias: [OpenAPI 3.1](https://spec.openapis.org/oas/v3.1.1.html), [restricciones de PostgreSQL](https://www.postgresql.org/docs/current/ddl-constraints.html), [Vercel Functions](https://vercel.com/docs/functions).
