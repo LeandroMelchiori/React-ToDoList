@@ -488,10 +488,12 @@ test('reloads the application shell while offline', async ({ context, page }) =>
 });
 
 test('creates schedules from the week grid and warns about overlaps', async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-11-02T09:00:00-03:00') });
   await seedAnchorTodo(page);
   await page.goto('/');
 
   await selectView(page, 'Semana');
+  const weekAgenda = page.getByRole('region', { name: 'Agenda semanal', exact: true });
   const initialSlot = page.getByRole('button', { name: /Crear bloque el \d{4}-\d{2}-\d{2} a las 10:00/ }).first();
   const slotLabel = await initialSlot.getAttribute('aria-label');
   const slotDate = slotLabel?.match(/\d{4}-\d{2}-\d{2}/)?.[0];
@@ -504,7 +506,7 @@ test('creates schedules from the week grid and warns about overlaps', async ({ p
   await expect(dialog.getByLabel('Primer dia')).toHaveValue(slotDate);
   await dialog.getByRole('textbox', { name: 'Nueva tarea' }).fill('Clase de algebra');
   await dialog.getByRole('button', { name: 'Agregar', exact: true }).click();
-  await expect(page.getByText('Clase de algebra')).toBeVisible();
+  await expect(weekAgenda.getByRole('button', { name: /Clase de algebra/ })).toBeVisible();
 
   await page.getByRole('button', { name: 'Crear nueva tarea' }).click();
   dialog = page.getByRole('dialog', { name: 'Crear tarea' });
@@ -523,8 +525,8 @@ test('creates schedules from the week grid and warns about overlaps', async ({ p
 
   const conflicts = page.getByRole('status', { name: 'Conflictos de horario' });
   await expect(conflicts).toContainText('1 conflicto de horario');
-  await expect(page.getByText('Clase de algebra')).toBeVisible();
-  await expect(page.getByText('Consulta de algebra')).toBeVisible();
+  await expect(weekAgenda.getByRole('button', { name: /Clase de algebra/ })).toBeVisible();
+  await expect(weekAgenda.getByRole('button', { name: /Consulta de algebra/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /Conflicto de horario/ })).toHaveCount(2);
 });
 
