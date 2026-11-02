@@ -2,6 +2,8 @@
 
 Esta entrega mantiene una agenda local utilizable sin cuenta, autenticación, API ni base remota. La copia al repositorio de herramientas será una integración separada; allí se conservará una versión base y este proyecto podrá evolucionar hacia la versión con nube.
 
+La base publicada está preservada en la rama `release/local-base`, commit `2ee0192` (`Update vulnerable dependencies`). Esa rama es el punto de partida para la integración en herramientas; no incorporar allí el backend o la sincronización remota. La evolución comienza en `feature/java-api`.
+
 ## Qué incluye
 
 - Tareas, eventos, horarios y períodos; recurrencias, fechas límite y bloques de trabajo.
