@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'taskflow-shell-';
-const CACHE_NAME = `${CACHE_PREFIX}v7`;
+const CACHE_NAME = `${CACHE_PREFIX}v8`;
 const MANIFEST_CACHE_KEY = '/__taskflow_asset_manifest__';
 const CORE_ASSETS = [
   '/',
@@ -158,7 +158,7 @@ self.addEventListener('fetch', event => {
 
   const requestUrl = new URL(event.request.url);
 
-  if (requestUrl.origin !== self.location.origin) {
+  if (requestUrl.origin !== self.location.origin || requestUrl.pathname.startsWith('/api/') || event.request.headers.has('Authorization')) {
     return;
   }
 
