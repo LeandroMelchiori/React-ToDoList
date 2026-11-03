@@ -25,17 +25,18 @@ class AccountController {
         @NotBlank @Size(max = 100) String displayName,
         @NotBlank @Size(max = 100) String timeZone) { }
     private final AccountService accounts;
+    private final IdentityClaims identities;
 
-    AccountController(AccountService accounts) { this.accounts = accounts; }
+    AccountController(AccountService accounts, IdentityClaims identities) { this.accounts = accounts; this.identities = identities; }
 
     @GetMapping("/api/v1/me")
     Profile me(@AuthenticationPrincipal Jwt jwt) {
-        return accounts.currentProfile(IdentityClaims.from(jwt));
+        return accounts.currentProfile(identities.from(jwt));
     }
 
     @PostMapping("/api/v1/account/invitations/redeem")
     Profile redeem(@AuthenticationPrincipal Jwt jwt, @RequestHeader("Idempotency-Key") UUID operationId,
         @Valid @RequestBody RedeemRequest request) {
-        return accounts.redeem(IdentityClaims.from(jwt), operationId, request.token(), request.handle(), request.displayName(), request.timeZone());
+        return accounts.redeem(identities.from(jwt), operationId, request.token(), request.handle(), request.displayName(), request.timeZone());
     }
 }

@@ -92,6 +92,7 @@ class AccountAccessTest {
         properties.add("spring.security.oauth2.resourceserver.jwt.issuer-uri", () -> issuer);
         properties.add("spring.security.oauth2.resourceserver.jwt.jwk-set-uri", () -> issuer + "/jwks.json");
         properties.add("spring.security.oauth2.resourceserver.jwt.audiences", () -> audience);
+        properties.add("taskflow.web-origins", () -> "http://127.0.0.1:5173");
     }
 
     @AfterAll
@@ -303,5 +304,18 @@ class AccountAccessTest {
         var privileged = Flyway.configure().dataSource(database.getJdbcUrl(), database.getUsername(), database.getPassword()).load();
         assertThatThrownBy(() -> migrationStrategy.migrate(privileged))
             .isInstanceOf(IllegalStateException.class).hasMessageContaining("SUPERUSER");
+    }
+
+    @Test
+    void allowsOnlyConfiguredBrowserOriginsWithoutCookies() throws Exception {
+        var preflight = request("/me", null).header("Origin", "http://127.0.0.1:5173")
+            .header("Access-Control-Request-Method", "GET").header("Access-Control-Request-Headers", "authorization")
+            .method("OPTIONS", HttpRequest.BodyPublishers.noBody()).build();
+        var allowed = client.send(preflight, HttpResponse.BodyHandlers.ofString());
+        assertThat(allowed.statusCode()).isEqualTo(200);
+        assertThat(allowed.headers().firstValue("Access-Control-Allow-Origin")).hasValue("http://127.0.0.1:5173");
+        assertThat(allowed.headers().allValues("Access-Control-Allow-Credentials")).isEmpty();
+        var denied = request("/me", token("person", "person@example.test")).header("Origin", "https://other.example.test").GET().build();
+        assertThat(client.send(denied, HttpResponse.BodyHandlers.ofString()).statusCode()).isEqualTo(403);
     }
 }

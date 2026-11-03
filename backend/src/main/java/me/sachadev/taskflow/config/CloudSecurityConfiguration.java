@@ -4,6 +4,8 @@ import me.sachadev.taskflow.shared.web.ApiErrors;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
+import java.net.URI;
+import java.util.Arrays;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
@@ -19,11 +21,34 @@ import org.springframework.security.oauth2.jwt.JwtClaimValidator;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration(proxyBeanMethods = false)
 @Profile("cloud")
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 class CloudSecurityConfiguration {
+    @Bean
+    CorsConfigurationSource corsConfigurationSource(@Value("${taskflow.web-origins:}") String configuredOrigins) {
+        var origins = Arrays.stream(configuredOrigins.split(",")).map(String::strip).filter(value -> !value.isEmpty()).toList();
+        for (String origin : origins) {
+            var uri = URI.create(origin);
+            if ((!"https".equals(uri.getScheme()) && !"http".equals(uri.getScheme())) || uri.getHost() == null ||
+                uri.getUserInfo() != null || !origin.equals(uri.getScheme() + "://" + uri.getRawAuthority()) || origin.contains("*")) {
+                throw new IllegalArgumentException("Use explicit frontend origins without paths or wildcards");
+            }
+        }
+        var cors = new CorsConfiguration();
+        cors.setAllowedOrigins(origins);
+        cors.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
+        cors.setAllowedHeaders(List.of("Authorization", "Content-Type", "Idempotency-Key"));
+        cors.setAllowCredentials(false);
+        var source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/v1/**", cors);
+        return source;
+    }
+
     @Bean
     JwtDecoder jwtDecoder(
         @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}") String issuer,
@@ -44,6 +69,7 @@ class CloudSecurityConfiguration {
     @Bean
     SecurityFilterChain cloudSecurityFilterChain(HttpSecurity http) throws Exception {
         return http
+            .cors(cors -> { })
             .csrf(AbstractHttpConfigurer::disable)
             .formLogin(AbstractHttpConfigurer::disable)
             .httpBasic(AbstractHttpConfigurer::disable)

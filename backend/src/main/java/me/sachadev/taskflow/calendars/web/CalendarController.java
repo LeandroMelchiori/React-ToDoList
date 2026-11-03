@@ -16,19 +16,21 @@ import org.springframework.web.bind.annotation.RestController;
 class CalendarController {
     private final AccountService accounts;
     private final PersonalCalendars calendars;
+    private final IdentityClaims identities;
 
-    CalendarController(AccountService accounts, PersonalCalendars calendars) {
+    CalendarController(AccountService accounts, PersonalCalendars calendars, IdentityClaims identities) {
         this.accounts = accounts;
         this.calendars = calendars;
+        this.identities = identities;
     }
 
     @GetMapping("/api/v1/calendars")
     PersonalCalendars.Page list(@AuthenticationPrincipal Jwt jwt) {
-        return calendars.list(accounts.currentProfile(IdentityClaims.from(jwt)).id());
+        return calendars.list(accounts.currentProfile(identities.from(jwt)).id());
     }
 
     @GetMapping("/api/v1/calendars/{calendarId}")
     PersonalCalendars.Calendar find(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID calendarId) {
-        return calendars.find(accounts.currentProfile(IdentityClaims.from(jwt)).id(), calendarId);
+        return calendars.find(accounts.currentProfile(identities.from(jwt)).id(), calendarId);
     }
 }
