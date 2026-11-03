@@ -43,6 +43,10 @@ El perfil `cloud` requiere un proveedor de identidad que emita JWT firmados. El 
 - `TASKFLOW_AUTH_ISSUER`: emisor exacto de los tokens.
 - `TASKFLOW_AUTH_JWKS_URI`: URL del juego de claves públicas del emisor.
 - `TASKFLOW_AUTH_AUDIENCE`: audiencia asignada a TaskFlow.
+- `TASKFLOW_AUTH_EMAIL_CLAIM` y `TASKFLOW_AUTH_EMAIL_VERIFIED_CLAIM`: nombres de los claims de email, por defecto `email` y `email_verified`.
+- `TASKFLOW_WEB_ORIGINS`: orígenes explícitos de frontend separados por coma, sin rutas ni comodines; vacío mantiene CORS cerrado.
+
+El frontend integra Auth0 Universal Login para Google y email/contraseña, alta por invitación y consulta del perfil. La [guía de Auth0](../docs/backend/auth0-setup.md) explica el tenant, la Action de claims, URLs permitidas y variables públicas/privadas. La configuración real del proveedor sigue pendiente.
 
 Usa HTTPS y tokens destinados a esta API en el entorno desplegado. Firma RS256, emisor, audiencia, expiración, vigencia y subject se verifican en el servidor. La aceptación de invitaciones requiere además un email con `email_verified: true` booleano. No se vinculan cuentas automáticamente por coincidencia de email. El acceso posterior se resuelve por emisor/subject verificados.
 
@@ -69,7 +73,7 @@ Una identidad válida sin alta responde 403. Las solicitudes sin identidad váli
 
 Usuarios y calendarios tienen RLS forzada, además de filtros explícitos del repositorio. El actor se establece solo dentro de una transacción desde el mapeo de identidad, y no se filtra a otra conexión del pool. Las tablas de bootstrap de identidad/invitación son exclusivas del servidor; las credenciales PostgreSQL nunca deben distribuirse al navegador.
 
-No se implementaron todavía edición de perfiles, elementos de agenda remotos, amistades, grupos, sincronización ni conexión de React al proveedor. La base local preservada continúa independiente.
+No se implementaron todavía edición de perfiles, elementos de agenda remotos, amistades, grupos ni sincronización. El acceso desde React no sube ni reemplaza el workspace local. La base local preservada continúa independiente.
 
 ## Pruebas
 

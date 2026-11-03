@@ -25,7 +25,7 @@ La información se guarda en IndexedDB dentro del navegador, puede exportarse me
 
 🔗 **Aplicación publicada:** [taskflow.sachadev.me](https://taskflow.sachadev.me)
 
-La versión base local está preservada en [`release/local-base`](https://github.com/LeandroMelchiori/React-ToDoList/tree/release/local-base), commit `2ee0192`, para integrarla en herramientas para emprendedores. La [API Java/Spring Boot](backend/README.md) independiente incorpora acceso privado por invitación, PostgreSQL y calendarios personales. La conexión de React y la sincronización de elementos de agenda siguen pendientes; la aplicación publicada conserva su funcionamiento local.
+La versión base local está preservada en [`release/local-base`](https://github.com/LeandroMelchiori/React-ToDoList/tree/release/local-base), commit `2ee0192`, para integrarla en herramientas para emprendedores. La [API Java/Spring Boot](backend/README.md) independiente incorpora acceso privado por invitación, PostgreSQL y calendarios personales. React integra el acceso con Google o email/contraseña mediante Auth0, invitación y perfil; requiere [configurar el proveedor](docs/backend/auth0-setup.md). La sincronización de elementos de agenda sigue pendiente; la aplicación publicada conserva su funcionamiento local.
 
 ---
 
@@ -190,7 +190,7 @@ src/
 ├── features/
 │   ├── calendars/             # Workspace, componentes y hooks de agenda
 │   ├── sync/                  # Persistencia local y cambios externos
-│   ├── account/               # Alcance definido; implementación pendiente
+│   ├── account/               # Acceso Auth0, invitación y perfil
 │   ├── friendships/           # Alcance definido; implementación pendiente
 │   ├── groups/                # Alcance definido; implementación pendiente
 │   └── meetings/              # Alcance definido; implementación pendiente

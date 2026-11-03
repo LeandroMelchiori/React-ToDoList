@@ -1,0 +1,27 @@
+.AccountPage { display: grid; min-height: 100dvh; place-items: center; padding: 32px 20px; color: var(--color-text); }
+.AccountCard { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 20px; width: 100%; max-width: 520px; padding: 36px; display: grid; gap: 20px; overflow-wrap: anywhere; }
+.AccountCard h1, .AccountCard h2, .AccountCard p { margin: 0; }
+.AccountCard h1 { font-size: clamp(26px, 4vw, 34px); color: var(--color-text-strong); line-height: 1.2; }
+.AccountCard h1:focus { outline: none; }
+.AccountCard h2 { font-size: 20px; color: var(--color-text-strong); }
+.AccountCard p { line-height: 1.6; }
+.AccountEyebrow { color: var(--color-accent-hover); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; }
+.AccountCard .AccountMuted { color: var(--color-text-muted); font-size: 14px; }
+.AccountCard button, .AccountOpen { background: var(--color-surface); border: 1px solid var(--color-border-strong); border-radius: 10px; color: var(--color-text); font: inherit; font-weight: 700; cursor: pointer; min-height: 44px; padding: 12px 16px; }
+.AccountCard button:hover, .AccountOpen:hover { border-color: var(--color-accent); }
+.AccountCard button:disabled { cursor: wait; opacity: .65; }
+.AccountCard .AccountPrimary { background: var(--color-accent); color: var(--color-active-text); border-color: var(--color-accent); }
+.AccountCard .AccountPrimary:hover { background: var(--color-accent-hover); }
+.AccountActions, .EnrollmentForm { display: grid; gap: 16px; }
+.AccountCard footer { display: grid; gap: 12px; border-top: 1px solid var(--color-border); padding-top: 20px; }
+.AccountCard dl { margin: 0; display: grid; gap: 12px; }
+.AccountCard dl div { display: grid; gap: 4px; }
+.AccountCard dt { color: var(--color-text-muted); font-size: 14px; }
+.AccountCard dd { margin: 0; font-weight: 700; }
+.EnrollmentForm label { display: grid; gap: 8px; font-size: 14px; font-weight: 700; }
+.EnrollmentForm input { width: 100%; min-width: 0; min-height: 44px; border-radius: 8px; border: 1px solid var(--color-border-strong); background: var(--color-surface); color: var(--color-text); padding: 12px; font: inherit; font-size: 16px; }
+.AccountCard .AccountError { color: var(--color-danger-hover); }
+[data-theme='dark'] .AccountCard .AccountError { color: var(--color-danger); }
+.AccountCard .AccountSuccess { color: var(--color-text-strong); font-weight: 700; }
+.AccountAppearance { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+@media(max-width: 480px) { .AccountPage { padding: 20px 12px; align-items: start; } .AccountCard { padding: 24px 20px; border-radius: 16px; } }

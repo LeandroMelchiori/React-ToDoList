@@ -12,6 +12,7 @@ Este repositorio es una aplicacion React local-first de tareas, agenda y horario
 - Registro PWA: `src/app/pwa/serviceWorkerRegistration.ts`.
 - Componente raiz y composicion: `src/app/App.tsx`.
 - Workspace de calendario: `src/features/calendars/CalendarWorkspace.tsx`.
+- Acceso privado opcional: `src/features/account/AccountEntry.tsx` + `AccountWorkspace.tsx`, configuración pública en `accountConfig.ts` y cliente HTTP en `accountApi.ts`. Auth0 Universal Login (Google/email), tokens en memoria; guía `docs/backend/auth0-setup.md`. No importar automáticamente la agenda local al entrar.
 - Pedidos manuales: `src/features/orders/OrdersWorkspace.tsx` + `useOrders.ts`; modelo puro `src/shared/orders/orderModel.ts` y proyecciones `orderAgenda.ts`. Persistencia `ORDERS_V1`.
 - Estado de todos: `src/features/calendars/hooks/useTodos.ts`.
 - Modelos puros: `src/shared/calendar/todoModel.ts` (tareas, agenda, recurrencias avanzadas, recordatorios, export/import ICS), `src/shared/calendar/todoBoards.ts` (tableros), `src/shared/calendar/todoSavedViews.ts` (vistas guardadas), `src/shared/calendar/todoWorkspaceBackup.ts` (backups).
@@ -85,7 +86,7 @@ Los tests unitarios e integracion corren con `npm test`, usando Vitest, jsdom y 
 - `src/features/calendars/` contiene la UI y los hooks de agenda. Las reglas puras compartidas permanecen en `src/shared/calendar/`.
 - El acceso entre features usa entradas publicas. Para persistencia local: `features/sync/storage.ts`, `features/sync/useLocalStorage.ts` y `features/sync/ChangeAlert.tsx`.
 - `src/server/modules/` no importa componentes, hooks ni persistencia del navegador. Puede reutilizar el dominio puro de `shared/calendar`.
-- Los modulos futuros de cuenta, amistades, grupos y reuniones estan definidos por responsabilidad; no asumir que sus pantallas, autenticacion o endpoints ya existen.
+- Cuenta implementa acceso por proveedor, invitación y perfil. Amistades, grupos, reuniones y sincronización de agenda siguen como alcance futuro; no asumir que sus pantallas o endpoints ya existen.
 - `src/app/architecture.test.js` verifica estos limites. Actualiza sus reglas solo cuando exista una dependencia intencional documentada.
 - La composicion en `app/hooks/useOrderWorkspace.ts` conecta pedidos y calendario. No persistir proyecciones de pedidos como todos; las metricas de tareas no incluyen pedidos. El backup completo version 2 valida ambos dominios mediante una dependencia explicita del helper de backup al modelo puro de pedidos; los backups anteriores preservan los pedidos actuales.
 

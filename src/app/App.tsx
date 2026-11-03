@@ -9,11 +9,13 @@ import { useCalendarReminders } from '../features/calendars/useCalendar';
 import type { TodoViewMode } from '../features/calendars/useCalendar';
 import { WorkspaceNavigation } from '../shared/ui/WorkspaceNavigation/WorkspaceNavigation';
 import { TodoBackupActions } from '../features/calendars/components/TodoHeader/TodoBackupActions/TodoBackupActions';
+import { readAccountConfig } from '../features/account/accountConfig';
+import '../features/account/AccountWorkspace.css';
 
 const OrdersWorkspace = React.lazy(() => import('../features/orders/OrdersWorkspace').then(module => ({ default: module.OrdersWorkspace })));
+const AccountEntry = React.lazy(() => import('../features/account/AccountEntry').then(module => ({ default: module.AccountEntry })));
 
-function App() {
-  const { isDarkTheme, toggleTheme } = useTheme();
+function LocalWorkspace({ onAccount, isDarkTheme, toggleTheme }: { onAccount?: () => void; isDarkTheme: boolean; toggleTheme: () => void }) {
   const pwa = usePwaStatus();
   const workspace = useOrderWorkspace();
   const { calendar, orders, agendaEntries } = workspace;
@@ -27,7 +29,8 @@ function App() {
     if (section === 'orders') visitedOrdersRef.current = true;
     else if (visitedOrdersRef.current) document.querySelector<HTMLElement>('main.App')?.focus();
   }, [section]);
-  const appearance = <ThemeToggle isDarkTheme={isDarkTheme} onToggleTheme={toggleTheme} />;
+  const toggle = <ThemeToggle isDarkTheme={isDarkTheme} onToggleTheme={toggleTheme} />;
+  const appearance = onAccount ? <div className="AccountAppearance"><button type="button" className="AccountOpen" onClick={onAccount}>Mi cuenta</button>{toggle}</div> : toggle;
   const status = <PwaStatus hasUpdate={pwa.hasUpdate} isOfflineReady={pwa.isOfflineReady} isOnline={pwa.isOnline} onApplyUpdate={pwa.applyUpdate} />;
   const openCalendar = (view: TodoViewMode, date?: string) => {
     setCalendarView(view); setAgendaDate(date); setSection('calendar');
@@ -65,6 +68,23 @@ function App() {
       status={status}
     />
   );
+}
+
+function App() {
+  const theme = useTheme();
+  const [accountOpen, setAccountOpen] = React.useState(() => window.location.pathname === '/account');
+  const config = readAccountConfig(import.meta.env);
+  React.useEffect(() => {
+    const navigate = () => setAccountOpen(window.location.pathname === '/account');
+    window.addEventListener('popstate', navigate);
+    return () => window.removeEventListener('popstate', navigate);
+  }, []);
+  const navigate = (account: boolean) => {
+    window.history.pushState(null, '', account ? '/account' : '/'); setAccountOpen(account);
+  };
+  return accountOpen ? <React.Suspense fallback={<p role="status">Cargando acceso…</p>}>
+    <AccountEntry config={config} onLocal={() => navigate(false)} />
+  </React.Suspense> : <LocalWorkspace isDarkTheme={theme.isDarkTheme} toggleTheme={theme.toggleTheme} onAccount={config ? () => navigate(true) : undefined} />;
 }
 
 export default App;

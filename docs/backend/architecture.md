@@ -1,6 +1,6 @@
 # TaskFlow: base multiusuario
 
-Estado: `backend/` implementa PostgreSQL/Flyway, autenticación de JWT emitidos por un proveedor configurable, alta por invitación y lectura del perfil/calendario propio. La conexión de React, los elementos de agenda remotos y la sincronización siguen pendientes. La versión publicada continúa siendo local-first; la base está preservada en `release/local-base`. Ver configuración y límites en `backend/README.md`.
+Estado: `backend/` implementa PostgreSQL/Flyway, autenticación de JWT emitidos por un proveedor configurable, alta por invitación y lectura del perfil/calendario propio. React integra Auth0 Universal Login, invitación y perfil; falta configurar y verificar el proveedor real según [la guía](auth0-setup.md). Los elementos de agenda remotos y la sincronización siguen pendientes. La versión publicada continúa siendo local-first; la base está preservada en `release/local-base`. Ver configuración y límites en `backend/README.md`.
 
 ## Producto y alcance
 
@@ -9,6 +9,8 @@ Cada persona tiene su agenda, puede aceptar amistades, comparar disponibilidad i
 La primera entrega remota conservará tareas, eventos, horarios, períodos, recurrencias y excepciones, proyectos, etiquetas, subtareas y bloques de trabajo. Las reglas de esos elementos siguen en `src/shared/calendar/todoModel.ts`. Los grupos sociales son entidades nuevas, diferentes de los tableros personales existentes.
 
 ## Arquitectura
+
+El diagrama representa el destino del producto. Actualmente IndexedDB pertenece al workspace local del dispositivo; todavía no hay copia remota ni cola de sincronización por cuenta. La pantalla de cuenta usa el contrato HTTP y no accede a esa base local.
 
 ```mermaid
 flowchart LR
@@ -21,7 +23,7 @@ flowchart LR
 - Mantener React/Vite y la PWA. La API se implementa en Java/Spring Boot en `backend/`, como monolito modular con despliegue independiente. El frontend no requiere migrar a Next.js ni conectarse automáticamente a la API.
 - PostgreSQL contiene los datos compartidos. IndexedDB conserva la copia de la cuenta actual y la cola de cambios offline.
 - `src/server/modules/meetings/domain/availability.ts` es la referencia TypeScript del cálculo de disponibilidad: recibe intervalos UTC autorizados y expandidos, sin consultar usuarios ni almacenar datos. No se ejecuta dentro de Java. Su adaptación y la normalización de calendario requerirán pruebas de equivalencia antes de activar esos endpoints.
-- La identidad usa JWT RS256, con emisor, claves y audiencia configurables, expiración y subject obligatorios. La invitación se vincula a un email verificado; el actor estable se resuelve por emisor/subject, sin enlaces automáticos por email. El proveedor concreto y sus credenciales quedan pendientes de configuración.
+- La identidad usa JWT RS256, con emisor, claves y audiencia configurables, expiración y subject obligatorios. La invitación se vincula a un email verificado; el actor estable se resuelve por emisor/subject, sin enlaces automáticos por email. Auth0 es el proveedor elegido; su tenant y la conexión Google quedan pendientes de configuración. React usa PKCE y tokens en memoria; la API admite claims de email con namespace y CORS con orígenes explícitos.
 - Las migraciones ejecutables están en `backend/src/main/resources/db/migration`. `schema.sql` conserva el diseño futuro; no aplicarlo junto a Flyway.
 - `openapi.json` marca con `x-implementation: implemented` las operaciones disponibles en el perfil `cloud`. El resto continúa como diseño; ninguna de estas operaciones se activa en la web publicada automáticamente.
 
@@ -80,8 +82,8 @@ La migración V1 implementa únicamente perfiles y calendarios personales. Sus p
 
 ## Secuencia de implementación
 
-1. Implementado en desarrollo: PostgreSQL/Flyway, verificación de identidad, invitaciones y pruebas HTTP/SQL de aislamiento entre dos cuentas. Pendiente elegir/configurar proveedor y credenciales para el piloto.
-2. Implementados perfil y calendario personal de lectura. Sigue implementar elementos normalizados/versionados, importación local y conexión voluntaria de React. Mantener modo offline independiente.
+1. Implementado en desarrollo: PostgreSQL/Flyway, verificación de identidad, invitaciones y pruebas HTTP/SQL de aislamiento entre dos cuentas. React incorpora acceso por Auth0, invitación y perfil. Pendiente configurar y verificar el proveedor real para el piloto.
+2. Implementados perfil y calendario personal de lectura. Sigue implementar elementos normalizados/versionados e importación local voluntaria. Mantener modo offline independiente.
 3. Implementar amistades y permisos, luego consulta individual de disponibilidad.
 4. Implementar grupos, invitaciones y propuestas de reunión con revalidación transaccional.
 5. Añadir sync offline completo, invalidación de permisos y pruebas de dos dispositivos.
@@ -92,6 +94,6 @@ La migración V1 implementa únicamente perfiles y calendarios personales. Sus p
 
 El cálculo de disponibilidad tiene tests para dos/cinco usuarios, ventanas discontinuas, intervalos contiguos y solapados, falta de disponibilidad y entradas inválidas. TypeScript valida el módulo. El contrato JSON incluye respuestas de autorización, conflicto e idempotencia. Su sintaxis/referencias se pueden comprobar offline.
 
-`backend/` prueba HTTP real con tokens firmados y un servidor JWKS temporal, contra PostgreSQL real en Testcontainers. Se comprueban políticas RLS con un rol sin bypass, invitaciones, altas concurrentes, idempotencia, rollback y accesos cruzados. Todavía faltan la configuración del proveedor real, conexión de React, elementos remotos, expansión de recurrencias con zonas horarias y los endpoints sociales/sync. El algoritmo de disponibilidad de referencia por sí solo no autoriza usuarios ni confirma reservas concurrentes. Esta rama no cambia la aplicación publicada.
+`backend/` prueba HTTP real con tokens firmados y un servidor JWKS temporal, contra PostgreSQL real en Testcontainers. Se comprueban políticas RLS con un rol sin bypass, invitaciones, altas concurrentes, idempotencia, rollback, CORS y accesos cruzados. React prueba ambos métodos de acceso con el SDK real y un proveedor simulado, reintentos, logout y preservación local. Todavía faltan la configuración del proveedor real, elementos remotos, expansión de recurrencias con zonas horarias y los endpoints sociales/sync. El algoritmo de disponibilidad de referencia por sí solo no autoriza usuarios ni confirma reservas concurrentes. Esta rama no cambia la aplicación publicada.
 
 Referencias: [OpenAPI 3.1](https://spec.openapis.org/oas/v3.1.1.html), [restricciones de PostgreSQL](https://www.postgresql.org/docs/current/ddl-constraints.html), [Vercel Functions](https://vercel.com/docs/functions).
